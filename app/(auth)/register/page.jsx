@@ -1,7 +1,8 @@
 "use client";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import axios from "axios";
+// Commented out API integration for development
+// import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,13 +69,20 @@ export default function RegisterPage() {
       setErrorMsg("");
       setSuccessMsg("");
 
+      // Commented out API integration for development - using dummy success instead
+      /*
       const res = await axios.post("/api/auth/register", data);
       if (res.status === 201) {
         setSuccessMsg("Account created successfully!");
         setTimeout(() => router.push("/login"), 1500);
       }
+      */
+
+      // Dummy registration logic for development
+      setSuccessMsg("Account created successfully!");
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || "Registration failed.");
+      setErrorMsg("Registration failed.");
     }
   };
 
@@ -261,16 +269,10 @@ export default function RegisterPage() {
                 Select your role
               </option>
               <option
-                value="buyer"
+                value="user"
                 style={{ color: "#111827", backgroundColor: "white" }}
               >
-                🏠 Buyer - Looking for properties
-              </option>
-              <option
-                value="seller"
-                style={{ color: "#111827", backgroundColor: "white" }}
-              >
-                💼 Seller - Selling my property
+                🏠 User - Looking for properties
               </option>
               <option
                 value="partner"

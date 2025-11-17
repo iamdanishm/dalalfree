@@ -3,10 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import BuyerExplorePage from "./(dashboard)/buyer/page";
+import UserExplorePage from "./(dashboard)/user/page";
 import AdminDashboard from "./(dashboard)/admin/page";
 import PartnerDashboard from "./(dashboard)/partner/page";
-import SellerDashboard from "./(dashboard)/seller/page";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -25,16 +24,13 @@ export default function Home() {
         case "partner":
           router.push("/partner");
           break;
-        case "seller":
-          router.push("/seller");
-          break;
-        case "buyer":
+        case "user":
         default:
-          // Stay on home page for buyers (show buyer explore page)
+          // Stay on home page for users (show user explore page)
           break;
       }
     } else if (status === "unauthenticated") {
-      // For unauthenticated users, show the buyer explore page
+      // For unauthenticated users, show the user explore page
       // This allows them to browse properties before logging in
     }
   }, [status, session, router]);
@@ -57,25 +53,23 @@ export default function Home() {
         return <AdminDashboard />;
       case "partner":
         return <PartnerDashboard />;
-      case "seller":
-        return <SellerDashboard />;
-      case "buyer":
+      case "user":
       default:
         return (
           <>
             <Navbar />
-            <BuyerExplorePage />
+            <UserExplorePage />
             <Footer />
           </>
         );
     }
   }
 
-  // For unauthenticated users, show buyer explore page
+  // For unauthenticated users, show user explore page
   return (
     <>
       <Navbar />
-      <BuyerExplorePage />
+      <UserExplorePage />
       <Footer />
     </>
   );

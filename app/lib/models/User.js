@@ -1,17 +1,19 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
-    name: String,
-    email: { type: String, unique: true },
-    password: String,
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String },
+    phone: { type: String },
     role: {
       type: String,
-      enum: ["admin", "buyer", "seller", "partner"],
-      default: "buyer",
+      enum: ["user", "partner", "admin"],
+      default: "user",
     },
+    isVerified: { type: Boolean, default: false }, // KYC status
   },
   { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model("User", userSchema);
+export default mongoose.models.User || mongoose.model("User", UserSchema);

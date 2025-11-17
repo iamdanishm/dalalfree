@@ -1,5 +1,5 @@
 "use client";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
@@ -24,11 +24,8 @@ export default function PartnerDashboard() {
           case "admin":
             router.push("/admin");
             break;
-          case "seller":
-            router.push("/seller");
-            break;
-          case "buyer":
-            router.push("/buyer");
+          case "user":
+            router.push("/user");
             break;
           default:
             // If role is not recognized, redirect to home
@@ -143,23 +140,22 @@ export default function PartnerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Section */}
-      <div className="bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-3xl font-bold text-heading">
+      {/* Header */}
+      <header className="bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-heading">
               Partner Dashboard
             </h1>
-            <p className="mt-2 text-body">
-              Manage partnerships, collaborations, and revenue tracking
-            </p>
-          </motion.div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Partnership Metrics */}

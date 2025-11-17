@@ -1,0 +1,31 @@
+Demo users data for development login:
+
+Format: JSON array of user objects
+
+[
+  {
+    "email": "user@example.com",
+    "password": "password123",
+    "role": "user",
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  {
+    "email": "partner@example.com",
+    "password": "partner123",
+    "role": "partner",
+    "firstName": "Jane",
+    "lastName": "Smith"
+  },
+  {
+    "email": "admin@example.com",
+    "password": "admin123",
+    "role": "admin",
+    "firstName": "Admin",
+    "lastName": "User"
+  }
+]
+
+Note: These are dummy users for development purposes only.
+Passwords are hardcoded for easy testing.
+In production, remove this file and use secure API authentication.

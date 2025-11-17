@@ -2,9 +2,17 @@
 import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import * as Select from "@radix-ui/react-select";
+import { MdKeyboardArrowDown } from "react-icons/md";
+
+const propertyTypes = {
+  residential: ["1 RK", "1 BHK", "2 BHK", "3 BHK", "4+ BHK"],
+  commercial: ["Office", "Shop", "Warehouse", "Showroom", "Commercial Plot"],
+};
 
 export default function HeroSearch() {
   const [activeTab, setActiveTab] = useState("buy");
+  const [propertyType, setPropertyType] = useState("");
 
   return (
     <section className="relative bg-secondary text-white flex items-center justify-center py-20 md:py-28 overflow-hidden">
@@ -34,7 +42,10 @@ export default function HeroSearch() {
             {["Buy", "Rent", "Commercial"].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab.toLowerCase())}
+                onClick={() => {
+                  setActiveTab(tab.toLowerCase());
+                  setPropertyType("");
+                }}
                 className={`px-5 py-2 text-sm sm:text-base font-medium rounded-full transition-colors duration-200 ${
                   activeTab === tab.toLowerCase()
                     ? "bg-primary text-white"
@@ -61,12 +72,32 @@ export default function HeroSearch() {
               className="border border-gray-200 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full"
               suppressHydrationWarning
             />
-            <input
-              type="text"
-              placeholder="Property Type"
-              className="border border-gray-200 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full"
-              suppressHydrationWarning
-            />
+            <Select.Root value={propertyType} onValueChange={setPropertyType}>
+              <Select.Trigger className="group flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full bg-white">
+                <Select.Value placeholder="Property Type" />
+                <Select.Icon>
+                  <MdKeyboardArrowDown className="transform transition-transform group-data-[state=open]:rotate-180" />
+                </Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Content className="bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-hidden">
+                  <Select.Viewport className="p-1">
+                    {(activeTab === "commercial"
+                      ? propertyTypes.commercial
+                      : propertyTypes.residential
+                    ).map((type) => (
+                      <Select.Item
+                        key={type}
+                        value={type}
+                        className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer rounded outline-none select-none data-[highlighted]:bg-gray-100"
+                      >
+                        <Select.ItemText>{type}</Select.ItemText>
+                      </Select.Item>
+                    ))}
+                  </Select.Viewport>
+                </Select.Content>
+              </Select.Portal>
+            </Select.Root>
             <input
               type="text"
               placeholder="Budget"

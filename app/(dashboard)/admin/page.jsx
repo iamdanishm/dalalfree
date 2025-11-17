@@ -24,11 +24,8 @@ export default function AdminDashboard() {
           case "partner":
             router.push("/partner");
             break;
-          case "seller":
-            router.push("/seller");
-            break;
-          case "buyer":
-            router.push("/buyer");
+          case "user":
+            router.push("/user");
             break;
           default:
             // If role is not recognized, redirect to home
@@ -88,21 +85,9 @@ export default function AdminDashboard() {
       status: "Active",
     },
     {
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "Seller",
-      status: "Pending",
-    },
-    {
       name: "Mike Johnson",
       email: "mike@example.com",
       role: "Partner",
-      status: "Active",
-    },
-    {
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      role: "Seller",
       status: "Active",
     },
   ];

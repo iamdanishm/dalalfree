@@ -12,7 +12,7 @@ export async function GET() {
   return NextResponse.json(properties);
 }
 
-// POST new property (only verified sellers)
+// POST new property (only verified users)
 export async function POST(req) {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -20,9 +20,9 @@ export async function POST(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: userId, role } = session.user;
-  if (role !== "seller" && role !== "partner")
+  if (role !== "partner")
     return NextResponse.json(
-      { error: "Only sellers or partners can list properties" },
+      { error: "Only partners can list properties" },
       { status: 403 }
     );
 

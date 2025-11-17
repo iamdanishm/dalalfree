@@ -62,18 +62,18 @@ export default function Navbar() {
         href: "/wishlist",
         label: "Wishlist",
         icon: FiHeart,
-        roles: ["buyer", "user"],
+        roles: ["user"],
       },
     ];
 
-    if (session.user.role === "seller" || session.user.role === "partner") {
+    if (session.user.role === "partner") {
       baseActions.push(
         {
-          href: "/seller/properties",
+          href: "/partner/properties",
           label: "My Properties",
           icon: FiSettings,
         },
-        { href: "/seller/post", label: "Add Property", icon: FiPlus }
+        { href: "/partner/post", label: "Add Property", icon: FiPlus }
       );
     }
 
@@ -157,9 +157,9 @@ export default function Navbar() {
 
             {/* Right-side actions */}
             <div className="flex items-center gap-6">
-              {session?.user?.role !== "buyer" && (
+              {session?.user?.role !== "user" && (
                 <Link
-                  href="/seller/post"
+                  href="/partner/post"
                   className="inline-flex items-center px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-95 transition-opacity duration-200"
                 >
                   <FiPlus className="mr-2" size={16} />
@@ -374,10 +374,10 @@ export default function Navbar() {
               </nav>
 
               {/* Action buttons */}
-              {session?.user?.role !== "buyer" && (
+              {session?.user?.role !== "user" && (
                 <div className="pt-4">
                   <Link
-                    href="/seller/post"
+                    href="/partner/post"
                     onClick={() => setOpen(false)}
                     className="flex items-center justify-center w-full px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors duration-150 touch-manipulation"
                   >

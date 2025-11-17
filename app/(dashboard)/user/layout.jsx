@@ -13,7 +13,7 @@ const metadata = {
     "Find your dream property with Dalal Free – 100% verified, zero brokerage.",
 };
 
-export default function BuyerLayout({ children }) {
+export default function UserLayout({ children }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -25,19 +25,16 @@ export default function BuyerLayout({ children }) {
       return;
     }
 
-    // If authenticated but not a buyer, redirect to appropriate dashboard
+    // If authenticated but not a user, redirect to appropriate dashboard
     if (status === "authenticated" && session?.user) {
       const userRole = session.user.role;
-      if (userRole !== "buyer") {
+      if (userRole !== "user") {
         switch (userRole) {
           case "admin":
             router.push("/admin");
             break;
           case "partner":
             router.push("/partner");
-            break;
-          case "seller":
-            router.push("/seller");
             break;
           default:
             // If role is not recognized, redirect to home
@@ -62,11 +59,11 @@ export default function BuyerLayout({ children }) {
     return null;
   }
 
-  // If authenticated but not a buyer, don't render anything (will redirect)
+  // If authenticated but not a user, don't render anything (will redirect)
   if (
     status === "authenticated" &&
     session?.user &&
-    session.user.role !== "buyer"
+    session.user.role !== "user"
   ) {
     return null;
   }

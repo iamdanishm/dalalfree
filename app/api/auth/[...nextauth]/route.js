@@ -9,41 +9,26 @@ export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
-      credentials: {
-        email: { label: "Email" },
-        password: { label: "Password", type: "password" },
-      },
+      credentials: { email: {}, password: {} },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password)
-          throw new Error("Missing credentials");
         await connectDB();
-        const user = await User.findOne({ email: credentials.email }).select(
-          "+password"
-        );
+        const user = await User.findOne({ email: credentials.email });
         if (!user) throw new Error("User not found");
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) throw new Error("Invalid password");
         return {
-          id: user._id.toString(),
+          id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: user.role || "user",
         };
       },
     }),
-
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
-
-  pages: {
-    signIn: "/login", // your custom login UI
-  },
-  session: {
-    strategy: "jwt", // required for App Router
-  },
 
   callbacks: {
     async signIn({ user, account }) {
@@ -54,7 +39,7 @@ export const authOptions = {
           await User.create({
             name: user.name,
             email: user.email,
-            role: "buyer", // default role for Google sign-in
+            role: "user", // unified
           });
         }
       }
@@ -64,7 +49,7 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id || user._id;
-        token.role = user.role || "buyer";
+        token.role = user.role || "user";
       }
       return token;
     },
@@ -75,6 +60,9 @@ export const authOptions = {
       return session;
     },
   },
+
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
 };
 

@@ -7,7 +7,7 @@ import Footer from "@/app/components/Footer";
 import QuickCategories from "./components/QuickCategories";
 import FeaturedGrid from "./components/FeaturedGrid";
 
-export default function BuyerExplore() {
+export default function UserExplore() {
   return (
     <div className="bg-background text-foreground font-sans">
       <HeroSearch />

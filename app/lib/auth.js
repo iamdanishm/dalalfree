@@ -158,14 +158,9 @@ export const isAdmin = (user) => {
   return user && user.userType === "admin";
 };
 
-// Check if user is seller
-export const isSeller = (user) => {
-  return user && user.userType === "seller";
-};
-
-// Check if user is buyer
-export const isBuyer = (user) => {
-  return user && user.userType === "buyer";
+// Check if user is user
+export const isUser = (user) => {
+  return user && user.userType === "user";
 };
 
 // Check if user is partner
@@ -238,7 +233,6 @@ export default {
   requireAuth,
   requireUserType,
   isAdmin,
-  isSeller,
-  isBuyer,
+  isUser,
   isPartner,
 };
