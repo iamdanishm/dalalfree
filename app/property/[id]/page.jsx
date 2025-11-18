@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -23,6 +23,11 @@ import {
   FiShield,
   FiTrendingUp,
   FiClock,
+  FiDroplet,
+  FiGrid,
+  FiCompass,
+  FiArrowUp,
+  FiTruck,
 } from "react-icons/fi";
 import {
   FaCheck,
@@ -36,6 +41,7 @@ import {
 } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Masonry from "react-masonry-css";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
@@ -44,6 +50,12 @@ export default function PropertyDetails({ params }) {
   const [activeImage, setActiveImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedAmenity, setSelectedAmenity] = useState("all");
+  const [showAllImages, setShowAllImages] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [showDescriptionMore, setShowDescriptionMore] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
   const { status } = useSession();
   const router = useRouter();
 
@@ -70,6 +82,56 @@ export default function PropertyDetails({ params }) {
     }
   };
 
+  const handleModalImageNavigation = (direction) => {
+    if (direction === "prev") {
+      setModalImageIndex((prev) =>
+        prev === 0 ? property.images.length - 1 : prev - 1
+      );
+    } else {
+      setModalImageIndex((prev) =>
+        prev === property.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const openGalleryModal = (startIndex = 0) => {
+    setModalImageIndex(startIndex);
+    setShowGalleryModal(true);
+  };
+
+  const closeGalleryModal = () => {
+    setShowGalleryModal(false);
+    setShowGalleryModal(false);
+    document.body.style.overflow = "auto";
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showGalleryModal) return;
+
+    if (e.key === "ArrowLeft") {
+      handleModalImageNavigation("prev");
+    } else if (e.key === "ArrowRight") {
+      handleModalImageNavigation("next");
+    } else if (e.key === "Escape") {
+      closeGalleryModal();
+    }
+  };
+
+  // Add keyboard event listener and handle scroll lock
+  React.useEffect(() => {
+    if (showGalleryModal) {
+      window.addEventListener("keydown", handleKeyDown);
+      // Prevent scroll when modal is open
+      document.body.style.overflow = "hidden";
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "auto";
+      };
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showGalleryModal, modalImageIndex]);
+
   // Mock property data - In production, this would come from an API
   const getPropertyById = (id) => {
     const allProperties = [
@@ -88,6 +150,10 @@ export default function PropertyDetails({ params }) {
           "/images/hero-image2.png",
           "/images/hero-image1.png",
           "/images/hero-image.png",
+          "/images/home-lifestyle.png",
+          "/images/hero-image3.png",
+          "/images/hero-image2.png",
+          "/images/hero-image1.png",
         ],
         imageCategories: [
           "Exterior",
@@ -225,6 +291,21 @@ export default function PropertyDetails({ params }) {
     alert("Contact functionality would be implemented here");
   };
 
+  // Generate consistent, compact aspect ratios for uniform grid layout (avoiding staircase effect)
+  const imageAspectRatios = useMemo(() => {
+    // Use wide aspect ratio for all images to keep grid height compact
+    const unifiedRatio = "3/2"; // 1.5:1 ratio - wider format for smaller height
+    return property.images.map(() => unifiedRatio);
+  }, [property.images]); // Only regenerate when images change
+
+  // Breakpoint columns for masonry layout
+  const breakpointColumnsObj = {
+    default: 3,
+    1100: 3,
+    700: 2,
+    500: 1,
+  };
+
   return (
     <>
       <Navbar />
@@ -232,15 +313,13 @@ export default function PropertyDetails({ params }) {
         {/* Breadcrumb Navigation */}
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center py-3 text-sm">
+            <nav className="flex items-center py-1 text-xs">
               <Link href="/" className="text-gray-500 hover:text-gray-700">
                 Home
               </Link>
-              <span className="mx-2 text-gray-400">/</span>
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                Properties
-              </Link>
-              <span className="mx-2 text-gray-400">/</span>
+              <span className="mx-1 text-gray-400">/</span>
+              <span className="text-gray-500">Properties</span>
+              <span className="mx-1 text-gray-400">/</span>
               <span className="text-gray-900 font-medium">
                 {property.title}
               </span>
@@ -249,104 +328,183 @@ export default function PropertyDetails({ params }) {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Hero Image Gallery */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8 relative">
-            <div className="relative aspect-[16/9] bg-gray-900">
-              <Image
-                src={property.images[activeImage]}
-                alt={`${property.title} - ${activeImage + 1}`}
-                fill
-                className="object-cover"
-                priority
-              />
-
-              {/* Navigation Arrows */}
-              <button
-                onClick={() => handleImageNavigation("prev")}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
-              >
-                <FiChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => handleImageNavigation("next")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
-              >
-                <FiChevronRight size={20} />
-              </button>
-
-              {/* Image Counter */}
-              <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                {activeImage + 1} / {property.images.length}
-              </div>
-
-              {/* Property Score & KYC Badges */}
-              <div className="absolute top-4 left-4 flex gap-2">
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                  {property.score} Grade Property
-                </div>
-                <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                  KYC Verified
-                </div>
-              </div>
-
-              {/* Wishlist Button */}
-              <button
-                onClick={handleWishlistClick}
-                className={`absolute top-4 right-16 w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-lg ${
-                  isWishlisted
-                    ? "bg-red-500 text-white"
-                    : "bg-white/90 text-gray-600 hover:text-red-500"
-                }`}
-              >
-                <FiHeart
-                  size={20}
-                  fill={isWishlisted ? "currentColor" : "none"}
-                />
-              </button>
-
-              {/* Property Highlights Overlay */}
-              <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-sm text-white p-4 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold mb-1">
-                      {property.title}
-                    </h1>
-                    <p className="text-gray-200 text-sm">{property.subtitle}</p>
+          {/* Property Information Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 shadow-lg border border-blue-100 relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="mb-4 lg:mb-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    {property.score} Grade Property
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-400">
-                      {property.price}
-                    </div>
-                    {property.originalPrice && (
-                      <div className="text-sm line-through opacity-75">
-                        {property.originalPrice}
-                      </div>
-                    )}
+                  <div className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    KYC Verified
+                  </div>
+                </div>
+
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
+                  {property.title}
+                </h1>
+                <div className="flex items-center text-gray-600">
+                  <FiMapPin className="mr-1" size={16} />
+                  <span>{property.location}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Previous Property Navigation */}
+                {parseInt(id) > 1 && (
+                  <button
+                    onClick={() => router.push(`/property/${parseInt(id) - 1}`)}
+                    className="flex items-center gap-2 bg-white/80 hover:bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-all duration-200"
+                  >
+                    <FiChevronLeft size={18} />
+                    Previous Property
+                  </button>
+                )}
+
+                {/* Next Property Navigation */}
+                {parseInt(id) < 10 && ( // Assuming there are 10 properties for now
+                  <button
+                    onClick={() => router.push(`/property/${parseInt(id) + 1}`)}
+                    className="flex items-center gap-2 bg-white/80 hover:bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-all duration-200"
+                  >
+                    Next Property
+                    <FiChevronRight size={18} />
+                  </button>
+                )}
+
+                <div className="text-right">
+                  <div className="text-2xl lg:text-3xl font-bold text-green-600">
+                    {property.price}
+                  </div>
+                  <div className="text-sm text-green-700 font-semibold bg-green-100 px-2 py-1 rounded-full mt-1">
+                    Negotiable Price
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Thumbnail Strip */}
-            <div className="flex gap-2 p-4 bg-gray-50 border-t">
-              {property.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveImage(index)}
-                  className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
-                    activeImage === index
-                      ? "border-red-500 ring-2 ring-red-200"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${property.title} ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
+          {/* Image Gallery */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Property Gallery
+              </h2>
+              <p className="text-gray-600 text-sm">
+                {property.images.length} photos
+              </p>
+            </div>
+
+            <Masonry
+              breakpointCols={breakpointColumnsObj}
+              className="my-masonry-grid"
+              columnClassName="my-masonry-grid_column"
+            >
+              {property.images
+                .slice(0, showAllImages ? property.images.length : 6)
+                .map((image, index) => (
+                  <div key={index}>
+                    <div
+                      className="relative group cursor-pointer overflow-hidden rounded-xl bg-gray-200 mb-4"
+                      style={{
+                        aspectRatio: imageAspectRatios[index],
+                      }}
+                      onClick={() => openGalleryModal(index)}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${property.title} - ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 500px) 100vw, (max-width: 700px) 50vw, 33vw"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <div className="text-white text-center">
+                          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2 mx-auto">
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                          </div>
+                          <div className="text-sm font-medium">View Image</div>
+                        </div>
+                      </div>
+                      {index ===
+                        (showAllImages ? property.images.length : 6) - 1 &&
+                        !showAllImages &&
+                        property.images.length > 6 && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openGalleryModal(
+                                (showAllImages ? property.images.length : 6) - 1
+                              );
+                            }}
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center text-white cursor-pointer hover:bg-black/70 transition-colors"
+                          >
+                            <div className="text-center">
+                              <div className="text-2xl font-bold">
+                                +{property.images.length - 6}
+                              </div>
+                              <div className="text-sm">More photos</div>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                ))}
+            </Masonry>
+          </div>
+
+          {/* Quick Overview Card */}
+          <div className="bg-white rounded-2xl p-6 mb-8 shadow-lg">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Quick Overview
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                <FiHome className="mx-auto text-blue-600 mb-2" size={24} />
+                <div className="font-semibold text-gray-900 text-sm">
+                  {property.specs.bhk}
+                </div>
+              </div>
+              <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                <FiDroplet className="mx-auto text-green-600 mb-2" size={24} />
+                <div className="font-semibold text-gray-900 text-sm">
+                  {property.specs.bathrooms} Baths
+                </div>
+              </div>
+              <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                <FiTrendingUp
+                  className="mx-auto text-purple-600 mb-2"
+                  size={24}
+                />
+                <div className="font-semibold text-gray-900 text-sm">
+                  {property.specs.furnishing}
+                </div>
+              </div>
+              <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+                <FiClock className="mx-auto text-orange-600 mb-2" size={24} />
+                <div className="font-semibold text-gray-900 text-sm">
+                  Ready to Move
+                </div>
+              </div>
             </div>
           </div>
 
@@ -376,25 +534,178 @@ export default function PropertyDetails({ params }) {
                 </div>
               </div>
 
-              {/* Property Specifications */}
+              {/* Amenities */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Property Specifications
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Amenities
+                  </h3>
+                  <button
+                    onClick={() => setShowAllAmenities(!showAllAmenities)}
+                    className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                  >
+                    {showAllAmenities
+                      ? "Show Less"
+                      : `+${property.amenities.society.length - 6} more`}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {property.amenities.society
+                    .slice(
+                      0,
+                      showAllAmenities ? property.amenities.society.length : 6
+                    )
+                    .map((amenity, index) => (
+                      <div key={index} className="flex items-center text-sm">
+                        <amenity.icon
+                          className={`mr-2 flex-shrink-0 ${
+                            amenity.available
+                              ? "text-green-500"
+                              : "text-gray-300"
+                          }`}
+                          size={16}
+                        />
+                        <span
+                          className={
+                            amenity.available
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }
+                        >
+                          {amenity.name}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Detailed Property Overview */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+                  Property Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(property.specs).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg"
-                    >
-                      <span className="text-sm text-gray-600 font-medium capitalize">
-                        {key.replace(/([A-Z])/g, " $1")}:
-                      </span>
-                      <span className="text-sm font-semibold text-gray-900 capitalize">
-                        {value}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiCalendar className="mr-3 text-blue-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Age of Building
                       </span>
                     </div>
-                  ))}
+                    <span className="font-semibold text-gray-900">2 years</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiHome className="mr-3 text-green-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Ownership Type
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      Self Owned
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiTrendingUp
+                        className="mr-3 text-purple-600"
+                        size={20}
+                      />
+                      <span className="text-gray-700 font-medium">
+                        Maintenance Charges
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      ₹7,000 per sq.ft/m
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiAward className="mr-3 text-orange-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Flooring
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      Vitrified Tiles
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiMap className="mr-3 text-red-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Built-up Area
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      1,200 sq.ft
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiMapPin className="mr-3 text-indigo-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Carpet Area
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      905 sq.ft
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiShield className="mr-3 text-cyan-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Furnishing Status
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      Unfurnished
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiCoffee className="mr-3 text-brown-600" size={20} />
+                      <span className="text-gray-700 font-medium">Facing</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">East</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiClock className="mr-3 text-teal-600" size={20} />
+                      <span className="text-gray-700 font-medium">Floor</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">14/28</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiThumbsUp className="mr-3 text-yellow-600" size={20} />
+                      <span className="text-gray-700 font-medium">Parking</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      Bike and Car
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-shadow">
+                    <div className="flex items-center">
+                      <FiAward className="mr-3 text-pink-600" size={20} />
+                      <span className="text-gray-700 font-medium">
+                        Gated Security
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900">Yes</span>
+                  </div>
                 </div>
               </div>
 
@@ -524,17 +835,9 @@ export default function PropertyDetails({ params }) {
             <div className="space-y-6">
               {/* Enhanced Owner Information */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Property Owner
-                  </h3>
-                  <div className="flex items-center">
-                    <FiStar className="mr-1 text-yellow-500" size={14} />
-                    <span className="text-sm font-medium">
-                      {property.owner.rating}
-                    </span>
-                  </div>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Property Owner
+                </h3>
 
                 <div className="flex items-center mb-4">
                   <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
@@ -594,32 +897,6 @@ export default function PropertyDetails({ params }) {
                 )}
               </div>
 
-              {/* Society Amenities */}
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Society Amenities
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {property.amenities.society.map((amenity, index) => (
-                    <div key={index} className="flex items-center text-sm">
-                      <amenity.icon
-                        className={`mr-2 flex-shrink-0 ${
-                          amenity.available ? "text-green-500" : "text-gray-300"
-                        }`}
-                        size={16}
-                      />
-                      <span
-                        className={
-                          amenity.available ? "text-gray-900" : "text-gray-400"
-                        }
-                      >
-                        {amenity.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Trust Badges */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -643,7 +920,122 @@ export default function PropertyDetails({ params }) {
           </div>
         </div>
       </main>
+
       <Footer />
+
+      {/* Gallery Modal */}
+      {showGalleryModal && (
+        <div className="fixed inset-0 bg-black z-50">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4">
+            <div className="flex items-center justify-between text-white">
+              <div className="text-lg font-semibold">{property.title}</div>
+              <button
+                onClick={closeGalleryModal}
+                className="w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition-colors"
+                aria-label="Close gallery"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Image Container */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Navigation Arrows */}
+            {property.images.length > 1 && (
+              <>
+                {modalImageIndex > 0 && (
+                  <button
+                    onClick={() => handleModalImageNavigation("prev")}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group"
+                    aria-label="Previous image"
+                  >
+                    <FiChevronLeft className="text-white w-8 h-8 group-hover:scale-110 transition-transform" />
+                  </button>
+                )}
+
+                {modalImageIndex < property.images.length - 1 && (
+                  <button
+                    onClick={() => handleModalImageNavigation("next")}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group"
+                    aria-label="Next image"
+                  >
+                    <FiChevronRight className="text-white w-8 h-8 group-hover:scale-110 transition-transform" />
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Main Image */}
+            <div className="relative max-w-[90vw] max-h-[85vh]">
+              <Image
+                src={property.images[modalImageIndex]}
+                alt={`${property.title} - Photo ${modalImageIndex + 1}`}
+                width={1200}
+                height={800}
+                className="object-contain w-full h-full rounded-lg shadow-2xl"
+                priority
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-6">
+            {/* Image Counter */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-black/60 backdrop-blur-sm text-white px-6 py-2 rounded-full">
+                <span className="font-semibold">{modalImageIndex + 1}</span>
+                <span className="text-white/60 mx-2">/</span>
+                <span className="text-white/60">{property.images.length}</span>
+              </div>
+            </div>
+
+            {/* Thumbnail Strip */}
+            <div className="flex justify-center">
+              <div className="flex gap-2 overflow-x-auto max-w-[90vw] p-2 rounded-lg bg-black/20 backdrop-blur-sm">
+                {property.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setModalImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-white/50 ${
+                      index === modalImageIndex
+                        ? "border-white shadow-lg scale-110"
+                        : "border-transparent opacity-70 hover:opacity-100 hover:border-white/50"
+                    }`}
+                    aria-label={`View photo ${index + 1}`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`Photo thumbnail ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Keyboard Instructions */}
+            <div className="text-center mt-3 text-white/50 text-sm">
+              Use ← → keys to navigate • ESC to close
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
