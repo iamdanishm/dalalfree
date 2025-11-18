@@ -54,7 +54,7 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="bg-background py-20">
+    <section className="bg-background py-12 sm:py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
         <motion.h2
@@ -76,7 +76,7 @@ export default function Testimonials() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
         >
           {testimonials.map((user) => (
             <motion.div

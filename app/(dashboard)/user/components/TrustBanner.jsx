@@ -60,13 +60,13 @@ export default function TrustBanner() {
         duration: 0.8,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      className="py-16 px-4 md:px-8"
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
       style={{ willChange: "transform" }}
     >
       {/* Outer rounded black container */}
       <div className="mx-auto max-w-7xl bg-secondary rounded-3xl p-6 sm:p-10 lg:p-12">
         {/* Inner content: uses flex on large screens */}
-        <div className="flex flex-col lg:flex-row items-center gap-8">
+        <div className="flex flex-col lg:flex-row items-center gap-4 md:gap-8">
           {/* LEFT: heading + 2x2 cards */}
           <div className="flex-1">
             <motion.p
@@ -88,7 +88,7 @@ export default function TrustBanner() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4"
             >
               {features.map((f, idx) => (
                 <motion.div

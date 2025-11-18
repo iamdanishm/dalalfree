@@ -31,10 +31,10 @@ export default function CTASection() {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
-      className="bg-primary text-primary-foreground py-7"
+      className="bg-primary text-primary-foreground py-4 md:py-7"
       style={{ willChange: "transform" }}
     >
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <motion.h3
           variants={itemVariants}
           className="text-2xl font-semibold text-center md:text-left"
