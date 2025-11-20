@@ -47,8 +47,18 @@ New buyers automatically receive subscription benefits:
 ### POST `/api/auth/register`
 
 - **Purpose:** User registration with role assignment
-- **Body:** `{ name, email, password, role: "buyer"|"partner" }`
-- **Response:**
+- **Request Body:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword123",
+  "role": "buyer"
+}
+```
+
+- **Response:** `201 Created`
 
 ```json
 {
@@ -61,9 +71,23 @@ New buyers automatically receive subscription benefits:
     "accountStatus": "active",
     "isVerified": false,
     "subscriptionStatus": "free_trial",
-    "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
+    "subscriptionStartDate": null,
+    "subscriptionEndDate": null,
+    "freeTrialUsed": false,
+    "freeTrialStartDate": null,
+    "freeTrialEndDate": "2025-12-20T18:17:00.000Z",
     "adUnlockCredits": 5
   }
+}
+```
+
+- **Error Response:** `400 Bad Request`
+
+```json
+{
+  "error": "Missing required fields",
+  "required": ["name", "email", "password"],
+  "missing": ["email"]
 }
 ```
 
@@ -112,8 +136,16 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 ### POST `/api/auth/login`
 
 - **Purpose:** User authentication with subscription data
-- **Body:** `{ email, password }`
-- **Response:**
+- **Request Body:**
+
+```json
+{
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+- **Response:** `200 OK`
 
 ```json
 {
@@ -123,20 +155,33 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
     "name": "John Doe",
     "email": "john@example.com",
     "role": "buyer",
+    "accountStatus": "active",
     "isVerified": false,
     "subscriptionStatus": "free_trial",
-    "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
+    "subscriptionStartDate": null,
+    "subscriptionEndDate": null,
+    "freeTrialUsed": false,
+    "freeTrialStartDate": null,
+    "freeTrialEndDate": "2025-12-20T18:17:00.000Z",
     "adUnlockCredits": 5
   },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzMzc2ODBkZjk2Zjk2Zjk2ZjlmNTM3NjgiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYnV5ZXIiLCJuYW1lIjoiSm9obiBEb2UifQ.X1Z2Z3Z4Z5Z6Z7Z8Z9Z0Za1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+}
+```
+
+- **Error Response:** `401 Unauthorized`
+
+```json
+{
+  "error": "Invalid credentials."
 }
 ```
 
 ### GET `/api/users/profile`
 
-- **Purpose:** Get complete user profile with subscription data
+- **Purpose:** Get complete authenticated user profile with subscription data
 - **Auth:** Required
-- **Response:**
+- **Response:** `200 OK`
 
 ```json
 {
@@ -148,6 +193,7 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
     "role": "buyer",
     "phone": null,
     "accountStatus": "active",
+    "accountStatusReason": null,
     "isVerified": false,
     "reraNumber": null,
     "subscriptionStatus": "free_trial",
@@ -155,27 +201,10 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
     "subscriptionEndDate": null,
     "freeTrialUsed": false,
     "freeTrialStartDate": null,
-    "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
+    "freeTrialEndDate": "2025-12-20T18:17:00.000Z",
     "adUnlockCredits": 5,
-    "createdAt": "2025-11-19T16:47:39.000Z"
-  }
-}
-```
-
-### POST `/api/kyc/convert`
-
-- **Purpose:** Convert buyer to seller via KYC verification
-- **Auth:** Required
-- **Response:**
-
-```json
-{
-  "message": "Successfully converted buyer to seller",
-  "user": {
-    "id": "_id",
-    "role": "seller",
-    "isVerified": true,
-    "subscriptionStatus": "free_trial"
+    "createdAt": "2025-11-20T18:17:00.000Z",
+    "updatedAt": "2025-11-20T18:17:00.000Z"
   }
 }
 ```
@@ -192,7 +221,7 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
   - `role` (string): Filter by user role (`buyer`, `seller`, `partner`, `admin`, `sub-admin`)
   - `status` (string): Filter by account status (`active`, `suspended`, `pending`)
   - `search` (string): Search in name or email (case-insensitive)
-- **Response:**
+- **Response:** `200 OK`
 
 ```json
 {
@@ -212,10 +241,10 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
       "subscriptionEndDate": null,
       "freeTrialUsed": false,
       "freeTrialStartDate": null,
-      "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
+      "freeTrialEndDate": "2025-12-20T18:17:00.000Z",
       "adUnlockCredits": 5,
-      "createdAt": "2025-11-19T16:47:39.000Z",
-      "updatedAt": "2025-11-19T16:47:39.000Z"
+      "createdAt": "2025-11-20T18:17:00.000Z",
+      "updatedAt": "2025-11-20T18:17:00.000Z"
     }
   ],
   "pagination": {
@@ -228,37 +257,6 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 }
 ```
 
-#### POST `/api/admin/users`
-
-- **Purpose:** Admin create user with any role
-- **Auth:** Required (Admin only)
-- **Body:** `{ name, email, password, phone?, role?: "buyer"|"seller"|"partner"|"admin"|"sub-admin" }`
-- **Default Role:** `buyer`
-- **Response:**
-
-```json
-{
-  "user": {
-    "id": "_id",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "buyer",
-    "phone": "+1234567890",
-    "accountStatus": "active",
-    "isVerified": false,
-    "isSubAdmin": false,
-    "createdAt": "2025-11-19T16:47:39.000Z"
-  },
-  "message": "User created successfully as buyer"
-}
-```
-
-### GET `/api/users/profile`
-
-- **Purpose:** Get complete authenticated user profile
-- **Auth:** Required
-- **Response:** Full user object with all subscription data (see above example)
-
 ## KYC (Know Your Customer)
 
 ### KYC Conversion Flow
@@ -268,17 +266,11 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 3. **KYC approved** → Role becomes `seller`
 4. **Seller status** → Can now list properties
 
-### POST `/api/kyc/convert`
-
-- **Purpose:** Convert buyer to seller via KYC approval
-- **Auth:** Required
-- **Response:** Updated user with seller role and subscription data
-
 ### GET `/api/kyc/convert`
 
 - **Purpose:** Check if buyer can convert to seller
 - **Auth:** Required
-- **Response:**
+- **Response:** `200 OK`
 
 ```json
 {
@@ -288,25 +280,106 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 }
 ```
 
+### POST `/api/kyc/convert`
+
+- **Purpose:** Convert buyer to seller via KYC verification
+- **Auth:** Required
+- **Response:** `200 OK`
+
+```json
+{
+  "message": "Successfully converted buyer to seller",
+  "user": {
+    "id": "_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "seller",
+    "accountStatus": "active",
+    "isVerified": true,
+    "subscriptionStatus": "free_trial",
+    "subscriptionStartDate": null,
+    "subscriptionEndDate": null,
+    "freeTrialUsed": false,
+    "freeTrialStartDate": null,
+    "freeTrialEndDate": "2025-12-20T18:17:00.000Z",
+    "adUnlockCredits": 5
+  }
+}
+```
+
+- **Error Response:** `400 Bad Request`
+
+```json
+{
+  "error": "Only buyers can convert to sellers"
+}
+```
+
 ### GET `/api/kyc`
 
 - **Purpose:** Get logged-in user's KYC status
 - **Auth:** Required
-- **Response:** User's KYC data or empty object if not submitted
+- **Response:** `200 OK`
+
+```json
+{
+  "_id": "_id",
+  "userId": "_id",
+  "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+  "agreementPhoto": "https://example.com/agreement.jpg",
+  "videoUrl": "https://example.com/video.mp4",
+  "status": "pending",
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "remarks": null,
+  "rejectionReason": null,
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
+
+**Empty Response (not submitted):** `{}`
 
 ### POST `/api/kyc`
 
 - **Purpose:** Submit new KYC application
 - **Auth:** Required
-- **Body:** `{ aadhaarPhoto, agreementPhoto, videoUrl }`
-- **Response:** Created KYC submission object
+- **Request Body:**
 
-### PUT `/api/kyc/[id]`
+```json
+{
+  "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+  "agreementPhoto": "https://example.com/agreement.jpg",
+  "videoUrl": "https://example.com/video.mp4"
+}
+```
 
-- **Purpose:** Update KYC status (Admin only)
-- **Auth:** Required (Admin)
-- **Body:** `{ status, remarks }`
-- **Response:** Updated KYC object
+- **Response:** `201 Created`
+
+```json
+{
+  "_id": "_id",
+  "userId": "_id",
+  "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+  "agreementPhoto": "https://example.com/agreement.jpg",
+  "videoUrl": "https://example.com/video.mp4",
+  "status": "pending",
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "remarks": null,
+  "rejectionReason": null,
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
+
+- **Error Response:** `400 Bad Request`
+
+```json
+{
+  "error": "Already submitted"
+}
+```
 
 ## Property Management APIs
 
@@ -316,39 +389,221 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 
 - **Purpose:** Get all properties (public view)
 - **Auth:** Optional
-- **Response:** Array of property objects
+- **Response:** `200 OK`
+
+```json
+[
+  {
+    "_id": "_id",
+    "title": "Modern 2BHK Apartment",
+    "description": "Beautiful apartment in prime location",
+    "price": 2500000,
+    "propertyType": "apartment",
+    "category": "Residential",
+    "location": {
+      "address": "123 Main St, Mumbai",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400001"
+    },
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "area": 1200,
+    "verified": true,
+    "featured": false,
+    "status": "approved",
+    "ownerId": {
+      "_id": "_id",
+      "name": "Property Owner",
+      "email": "owner@example.com"
+    },
+    "createdAt": "2025-11-20T18:17:00.000Z",
+    "updatedAt": "2025-11-20T18:17:00.000Z"
+  }
+]
+```
 
 #### GET `/api/properties/[id]`
 
 - **Purpose:** Get single property details
 - **Auth:** Optional
-- **Response:** Property object with full details
+- **Response:** `200 OK`
+
+```json
+{
+  "_id": "_id",
+  "title": "Modern 2BHK Apartment",
+  "description": "Beautiful apartment in prime location with amenities",
+  "price": 2500000,
+  "propertyType": "apartment",
+  "category": "Residential",
+  "location": {
+    "address": "123 Main St, Mumbai",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  },
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "area": 1200,
+  "verified": true,
+  "featured": false,
+  "status": "approved",
+  "ownerId": {
+    "_id": "_id",
+    "name": "Property Owner",
+    "email": "owner@example.com"
+  },
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
+
+- **Error Response:** `404 Not Found`
+
+```json
+{
+  "error": "Not found"
+}
+```
 
 #### POST `/api/properties`
 
 - **Purpose:** Create new property listing
 - **Auth:** Required (Partners only)
-- **Body:** Full property data object
-- **Response:** Created property object
+- **Request Body:**
+
+```json
+{
+  "title": "Modern 2BHK Apartment",
+  "description": "Beautiful apartment in prime location with amenities",
+  "price": 2500000,
+  "propertyType": "apartment",
+  "category": "Residential",
+  "location": {
+    "address": "123 Main St, Mumbai",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  },
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "area": 1200
+}
+```
+
+- **Response:** `201 Created`
+
+```json
+{
+  "_id": "_id",
+  "title": "Modern 2BHK Apartment",
+  "description": "Beautiful apartment in prime location with amenities",
+  "price": 2500000,
+  "propertyType": "apartment",
+  "category": "Residential",
+  "location": {
+    "address": "123 Main St, Mumbai",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  },
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "area": 1200,
+  "verified": true,
+  "featured": false,
+  "status": "pending",
+  "ownerId": "_id",
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
+
+- **Error Response:** `403 Forbidden`
+
+```json
+{
+  "error": "Only partners can list properties"
+}
+```
 
 #### PUT `/api/properties/[id]`
 
 - **Purpose:** Update property listing
 - **Auth:** Required (Owner or Admin)
-- **Body:** Updated property data
-- **Response:** Updated property object
+- **Request Body:**
+
+```json
+{
+  "title": "Updated Property Title",
+  "price": 2800000,
+  "description": "Updated description",
+  "featured": true
+}
+```
+
+- **Response:** `200 OK`
+
+```json
+{
+  "_id": "_id",
+  "title": "Updated Property Title",
+  "description": "Updated description",
+  "price": 2800000,
+  "propertyType": "apartment",
+  "category": "Residential",
+  "location": {
+    "address": "123 Main St, Mumbai",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  },
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "area": 1200,
+  "verified": true,
+  "featured": true,
+  "status": "pending",
+  "ownerId": "_id",
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
+
+- **Error Response:** `403 Forbidden`
+
+```json
+{
+  "error": "Forbidden"
+}
+```
 
 #### DELETE `/api/properties/[id]`
 
 - **Purpose:** Delete property listing
 - **Auth:** Required (Owner or Admin)
-- **Response:** Success confirmation
+- **Response:** `200 OK`
+
+```json
+{
+  "success": true
+}
+```
+
+- **Error Response:** `403 Forbidden`
+
+```json
+{
+  "error": "Forbidden"
+}
+```
 
 #### GET `/api/properties/daily-chart`
 
 - **Purpose:** Get property addition statistics for charts
 - **Auth:** Required (Admin only)
-- **Response:**
+- **Response:** `200 OK`
 
 ```json
 {
@@ -373,35 +628,94 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 ### GET `/api/admin/users`
 
 - **Purpose:** Get paginated list of users with filters
+- **Auth:** Required (Admin only)
 - **Query Params:**
   - `page` (number): Page number (default: 1)
   - `limit` (number): Items per page (default: 10)
   - `role` (string): Filter by user role
   - `status` (string): Filter by account status
   - `search` (string): Search in name, email, phone
-- **Response:** `{ users: [...], pagination: {...} }`
-- **UI Mapping:**
-  - `users[].role`: Maps "user" → "Buyer", "partner" → "Partner", "admin" → "Admin"
-  - `users[].status`: Capitalizes accountStatus ("active" → "Active")
+- **Response:** `200 OK`
 
-### PUT `/api/admin/users/[id]`
+```json
+{
+  "users": [
+    {
+      "_id": "_id",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890",
+      "role": "Buyer",
+      "isSubAdmin": false,
+      "accountStatus": "Active",
+      "accountStatusReason": null,
+      "reraNumber": null,
+      "isVerified": false,
+      "createdAt": "2025-11-20T18:17:00.000Z",
+      "status": "Active"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 47,
+    "pages": 5
+  }
+}
+```
 
-- **Purpose:** Update user account details
-- **Body:** `{ role?, accountStatus?, accountStatusReason?, isSubAdmin? }`
-- **Response:** `{ user, message: "User updated successfully" }`
+### POST `/api/admin/users`
 
-### DELETE `/api/admin/users/[id]`
+- **Purpose:** Admin create user with any role
+- **Auth:** Required (Admin only)
+- **Request Body:**
 
-- **Purpose:** Soft delete user (suspend account)
-- **Body:** `{ reason }`
-- **Response:** `{ success: true, message, user }`
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword123",
+  "phone": "+1234567890",
+  "role": "buyer"
+}
+```
+
+- **Response:** `201 Created`
+
+```json
+{
+  "user": {
+    "id": "_id",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "buyer",
+    "phone": "+1234567890",
+    "accountStatus": "active",
+    "isVerified": false,
+    "isSubAdmin": false,
+    "createdAt": "2025-11-20T18:17:00.000Z"
+  },
+  "message": "User created successfully as buyer"
+}
+```
+
+- **Error Response:** `400 Bad Request`
+
+```json
+{
+  "error": "Missing required fields",
+  "required": ["name", "email", "password"],
+  "missing": ["name"]
+}
+```
 
 ## Analytics APIs
 
 ### GET `/api/admin/users/analytics`
 
 - **Purpose:** Dashboard metrics and user statistics
-- **Response:**
+- **Auth:** Required (Admin only)
+- **Response:** `200 OK`
 
 ```json
 {
@@ -442,48 +756,216 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 ### GET `/api/admin/kyc`
 
 - **Purpose:** Get paginated KYC applications
+- **Auth:** Required (Admin only)
 - **Query Params:** `status`, `page`, `limit`
-- **Response:** `{ kycs: [...], pagination }`
+- **Response:** `200 OK`
+
+```json
+{
+  "kycs": [
+    {
+      "_id": "_id",
+      "userId": "_id",
+      "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+      "agreementPhoto": "https://example.com/agreement.jpg",
+      "videoUrl": "https://example.com/video.mp4",
+      "status": "pending",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "remarks": null,
+      "rejectionReason": null,
+      "createdAt": "2025-11-20T18:17:00.000Z",
+      "updatedAt": "2025-11-20T18:17:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 23,
+    "pages": 3
+  }
+}
+```
 
 ### PUT `/api/admin/kyc/[id]`
 
 - **Purpose:** Approve/reject KYC submission
-- **Body:** `{ status: "approved"|"rejected", remarks?, rejectionReason? }`
-- **Response:** `{ kyc, message }`
+- **Auth:** Required (Admin)
+- **Request Body:**
+
+```json
+{
+  "status": "approved",
+  "remarks": "All documents verified successfully"
+}
+```
+
+- **Response:** `200 OK`
+
+```json
+{
+  "kyc": {
+    "_id": "_id",
+    "userId": "_id",
+    "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+    "agreementPhoto": "https://example.com/agreement.jpg",
+    "videoUrl": "https://example.com/video.mp4",
+    "status": "approved",
+    "reviewedBy": "_admin_id",
+    "reviewedAt": "2025-11-20T18:17:00.000Z",
+    "remarks": "All documents verified successfully",
+    "rejectionReason": null,
+    "createdAt": "2025-11-20T18:17:00.000Z",
+    "updatedAt": "2025-11-20T18:17:00.000Z"
+  },
+  "message": "KYC approved successfully"
+}
+```
 
 ### GET `/api/admin/kyc/[id]`
 
 - **Purpose:** Get detailed KYC info
-- **Response:** `{ kyc: { user data, kyc data, reviewer data } }`
+- **Auth:** Required (Admin)
+- **Response:** `200 OK`
+
+```json
+{
+  "kyc": {
+    "user": {
+      "_id": "_id",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "buyer"
+    },
+    "kyc": {
+      "_id": "_id",
+      "userId": "_id",
+      "aadhaarPhoto": "https://example.com/aadhaar.jpg",
+      "agreementPhoto": "https://example.com/agreement.jpg",
+      "videoUrl": "https://example.com/video.mp4",
+      "status": "pending",
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "remarks": null,
+      "rejectionReason": null,
+      "createdAt": "2025-11-20T18:17:00.000Z",
+      "updatedAt": "2025-11-20T18:17:00.000Z"
+    },
+    "reviewer": null
+  }
+}
+```
 
 ## Property Management APIs
 
 ### GET `/api/admin/properties`
 
 - **Purpose:** Admin property listing with filters
+- **Auth:** Required (Admin only)
 - **Query Params:** `status`, `verified`, `featured`, `page`, `limit`
-- **Response:** `{ properties: [...], pagination }`
+- **Response:** `200 OK`
+
+```json
+{
+  "properties": [
+    {
+      "_id": "_id",
+      "title": "Modern 2BHK Apartment",
+      "description": "Beautiful apartment in prime location",
+      "price": 2500000,
+      "propertyType": "apartment",
+      "category": "Residential",
+      "verified": true,
+      "featured": false,
+      "status": "approved",
+      "ownerId": {
+        "_id": "_id",
+        "name": "Property Owner",
+        "email": "owner@example.com"
+      },
+      "createdAt": "2025-11-20T18:17:00.000Z",
+      "updatedAt": "2025-11-20T18:17:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1284,
+    "pages": 129
+  }
+}
+```
 
 ### PUT `/api/admin/properties/[id]`
 
 - **Purpose:** Multi-purpose property actions
-- **Body:** `{ action: "approve"|"reject"|"verify"|"feature"|"boost", ...data }`
-- **Actions:**
+- **Auth:** Required (Admin)
+- **Request Body:**
+
+```json
+{
+  "action": "approve",
+  "reason": "All documents verified"
+}
+```
+
+- **Available Actions:**
   - `approve`: Set status to "approved"
   - `reject`: Set status to "rejected" with reason
   - `verify`: Toggle verified status
   - `feature`: Toggle featured status
   - `boost`: Toggle boosted status
+- **Response:** `200 OK`
+
+```json
+{
+  "_id": "_id",
+  "title": "Modern 2BHK Apartment",
+  "description": "Beautiful apartment in prime location",
+  "price": 2500000,
+  "propertyType": "apartment",
+  "category": "Residential",
+  "verified": true,
+  "featured": true,
+  "status": "approved",
+  "ownerId": "_id",
+  "createdAt": "2025-11-20T18:17:00.000Z",
+  "updatedAt": "2025-11-20T18:17:00.000Z"
+}
+```
 
 ### DELETE `/api/admin/properties/[id]`
 
 - **Purpose:** Hard delete property with audit
-- **Body:** `{ reason }`
+- **Auth:** Required (Admin)
+- **Request Body:**
+
+```json
+{
+  "reason": "Property violates community guidelines"
+}
+```
+
+- **Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Property deleted successfully",
+  "property": {
+    "_id": "_id",
+    "title": "Modern 2BHK Apartment",
+    "deletedAt": "2025-11-20T18:17:00.000Z",
+    "deletedReason": "Property violates community guidelines"
+  }
+}
+```
 
 ### GET `/api/admin/properties/analytics`
 
 - **Purpose:** Property statistics for dashboard
-- **Response:**
+- **Auth:** Required (Admin only)
+- **Response:** `200 OK`
 
 ```json
 {
