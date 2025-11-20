@@ -18,9 +18,9 @@ export const authOptions = {
         if (!valid) throw new Error("Invalid password");
         return {
           id: user._id,
-          name: user.name,
           email: user.email,
-          role: user.role || "user",
+          name: user.name,
+          role: user.role || "buyer",
         };
       },
     }),
@@ -39,7 +39,7 @@ export const authOptions = {
           await User.create({
             name: user.name,
             email: user.email,
-            role: "user", // unified
+            role: "buyer", // new buyers from Google signup
           });
         }
       }
@@ -49,7 +49,7 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id || user._id;
-        token.role = user.role || "user";
+        token.role = user.role || "buyer";
       }
       return token;
     },

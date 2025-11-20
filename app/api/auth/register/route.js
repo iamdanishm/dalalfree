@@ -5,13 +5,33 @@ import User from "@/app/lib/models/User";
 
 export async function POST(req) {
   try {
-    const { name, email, password, role } = await req.json();
-
-    if (!name || !email || !password)
+    let body;
+    try {
+      body = await req.json();
+    } catch (jsonError) {
       return NextResponse.json(
-        { error: "All fields are required." },
+        { error: "Invalid JSON body." },
         { status: 400 }
       );
+    }
+
+    const { name, email, password, role } = body;
+
+    const errors = [];
+    if (!name) errors.push("name");
+    if (!email) errors.push("email");
+    if (!password) errors.push("password");
+
+    if (errors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields",
+          required: ["name", "email", "password"],
+          missing: errors,
+        },
+        { status: 400 }
+      );
+    }
 
     await connectDB();
 
@@ -39,6 +59,16 @@ export async function POST(req) {
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
+          accountStatus: newUser.accountStatus,
+          isVerified: newUser.isVerified,
+          // Include subscription data (mainly for buyers)
+          subscriptionStatus: newUser.subscriptionStatus,
+          subscriptionStartDate: newUser.subscriptionStartDate,
+          subscriptionEndDate: newUser.subscriptionEndDate,
+          freeTrialUsed: newUser.freeTrialUsed,
+          freeTrialStartDate: newUser.freeTrialStartDate,
+          freeTrialEndDate: newUser.freeTrialEndDate,
+          adUnlockCredits: newUser.adUnlockCredits,
         },
       },
       { status: 201 }

@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-// Commented out API integration for development
-// import { signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
@@ -87,8 +86,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     setErrorMsg("");
-    // Commented out API integration for development - using dummy data instead
-    /*
+
     const res = await signIn("credentials", {
       redirect: false,
       email: data.email,
@@ -99,17 +97,20 @@ export default function LoginPage() {
       setErrorMsg(res.error);
     } else {
       // Get user info from the session
-      const user = res.user;
+      const user = res.user || res;
+
       if (user) {
         // Role-based redirect
         switch (user.role) {
           case "admin":
+          case "sub-admin":
             router.push("/admin");
             break;
           case "partner":
             router.push("/partner");
             break;
-          case "user":
+          case "buyer":
+          case "seller":
           default:
             router.push("/user");
             break;
@@ -118,37 +119,6 @@ export default function LoginPage() {
         // Fallback to user dashboard
         router.push("/user");
       }
-    }
-    */
-
-    // Dummy login logic for development
-    try {
-      const response = await fetch("/dummyUsers.json");
-      const users = await response.json();
-      const user = users.find(
-        (u) => u.email === data.email && u.password === data.password
-      );
-
-      if (!user) {
-        setErrorMsg("Invalid email or password");
-        return;
-      }
-
-      // Role-based redirect
-      switch (user.role) {
-        case "admin":
-          router.push("/admin");
-          break;
-        case "partner":
-          router.push("/partner");
-          break;
-        case "user":
-        default:
-          router.push("/user");
-          break;
-      }
-    } catch (error) {
-      setErrorMsg("Login failed. Please try again.");
     }
   };
 
@@ -312,8 +282,7 @@ export default function LoginPage() {
       <motion.div className="mt-6" variants={itemVariants}>
         <motion.button
           type="button"
-          // Commented out Google login API integration for development
-          // onClick={() => signIn("google", { callbackUrl: "/" })}
+          onClick={() => signIn("google", { callbackUrl: "/user" })}
           variants={googleButtonVariants}
           initial="idle"
           whileHover="hover"

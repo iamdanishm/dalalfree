@@ -5,13 +5,32 @@ import User from "@/app/lib/models/User";
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password)
+    let body;
+    try {
+      body = await req.json();
+    } catch (jsonError) {
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: "Invalid JSON body." },
         { status: 400 }
       );
+    }
+
+    const { email, password } = body;
+
+    const errors = [];
+    if (!email) errors.push("email");
+    if (!password) errors.push("password");
+
+    if (errors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields",
+          required: ["email", "password"],
+          missing: errors,
+        },
+        { status: 400 }
+      );
+    }
 
     await connectDB();
 
@@ -33,6 +52,16 @@ export async function POST(req) {
       name: user.name,
       email: user.email,
       role: user.role,
+      accountStatus: user.accountStatus,
+      isVerified: user.isVerified,
+      // Subscription data for buyers
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionStartDate: user.subscriptionStartDate,
+      subscriptionEndDate: user.subscriptionEndDate,
+      freeTrialUsed: user.freeTrialUsed,
+      freeTrialStartDate: user.freeTrialStartDate,
+      freeTrialEndDate: user.freeTrialEndDate,
+      adUnlockCredits: user.adUnlockCredits,
     };
 
     return NextResponse.json(

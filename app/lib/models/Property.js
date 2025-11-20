@@ -11,16 +11,44 @@ const propertySchema = new mongoose.Schema(
     description: String,
     price: Number,
     location: String,
-    verified: { type: Boolean, default: false },
+    verified: { type: Boolean, default: false }, // Keep for backward compatibility
+    featured: { type: Boolean, default: false }, // Paid featured listings
+    boosted: { type: Boolean, default: false }, // Temporary promotion
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvalDate: Date,
+    rejectionReason: String,
     images: [String],
+    companionPhotos: [String], // Additional property images
+    propertyType: {
+      type: String,
+      enum: ["sell", "rent", "lease"],
+      required: true,
+    },
+    category: {
+      type: String,
+      enum: ["Residential", "Commercial", "Industrial", "Land"],
+      required: true,
+    },
+    viewsCount: { type: Number, default: 0 },
+    likesCount: { type: Number, default: 0 },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "rejected", "featured"],
       default: "pending",
     },
   },
   { timestamps: true }
 );
+
+// Add indexes for performance
+propertySchema.index({ status: 1 });
+propertySchema.index({ verified: 1 });
+propertySchema.index({ featured: 1 });
+propertySchema.index({ propertyType: 1 });
+propertySchema.index({ ownerId: 1 });
 
 export default mongoose.models.Property ||
   mongoose.model("Property", propertySchema);
