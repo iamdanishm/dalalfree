@@ -69,14 +69,34 @@ export async function GET(req) {
   });
 }
 
-// POST /api/admin/users/sub-admin - Create sub-admin
+// POST /api/admin/users - Admin create user (any role: buyer, seller, partner, admin, sub-admin: buyer, seller, partner, admin, sub-admin)
 export async function POST(req) {
   await connectDB();
   const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "admin" && !session.user.isSubAdmin))
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session || session.user.role !== "admin")
+    return NextResponse.json(
+      { error: "Forbidden - Admin access required" },
+      { status: 403 }
+    );
 
-  const { name, email, password, phone } = await req.json();
+  const { name, email, password, phone, role = "buyer" } = await req.json();
+
+  // Validate required fields
+  const errors = [];
+  if (!name) errors.push("name");
+  if (!email) errors.push("email");
+  if (!password) errors.push("password");
+
+  if (errors.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Missing required fields",
+        required: ["name", "email", "password"],
+        missing: errors,
+      },
+      { status: 400 }
+    );
+  }
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -86,13 +106,18 @@ export async function POST(req) {
       { status: 400 }
     );
 
+  // Hash password
+  const bcrypt = require("bcrypt");
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create user
   const newUser = await User.create({
     name,
     email,
-    password, // Should hash password, but for demo
+    password: hashedPassword,
     phone,
-    role: "admin",
-    isSubAdmin: true,
+    role,
+    isSubAdmin: role === "admin" && true, // Set isSubAdmin for admin roles
     accountStatus: "active",
   });
 
@@ -102,7 +127,12 @@ export async function POST(req) {
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
+      phone: newUser.phone,
+      accountStatus: newUser.accountStatus,
+      isVerified: newUser.isVerified,
       isSubAdmin: newUser.isSubAdmin,
+      createdAt: newUser.createdAt,
     },
+    message: `User created successfully as ${newUser.role}`,
   });
 }

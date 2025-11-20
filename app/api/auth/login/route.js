@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
 
@@ -54,7 +55,6 @@ export async function POST(req) {
       role: user.role,
       accountStatus: user.accountStatus,
       isVerified: user.isVerified,
-      // Subscription data for buyers
       subscriptionStatus: user.subscriptionStatus,
       subscriptionStartDate: user.subscriptionStartDate,
       subscriptionEndDate: user.subscriptionEndDate,
@@ -64,10 +64,25 @@ export async function POST(req) {
       adUnlockCredits: user.adUnlockCredits,
     };
 
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
+      process.env.NEXTAUTH_SECRET ||
+        process.env.JWT_SECRET ||
+        "fallback-secret",
+      { expiresIn: "7d" }
+    );
+
     return NextResponse.json(
       {
         message: "Login successful",
         user: userData,
+        token: token,
       },
       { status: 200 }
     );

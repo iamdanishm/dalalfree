@@ -1,5 +1,14 @@
 # 📚 DalalFree API Documentation
 
+## Table of Contents
+
+- [User Roles & Subscription System](#user-roles--subscription-system)
+- [Authentication APIs](#authentication-apis)
+- [User Management APIs](#user-management-apis)
+- [KYC (Know Your Customer) APIs](#kyc-know-your-customer-apis)
+- [Property Management APIs](#property-management-apis)
+- [Admin APIs](#admin-api-documentation)
+
 ## User Roles & Subscription System
 
 ### User Roles
@@ -31,7 +40,7 @@ New buyers automatically receive subscription benefits:
 - `active`: Paid subscription
 - `expired`: Trial/subscription ended
 - `cancelled`: User cancelled
-- `none`: No subscription (sellers/partners)
+- `none`: No subscription (sellers/partners/admins)
 
 ## Authentication APIs
 
@@ -58,6 +67,48 @@ New buyers automatically receive subscription benefits:
 }
 ```
 
+## JWT Authentication
+
+DalalFree APIs support JWT (JSON Web Token) authentication for external API testing and integration. Use Bearer token authentication for secure API access:
+
+### 🔑 **Authentication Flow**
+
+1. **Login** to get JWT token
+2. **Use token** in Authorization header
+3. **Token expires** after 7 days
+
+### 📋 **Using JWT Tokens**
+
+**Postman Setup:**
+
+- Select **"Bearer Token"** auth type
+- Paste JWT token (received from login response)
+
+**API Headers:**
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+Content-Type: application/json
+```
+
+**Example Request:**
+
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     http://localhost:3000/api/users/profile
+```
+
+### 📝 **Auth Required Endpoints**
+
+All endpoints marked **"Auth: Required"** support JWT authentication:
+
+- `GET /api/users/profile`
+- `POST /api/properties`
+- `PUT /api/properties/[id]`
+- All admin endpoints
+- All KYC endpoints
+
 ### POST `/api/auth/login`
 
 - **Purpose:** User authentication with subscription data
@@ -76,7 +127,8 @@ New buyers automatically receive subscription benefits:
     "subscriptionStatus": "free_trial",
     "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
     "adUnlockCredits": 5
-  }
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 }
 ```
 
@@ -176,28 +228,28 @@ New buyers automatically receive subscription benefits:
 }
 ```
 
-### POST `/api/users`
+#### POST `/api/admin/users`
 
-- **Purpose:** Create new user with auto-subscription setup
-- **Body:** `{ name, email, password, phone?, role? }`
-- **Default Role:** `buyer` (includes free trial)
+- **Purpose:** Admin create user with any role
+- **Auth:** Required (Admin only)
+- **Body:** `{ name, email, password, phone?, role?: "buyer"|"seller"|"partner"|"admin"|"sub-admin" }`
+- **Default Role:** `buyer`
 - **Response:**
 
 ```json
 {
-  "success": true,
-  "message": "User created successfully",
-  "data": {
+  "user": {
     "id": "_id",
     "name": "John Doe",
     "email": "john@example.com",
     "role": "buyer",
+    "phone": "+1234567890",
     "accountStatus": "active",
-    "subscriptionStatus": "free_trial",
-    "freeTrialEndDate": "2025-12-19T16:47:39.000Z",
-    "adUnlockCredits": 5,
+    "isVerified": false,
+    "isSubAdmin": false,
     "createdAt": "2025-11-19T16:47:39.000Z"
-  }
+  },
+  "message": "User created successfully as buyer"
 }
 ```
 
@@ -236,6 +288,84 @@ New buyers automatically receive subscription benefits:
 }
 ```
 
+### GET `/api/kyc`
+
+- **Purpose:** Get logged-in user's KYC status
+- **Auth:** Required
+- **Response:** User's KYC data or empty object if not submitted
+
+### POST `/api/kyc`
+
+- **Purpose:** Submit new KYC application
+- **Auth:** Required
+- **Body:** `{ aadhaarPhoto, agreementPhoto, videoUrl }`
+- **Response:** Created KYC submission object
+
+### PUT `/api/kyc/[id]`
+
+- **Purpose:** Update KYC status (Admin only)
+- **Auth:** Required (Admin)
+- **Body:** `{ status, remarks }`
+- **Response:** Updated KYC object
+
+## Property Management APIs
+
+### Public Property APIs
+
+#### GET `/api/properties`
+
+- **Purpose:** Get all properties (public view)
+- **Auth:** Optional
+- **Response:** Array of property objects
+
+#### GET `/api/properties/[id]`
+
+- **Purpose:** Get single property details
+- **Auth:** Optional
+- **Response:** Property object with full details
+
+#### POST `/api/properties`
+
+- **Purpose:** Create new property listing
+- **Auth:** Required (Partners only)
+- **Body:** Full property data object
+- **Response:** Created property object
+
+#### PUT `/api/properties/[id]`
+
+- **Purpose:** Update property listing
+- **Auth:** Required (Owner or Admin)
+- **Body:** Updated property data
+- **Response:** Updated property object
+
+#### DELETE `/api/properties/[id]`
+
+- **Purpose:** Delete property listing
+- **Auth:** Required (Owner or Admin)
+- **Response:** Success confirmation
+
+#### GET `/api/properties/daily-chart`
+
+- **Purpose:** Get property addition statistics for charts
+- **Auth:** Required (Admin only)
+- **Response:**
+
+```json
+{
+  "data": [0, 2, 1, 3, 0, 1, 0],
+  "labels": [
+    "7 days ago",
+    "6 days ago",
+    "5 days ago",
+    "4 days ago",
+    "3 days ago",
+    "2 days ago",
+    "Yesterday"
+  ],
+  "total": 7
+}
+```
+
 ## Admin API Documentation
 
 ## User Management APIs
@@ -253,12 +383,6 @@ New buyers automatically receive subscription benefits:
 - **UI Mapping:**
   - `users[].role`: Maps "user" → "Buyer", "partner" → "Partner", "admin" → "Admin"
   - `users[].status`: Capitalizes accountStatus ("active" → "Active")
-
-### POST `/api/admin/users/sub-admin`
-
-- **Purpose:** Create new sub-admin user
-- **Body:** `{ name, email, password, phone }`
-- **Response:** `{ user: {...}, message }`
 
 ### PUT `/api/admin/users/[id]`
 
@@ -356,13 +480,25 @@ New buyers automatically receive subscription benefits:
 - **Purpose:** Hard delete property with audit
 - **Body:** `{ reason }`
 
-### POST `/api/admin/properties/analytics`
+### GET `/api/admin/properties/analytics`
 
 - **Purpose:** Property statistics for dashboard
 - **Response:**
 
 ```json
 {
+  "total": 1284,
+  "byStatus": {
+    "pending": 45,
+    "approved": 1200,
+    "rejected": 39,
+    "active": 1200
+  },
+  "byVerification": {
+    "verified": 1100,
+    "notVerified": 84
+  },
+  "featured": 156,
   "propertyStats": [
     { "type": "Residential", "count": 856, "percentage": 65 },
     { "type": "Commercial", "count": 234, "percentage": 18 },
