@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import Kyc from "@/app/lib/models/Kyc";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAuth } from "@/app/lib/auth";
 
 // GET all properties
 export async function GET() {
@@ -13,13 +12,11 @@ export async function GET() {
 }
 
 // POST new property (only verified users)
-export async function POST(req) {
+export const POST = requireAuth(async function (req) {
   await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id: userId, role } = session.user;
+  const userId = req.user._id;
+  const role = req.user.role;
   if (role !== "partner")
     return NextResponse.json(
       { error: "Only partners can list properties" },
@@ -39,4 +36,4 @@ export async function POST(req) {
   });
 
   return NextResponse.json(property);
-}
+});

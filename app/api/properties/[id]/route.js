@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAuth } from "@/app/lib/auth";
 
 // GET single property
 export async function GET(_, { params }) {
@@ -15,15 +14,12 @@ export async function GET(_, { params }) {
 }
 
 // PUT update property
-export async function PUT(req, { params }) {
+export const PUT = requireAuth(async function (req, { params }) {
   await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const userId = session.user.id;
-  const role = session.user.role;
+  const userId = req.user._id;
+  const role = req.user.role;
 
   const property = await Property.findById(id);
   if (!property)
@@ -39,18 +35,15 @@ export async function PUT(req, { params }) {
     new: true,
   });
   return NextResponse.json(updated);
-}
+});
 
 // DELETE property
-export async function DELETE(_, { params }) {
+export const DELETE = requireAuth(async function (req, { params }) {
   await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const userId = session.user.id;
-  const role = session.user.role;
+  const userId = req.user._id;
+  const role = req.user.role;
 
   const property = await Property.findById(id);
   if (!property)
@@ -62,4 +55,4 @@ export async function DELETE(_, { params }) {
 
   await Property.findByIdAndDelete(id);
   return NextResponse.json({ success: true });
-}
+});

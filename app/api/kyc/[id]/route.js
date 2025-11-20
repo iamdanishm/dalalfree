@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Kyc from "@/app/lib/models/Kyc";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAuth } from "@/app/lib/auth";
 
-export async function PUT(req, { params }) {
+export const PUT = requireAuth(async function (req, { params }) {
   await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin")
+  if (req.user.role !== "admin")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const data = await req.json();
@@ -18,4 +16,4 @@ export async function PUT(req, { params }) {
   );
 
   return NextResponse.json(updated);
-}
+});
