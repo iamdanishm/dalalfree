@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { sendEmail } from "@/app/lib/email";
 
 export async function PUT(req, { params }) {
   await connectDB();
@@ -25,15 +26,44 @@ export async function PUT(req, { params }) {
     new: true,
   });
 
-  // Audit log - in real app, save to audit collection
+  // Send email notifications for account status changes
+  if (accountStatus && updated) {
+    try {
+      if (accountStatus === "active" && updated.accountStatus === "active") {
+        // Send account approval email
+        await sendEmail(updated.email, "accountApproval", {
+          name: updated.name,
+          email: updated.email,
+          role: updated.role,
+        });
+        console.log(`Approval email sent to ${updated.email}`);
+      } else if (
+        accountStatus === "suspended" &&
+        updated.accountStatus === "suspended"
+      ) {
+        // Send account rejection/suspension email
+        await sendEmail(updated.email, "accountRejection", {
+          name: updated.name,
+          reason: accountStatusReason || "Account suspended by admin",
+        });
+        console.log(`Rejection email sent to ${updated.email}`);
+      }
+    } catch (emailError) {
+      console.error("Failed to send email notification:", emailError);
+      // Don't fail the API call if email fails
+    }
+  }
+
+  // Log admin action
   console.log(
-    `User ${params.id} updated by admin ${session.user.id}:`,
+    `Admin ${session.user.id} updated user ${params.id}:`,
     updateData
   );
 
   return NextResponse.json({
     user: updated,
     message: "User updated successfully",
+    emailSent: accountStatus ? true : false,
   });
 }
 

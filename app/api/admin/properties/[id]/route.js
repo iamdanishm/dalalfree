@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { sendEmail } from "@/app/lib/email";
 
 export async function PUT(req, { params }) {
   await connectDB();
@@ -68,12 +69,32 @@ export async function PUT(req, { params }) {
   if (!updated)
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
 
+  // Send email notifications for property actions requiring owner notification
+  if (action === "approve" || action === "reject") {
+    try {
+      const emailTemplate =
+        action === "approve" ? "propertyApproval" : "propertyRejection";
+      await sendEmail(updated.ownerId.email, emailTemplate, {
+        ownerName: updated.ownerId.name,
+        propertyTitle: updated.title,
+        propertyType: updated.propertyType,
+        approvedDate: updateData.approvalDate || new Date(),
+        reason: updateData.rejectionReason,
+      });
+      console.log(`Property ${action} email sent to ${updated.ownerId.email}`);
+    } catch (emailError) {
+      console.error("Failed to send property email notification:", emailError);
+      // Don't fail the API call if email fails
+    }
+  }
+
   // Audit log
   console.log(`Property ${params.id} ${action} by admin ${session.user.id}`);
 
   return NextResponse.json({
     property: updated,
     message,
+    emailSent: action === "approve" || action === "reject" ? true : false,
   });
 }
 

@@ -67,9 +67,14 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add indexes for performance
+// Add indexes for performance - single field indexes
 UserSchema.index({ role: 1 });
 UserSchema.index({ accountStatus: 1 });
-UserSchema.index({ createdAt: 1 });
+UserSchema.index({ isVerified: 1 });
+UserSchema.index({ isSubAdmin: 1 });
+
+// Compound index for admin user queries: role + accountStatus + createdAt
+// Used in /api/admin/users for filtering and sorting admin user lists
+UserSchema.index({ role: 1, accountStatus: 1, createdAt: -1 });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

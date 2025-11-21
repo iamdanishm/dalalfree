@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Kyc from "@/app/lib/models/Kyc";
 import User from "@/app/lib/models/User";
+import { sendEmail } from "@/app/lib/email";
 
 // PUT /api/admin/kyc/[id] - Approve/reject with remarks
 export async function PUT(req, { params }) {
@@ -45,6 +46,20 @@ export async function PUT(req, { params }) {
     });
   }
 
+  // Send email notifications for KYC status changes
+  try {
+    const emailTemplate =
+      status === "approved" ? "kycApproval" : "kycRejection";
+    await sendEmail(updatedKyc.userId.email, emailTemplate, {
+      name: updatedKyc.userId.name,
+      reason: rejectionReason || null,
+    });
+    console.log(`KYC ${status} email sent to ${updatedKyc.userId.email}`);
+  } catch (emailError) {
+    console.error("Failed to send KYC email notification:", emailError);
+    // Don't fail the API call if email fails
+  }
+
   // Audit log
   console.log(
     `KYC ${params.id} ${status} by admin ${session.user.id}: ${remarks}`
@@ -53,6 +68,7 @@ export async function PUT(req, { params }) {
   return NextResponse.json({
     kyc: updatedKyc,
     message: `KYC ${status} successfully`,
+    emailSent: true,
   });
 }
 

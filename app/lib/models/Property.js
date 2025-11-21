@@ -43,12 +43,19 @@ const propertySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add indexes for performance
+// Add indexes for performance - single field indexes
 propertySchema.index({ status: 1 });
 propertySchema.index({ verified: 1 });
 propertySchema.index({ featured: 1 });
+propertySchema.index({ boosted: 1 });
 propertySchema.index({ propertyType: 1 });
 propertySchema.index({ ownerId: 1 });
+propertySchema.index({ viewsCount: 1 });
+propertySchema.index({ likesCount: 1 });
+
+// Compound index for admin property queries: status + propertyType + createdAt
+// Used in /api/admin/properties for filtering and sorting property management lists
+propertySchema.index({ status: 1, propertyType: 1, createdAt: -1 });
 
 export default mongoose.models.Property ||
   mongoose.model("Property", propertySchema);

@@ -33,9 +33,14 @@ const kycSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add indexes for performance
+// Add indexes for performance - single field indexes
 kycSchema.index({ status: 1 });
 kycSchema.index({ userId: 1 });
 kycSchema.index({ approvalLevel: 1 });
+kycSchema.index({ reviewedBy: 1 });
+
+// Compound index for admin KYC queries: status + approvalLevel + createdAt
+// Used in /api/admin/kyc for filtering and sorting KYC workflow lists
+kycSchema.index({ status: 1, approvalLevel: 1, createdAt: -1 });
 
 export default mongoose.models.Kyc || mongoose.model("Kyc", kycSchema);
