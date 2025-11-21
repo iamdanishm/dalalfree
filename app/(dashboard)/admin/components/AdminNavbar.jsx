@@ -156,7 +156,7 @@ export default function AdminNavbar({ onMenuClick }) {
                     animate="visible"
                     exit="exit"
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-soft border border-border overflow-hidden z-[100] shadow-lg"
+                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-soft border border-border overflow-hidden z-100"
                   >
                     <div className="p-4 border-b border-border">
                       <h3 className="text-sm font-semibold text-heading">
@@ -174,7 +174,7 @@ export default function AdminNavbar({ onMenuClick }) {
                         >
                           <div className="flex items-start">
                             <div
-                              className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
+                              className={`shrink-0 w-2 h-2 rounded-full mt-2 ${
                                 notification.unread
                                   ? "bg-primary"
                                   : "bg-transparent"
@@ -212,7 +212,7 @@ export default function AdminNavbar({ onMenuClick }) {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-surface transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium">
+                <div className="w-8 h-8 bg-linear-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium">
                   {session?.user?.name?.charAt(0)?.toUpperCase() || "A"}
                 </div>
                 <span className="hidden sm:block text-sm font-medium text-heading">
@@ -234,11 +234,11 @@ export default function AdminNavbar({ onMenuClick }) {
                     animate="visible"
                     exit="exit"
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-soft border border-border overflow-hidden z-[100] shadow-lg"
+                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-soft border border-border overflow-hidden z-100"
                   >
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 bg-linear-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium">
                           {session?.user?.name?.charAt(0)?.toUpperCase() || "A"}
                         </div>
                         <div>

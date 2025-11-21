@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Select from "react-select";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import {
   FiShield,
   FiSearch,
@@ -17,6 +19,7 @@ import {
 export default function KycManagementTable() {
   const [kycs, setKycs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -24,9 +27,14 @@ export default function KycManagementTable() {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchKycs = async (page = 1, status = "", search = "") => {
+  const fetchKycs = async (
+    page = 1,
+    status = "",
+    search = "",
+    showLoading = false
+  ) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
@@ -52,13 +60,23 @@ export default function KycManagementTable() {
       setError("Failed to fetch KYC applications");
       console.error("Error fetching KYC applications:", err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+        setInitialLoad(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchKycs();
+    fetchKycs(1, "", "", true); // Show loading on initial load
   }, []);
+
+  // Immediate filter when status changes (no loading spinner)
+  useEffect(() => {
+    if (!initialLoad) {
+      fetchKycs(1, statusFilter, "");
+    }
+  }, [statusFilter]);
 
   const handleReview = async (kycId, action, reason = "") => {
     try {
@@ -151,37 +169,130 @@ export default function KycManagementTable() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by user name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          <motion.div
+            className="relative flex-1 flex gap-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+              <motion.input
+                type="text"
+                placeholder="Search by user name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                initial={{ scale: 0.98 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              />
+            </div>
+            <motion.button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 whitespace-nowrap"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
+            >
+              Search
+            </motion.button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="relative"
+          >
+            <Select
+              value={
+                statusFilter
+                  ? {
+                      value: statusFilter,
+                      label:
+                        statusFilter.charAt(0).toUpperCase() +
+                        statusFilter.slice(1),
+                    }
+                  : null
+              }
+              onChange={(selectedOption) =>
+                setStatusFilter(selectedOption?.value || "")
+              }
+              options={[
+                { value: "", label: "All Status" },
+                { value: "pending", label: "Pending" },
+                { value: "approved", label: "Approved" },
+                { value: "rejected", label: "Rejected" },
+              ]}
+              placeholder="All Status"
+              className="w-full"
+              classNamePrefix="react-select"
+              menuPortalTarget={document.body}
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "0.5rem",
+                  padding: "0.25rem",
+                  minHeight: "48px",
+                  boxShadow: "none",
+                  "&:hover": {
+                    border: "1px solid #e5e7eb",
+                  },
+                  "&:focus-within": {
+                    borderColor: "var(--color-primary)",
+                    borderWidth: "3px",
+                    boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                  },
+                }),
+                singleValue: (provided) => ({
+                  ...provided,
+                  color: "#374151",
+                }),
+                placeholder: (provided) => ({
+                  ...provided,
+                  color: "#9ca3af",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "var(--color-primary)"
+                    : state.isFocused
+                    ? "#f3f4f6"
+                    : "white",
+                  color: state.isSelected ? "white" : "#374151",
+                  cursor: "pointer",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  borderRadius: "0.5rem",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  zIndex: 9999,
+                }),
+                menuPortal: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                }),
+              }}
+              components={{
+                DropdownIndicator: () => (
+                  <MdKeyboardArrowDown className="text-gray-400 mr-2" />
+                ),
+              }}
             />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Search
-          </button>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* Table */}
@@ -219,13 +330,17 @@ export default function KycManagementTable() {
                 <motion.tr
                   key={kyc._id || index}
                   className="hover:bg-surface transition-colors"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: index * 0.05,
+                    duration: 0.3,
+                    ease: "easeOut",
+                  }}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                      <div className="w-10 h-10 bg-linear-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium text-sm">
                         {kyc.userId?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                       <div className="ml-3">
@@ -331,31 +446,40 @@ export default function KycManagementTable() {
 
       {/* Pagination */}
       {!error && totalPages > 1 && (
-        <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
+        <motion.div
+          className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.4 }}
+        >
           <div className="text-sm text-muted">
             Showing page {currentPage} of {totalPages} ({totalKycs} total
             applications)
           </div>
           <div className="flex items-center space-x-2">
-            <button
+            <motion.button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <FiChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-3 py-1 border border-border rounded-md bg-white">
+            </motion.button>
+            <span className="px-3 py-1 border border-border rounded-md bg-white font-medium">
               {currentPage}
             </span>
-            <button
+            <motion.button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <FiChevronRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       )}
     </motion.div>
   );
