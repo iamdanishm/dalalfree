@@ -52,57 +52,101 @@ export default function AdminSidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const [activeStat, setActiveStat] = useState(null);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.2,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12,
+      },
+    },
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.1, duration: 0.3 }}
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
       {/* Branding Header */}
-      <div className="px-4 py-4 border-b border-border">
+      <motion.div
+        className="px-4 py-4 border-b border-border"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+      >
         <div className="flex items-center space-x-3">
-          <div className="w-2 h-2 bg-primary rounded-full"></div>
+          <motion.div
+            className="w-2 h-2 bg-primary rounded-full"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
           <h2 className="text-base font-semibold text-heading">
             Dalal Free Admin
           </h2>
         </div>
-      </div>
+      </motion.div>
 
       {/* Navigation */}
       <nav className="px-4 py-4">
-        <div className="space-y-1">
-          {navigation.map((item) => {
+        <motion.div
+          className="space-y-1"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {navigation.map((item, index) => {
             const isActive = pathname === item.href;
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={onClose}
-                className={`group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all ${
-                  isActive
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-body hover:bg-surface hover:text-heading"
-                }`}
-              >
-                <item.icon
-                  className={`mr-3 flex-shrink-0 w-5 h-5 ${
+              <motion.div key={item.name} variants={itemVariants}>
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive
-                      ? "text-primary"
-                      : "text-muted group-hover:text-heading"
+                      ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                      : "text-body hover:bg-surface hover:text-heading hover:shadow-md"
                   }`}
-                />
-                {item.name}
-                {isActive && (
+                >
                   <motion.div
-                    layoutId="activeTab"
-                    className="w-1 h-6 bg-primary rounded-full ml-auto"
-                    transition={{ type: "spring", duration: 0.5 }}
-                  />
-                )}
-              </Link>
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <item.icon
+                      className={`mr-3 flex-shrink-0 w-5 h-5 ${
+                        isActive
+                          ? "text-primary"
+                          : "text-muted group-hover:text-heading"
+                      }`}
+                    />
+                  </motion.div>
+                  <span>{item.name}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full"
+                      transition={{ type: "spring", duration: 0.5 }}
+                    />
+                  )}
+                </Link>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Quick Actions */}
         <div className="mt-8">

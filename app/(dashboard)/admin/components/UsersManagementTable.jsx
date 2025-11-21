@@ -1,34 +1,45 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Select from "react-select";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import {
   FiUsers,
   FiSearch,
-  FiFilter,
   FiEdit,
   FiTrash2,
   FiEye,
   FiChevronLeft,
   FiChevronRight,
-  FiMoreVertical,
-  FiUserCheck,
-  FiUserX,
 } from "react-icons/fi";
 
 export default function UsersManagementTable() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState({
+    value: "",
+    label: "All Roles",
+  });
+  const [statusFilter, setStatusFilter] = useState({
+    value: "",
+    label: "All Status",
+  });
 
-  const fetchUsers = async (page = 1, search = "", role = "", status = "") => {
+  const fetchUsers = async (
+    page = 1,
+    search = "",
+    role = "",
+    status = "",
+    showLoading = false
+  ) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
@@ -37,7 +48,7 @@ export default function UsersManagementTable() {
       });
 
       if (search) params.append("search", search);
-      if (role) params.append("role", role === "buyer" ? "user" : role);
+      if (role) params.append("role", role);
       if (status) params.append("status", status);
 
       const response = await fetch(`/api/admin/users?${params}`);
@@ -55,23 +66,43 @@ export default function UsersManagementTable() {
       setError("Failed to fetch users");
       console.error("Error fetching users:", err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+        setInitialLoad(false);
+      }
     }
   };
 
+  const handleSearch = () => {
+    fetchUsers(
+      1,
+      searchTerm,
+      roleFilter?.value || "",
+      statusFilter?.value || ""
+    );
+  };
+
+  // Immediate filter when role/status changes (no loading spinner)
   useEffect(() => {
-    fetchUsers();
+    if (!initialLoad) {
+      fetchUsers(1, "", roleFilter?.value || "", "");
+    }
+  }, [roleFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchUsers(1, "", "", "", true); // Show loading on initial load
   }, []);
 
-  const handleSearch = () => {
-    fetchUsers(1, searchTerm, roleFilter, statusFilter);
-  };
-
   const handlePageChange = (page) => {
-    fetchUsers(page, searchTerm, roleFilter, statusFilter);
+    fetchUsers(
+      page,
+      searchTerm,
+      roleFilter?.value || "",
+      statusFilter?.value || ""
+    );
   };
 
-  const handleUserAction = async (userId, action, newData = {}) => {
+  const handleUserAction = async (userId, action) => {
     try {
       if (action === "delete") {
         if (confirm("Are you sure you want to suspend this user?")) {
@@ -85,7 +116,12 @@ export default function UsersManagementTable() {
 
           if (response.ok) {
             alert("User suspended successfully");
-            fetchUsers(currentPage, searchTerm, roleFilter, statusFilter);
+            fetchUsers(
+              currentPage,
+              searchTerm,
+              roleFilter?.value || "",
+              statusFilter?.value || ""
+            );
           } else {
             alert("Failed to suspend user");
           }
@@ -114,8 +150,12 @@ export default function UsersManagementTable() {
     switch (role?.toLowerCase()) {
       case "admin":
         return "bg-purple-100 text-purple-800";
+      case "sub-admin":
+        return "bg-indigo-100 text-indigo-800";
       case "partner":
         return "bg-blue-100 text-blue-800";
+      case "seller":
+        return "bg-orange-100 text-orange-800";
       case "buyer":
         return "bg-green-100 text-green-800";
       default:
@@ -152,48 +192,195 @@ export default function UsersManagementTable() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          <motion.div
+            className="relative flex-1 flex gap-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+              <motion.input
+                type="text"
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                initial={{ scale: 0.98 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              />
+            </div>
+            <motion.button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 whitespace-nowrap"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
+            >
+              Search
+            </motion.button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="relative"
+          >
+            <Select
+              value={roleFilter}
+              onChange={setRoleFilter}
+              options={[
+                { value: "", label: "All Roles" },
+                { value: "buyer", label: "Buyers" },
+                { value: "seller", label: "Sellers" },
+                { value: "partner", label: "Partner" },
+                { value: "sub-admin", label: "Sub-Admin" },
+                { value: "admin", label: "Admin" },
+              ]}
+              placeholder="All Roles"
+              className="w-full"
+              classNamePrefix="react-select"
+              menuPortalTarget={document.body}
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "0.5rem",
+                  padding: "0.25rem",
+                  minHeight: "48px",
+                  boxShadow: "none",
+                  "&:hover": {
+                    border: "1px solid #e5e7eb",
+                  },
+                  "&:focus-within": {
+                    borderColor: "var(--color-primary)",
+                    borderWidth: "3px",
+                    boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                  },
+                }),
+                singleValue: (provided) => ({
+                  ...provided,
+                  color: "#374151",
+                }),
+                placeholder: (provided) => ({
+                  ...provided,
+                  color: "#9ca3af",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "var(--color-primary)"
+                    : state.isFocused
+                    ? "#f3f4f6"
+                    : "white",
+                  color: state.isSelected ? "white" : "#374151",
+                  cursor: "pointer",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  borderRadius: "0.5rem",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  zIndex: 9999,
+                }),
+                menuPortal: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                }),
+              }}
+              components={{
+                DropdownIndicator: () => (
+                  <MdKeyboardArrowDown className="text-gray-400 mr-2" />
+                ),
+              }}
             />
-          </div>
+          </motion.div>
 
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            className="relative"
           >
-            <option value="">All Roles</option>
-            <option value="buyer">Buyer</option>
-            <option value="partner">Partner</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending">Pending</option>
-          </select>
-
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Search
-          </button>
-        </div>
+            <Select
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: "", label: "All Status" },
+                { value: "active", label: "Active" },
+                { value: "suspended", label: "Suspended" },
+                { value: "pending", label: "Pending" },
+              ]}
+              placeholder="All Status"
+              className="w-full"
+              classNamePrefix="react-select"
+              menuPortalTarget={document.body}
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "0.5rem",
+                  padding: "0.25rem",
+                  minHeight: "48px",
+                  boxShadow: "none",
+                  "&:hover": {
+                    border: "1px solid #e5e7eb",
+                  },
+                  "&:focus-within": {
+                    borderColor: "var(--color-primary)",
+                    borderWidth: "3px",
+                    boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                  },
+                }),
+                singleValue: (provided) => ({
+                  ...provided,
+                  color: "#374151",
+                }),
+                placeholder: (provided) => ({
+                  ...provided,
+                  color: "#9ca3af",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "var(--color-primary)"
+                    : state.isFocused
+                    ? "#f3f4f6"
+                    : "white",
+                  color: state.isSelected ? "white" : "#374151",
+                  cursor: "pointer",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  borderRadius: "0.5rem",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  zIndex: 9999,
+                }),
+                menuPortal: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                }),
+              }}
+              components={{
+                DropdownIndicator: () => (
+                  <MdKeyboardArrowDown className="text-gray-400 mr-2" />
+                ),
+              }}
+            />
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* Table */}
@@ -231,9 +418,9 @@ export default function UsersManagementTable() {
                 <motion.tr
                   key={user._id || index}
                   className="hover:bg-surface transition-colors"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -254,8 +441,14 @@ export default function UsersManagementTable() {
                         user.role
                       )}`}
                     >
-                      {user.role === "user"
+                      {user.role === "buyer"
                         ? "Buyer"
+                        : user.role === "seller"
+                        ? "Seller"
+                        : user.role === "partner"
+                        ? "Partner"
+                        : user.role === "sub-admin"
+                        ? "Sub-Admin"
                         : user.role === "admin"
                         ? "Admin"
                         : user.role}
@@ -310,31 +503,40 @@ export default function UsersManagementTable() {
 
       {/* Pagination */}
       {!error && totalPages > 1 && (
-        <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
+        <motion.div
+          className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.4 }}
+        >
           <div className="text-sm text-muted">
             Showing page {currentPage} of {totalPages} ({totalUsers} total
             users)
           </div>
           <div className="flex items-center space-x-2">
-            <button
+            <motion.button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <FiChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-3 py-1 border border-border rounded-md bg-white">
+            </motion.button>
+            <span className="px-3 py-1 border border-border rounded-md bg-white font-medium">
               {currentPage}
             </span>
-            <button
+            <motion.button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <FiChevronRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       )}
     </motion.div>
   );

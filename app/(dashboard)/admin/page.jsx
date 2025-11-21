@@ -200,10 +200,17 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* Metrics Cards */}
-      <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
-          <motion.div key={metric.title}>
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+      >
+        {metrics.map((metric, index) => {
+          const delay = 0.1 * index;
+          return (
             <MetricsCard
+              key={metric.title}
               title={metric.title}
               value={metric.value}
               change={metric.change}
@@ -226,9 +233,10 @@ export default function AdminDashboard() {
                   ? "bg-gradient-to-r from-orange-500 to-amber-600"
                   : "bg-gradient-to-r from-purple-500 to-pink-600"
               }
+              delay={delay}
             />
-          </motion.div>
-        ))}
+          );
+        })}
       </motion.div>
 
       {/* Charts and Tables */}

@@ -75,32 +75,63 @@ export default function AdminNavbar({ onMenuClick }) {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-lg border-b border-border/50">
+    <motion.header
+      className="bg-white/80 backdrop-blur-lg border-b border-border/50"
+      initial={{ opacity: 0, y: -70 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <div className="max-w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <motion.div
+          className="flex items-center justify-between h-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
           {/* Left side - Logo and Mobile menu button */}
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center">
-              <Image
-                src="/t-logo2.png"
-                alt="Dalal Free"
-                width={120}
-                height={30}
-                className="object-cover"
-              />
+          <motion.div
+            className="flex items-center space-x-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            <Link href="/" className="flex items-center group">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="transition-transform"
+              >
+                <Image
+                  src="/t-logo2.png"
+                  alt="Dalal Free"
+                  width={120}
+                  height={30}
+                  className="object-cover"
+                />
+              </motion.div>
             </Link>
 
-            <button
+            <motion.button
               onClick={onMenuClick}
               className="lg:hidden p-2 rounded-lg text-secondary hover:bg-surface transition-colors z-10 relative"
               aria-label="Open sidebar"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
             >
               <FiMenu className="w-5 h-5" />
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Right side - Notifications and User menu */}
-          <div className="flex items-center space-x-4">
+          <motion.div
+            className="flex items-center space-x-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
               <button
@@ -241,9 +272,9 @@ export default function AdminNavbar({ onMenuClick }) {
                 )}
               </AnimatePresence>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </header>
+    </motion.header>
   );
 }
