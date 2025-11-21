@@ -1,222 +1,245 @@
-# Cline Usage Guide: Rules, Instructions, and MCP Server Integration
+# Cline Usage Guide: Effective Workflows, Rules, and MCP Server Integration
 
-## Overview
+## Core Rules (MANDATORY)
 
-Cline is a highly skilled software engineer AI assistant designed to help with programming tasks, code analysis, file operations, and system commands. This guide outlines the rules and best practices for interacting with Cline effectively, including proper instruction formatting and strategic use of MCP (Model Context Protocol) servers.
+### 🔑 **Context7 Integration for Code Generation**
 
-## General Interaction Rules
+- **ALWAYS use Context7 MCP server** for any code generation, library research, or documentation lookup
+- Before writing code, use `resolve-library-id` to get accurate library IDs for frameworks/libraries you need to implement
+- Use `get-library-docs` to fetch current documentation and best practices directly from sources
+- Only fetch external docs via `fetch-mcp-server` for non-code and code topics (APIs, specifications, articles)
 
-### 1. **Be Specific and Clear**
+### 📋 **Structured Request Format**
 
-- Provide detailed, unambiguous instructions
-- Include context about your project structure, technologies used, and desired outcomes
-- Avoid vague requests like "fix this" without specifying what needs fixing
-
-### 2. **Structure Your Requests**
-
-- Break complex tasks into smaller, manageable steps
-- Specify file paths, function names, or code sections you're referring to
-- Use numbered or bulleted lists for multi-step instructions
-
-### 3. **Provide Context**
-
-- Mention the programming language, framework, or technology stack
-- Include relevant code snippets, error messages, or expected behavior
-- Reference specific files or directories when possible
-
-### 4. **Use Appropriate File References**
-
-- Provide full paths relative to the current working directory (`d:\code\Clients\Esam\DalalFree\code\dalalfree`)
-- Use consistent naming conventions
-- Include file extensions when relevant
-
-## Instruction Formatting Best Practices
-
-### Code-Related Tasks
+Always structure your requests using this format:
 
 ```
-- Language: [Specify language]
-- Framework: [If applicable]
-- Task: [Clear description]
-- Files to modify: [List specific files]
-- Expected behavior: [Describe desired outcome]
+TASK: [Brief description]
+CONTEXT: [Project framework, current file, existing code]
+REQUIREMENTS: [Specific needs, constraints, outputs]
+STEPS: [If complex, break down expected steps]
+MCP: [MCP servers/tools needed and why]
 ```
 
-### File Operations
+### 🔍 **MCP Server Auto-Selection Rules**
+
+Cline will automatically choose the right MCP server based on task type:
+
+- **Code generation/library research**: Context7 (`resolve-library-id`, `get-library-docs`)
+- **Web data/API research**: fetch-mcp-server (`fetch_json`, `fetch_markdown`)
+- **Complex problem solving**: sequential-thinking (`sequentialthinking`)
+- **Documentation/Note management**: notion-mcp-server (database/page operations)
+- **Cross-directory operations**: filesystem MCP server (advanced file ops)
+
+## Effective Workflows
+
+### Code Generation Workflow
+
+1. **Library Research**: Use Context7 to resolve library IDs and check documentation
+2. **Pattern Analysis**: Use `search_files` to find existing patterns in codebase
+3. **Implementation**: Write code following project conventions
+4. **Validation**: Test integration points and error handling
+
+### Data Fetching Workflow
+
+1. **Identify Source**: Determine whether Context7 can provide docs or need external fetch
+2. **Fetch Data**: Use appropriate fetch tool (JSON for APIs, markdown for docs)
+3. **Process Data**: Transform data according to requirements
+4. **Integrate**: Apply data to codebase with proper error handling
+
+### Complex Task Workflow
+
+1. **Break Down**: Use sequential-thinking tool to analyze and structure complex tasks
+2. **Iterative Implementation**: Complete one logical unit before proceeding
+3. **Review & Adjust**: Check integration points and edge cases
+
+## MCP Server Usage Guidelines
+
+### **Context7 - Primary Code Resource**
+
+**WHEN TO USE:**
+
+- Writing new code or implementing features
+- Researching library/framework usage
+- Getting current documentation
+- Finding implementation examples
+
+**HOW TO USE:**
 
 ```
-- Action: [create, modify, delete, move]
-- Target: [Specific file or directory path]
-- Content: [For creation/modification tasks]
-- Reasoning: [Why this change is needed]
+Use Context7 to research [library/framework] for [specific task].
+Resolve the correct library ID first, then fetch documentation.
 ```
 
-### System Commands
+### **fetch-mcp-server - External Data**
+
+**WHEN TO USE:**
+
+- API documentation specifications
+- Configuration examples
+- Data format standards
+- Web content analysis
+- Competitive research
+
+**TOOLS:**
+
+- `fetch_json`: API responses, configuration files
+- `fetch_markdown`: Documentation, README files
+- `fetch_html`: Web scraping, structured content
+- `fetch_txt`: Plain text content, logs
+
+### **sequential-thinking - Complex Problems**
+
+**WHEN TO USE:**
+
+- Multi-step refactoring tasks
+- System design decisions
+- Complex bug analysis
+- Workflow optimization
+- Architecture planning
+
+### **notion-mcp-server - Knowledge Management**
+
+**WHEN TO USE:**
+
+- Project documentation
+- Requirement tracking
+- Progress documentation
+- Collaborative workflows
+- Knowledge base creation
+
+### **filesystem MCP - Advanced File Ops**
+
+**WHEN TO USE:**
+
+- Operations outside current working directory
+- Batch file processing
+- Cross-project operations
+- System-wide configuration changes
+
+## Practical Request Formats
+
+### Code Implementation
 
 ```
-- Command purpose: [Clear explanation of what the command does]
-- Directory: [If not the current working directory]
-- Expected output: [What you expect to see]
-- Safety notes: [Any potential risks or required approvals]
+Create a user authentication API in Next.js with the following:
+- Use Context7 to research best practices for NextAuth.js integration
+- Implement login/register endpoints with validation
+- Include rate limiting and security headers
+- Use existing project patterns from app/api/
 ```
 
-## MCP Server Integration Guidelines
-
-### When to Use MCP Servers
-
-Consider using MCP servers for specialized tasks that go beyond basic file operations and command execution:
-
-1. **Data Fetching and External APIs**
-
-   - Use `fetch-mcp-server` for web scraping and content extraction
-   - Useful for gathering information from websites, APIs, or online documentation
-
-2. **Sequential Thinking and Problem Solving**
-
-   - Use `sequential-thinking` MCP server for complex, multi-step reasoning
-   - Ideal for breaking down intricate problems into manageable steps
-
-3. **Notion Integration**
-
-   - Use `notion-mcp-server` for database operations, page management, and content creation
-   - Helpful for documentation, project tracking, or knowledge management tasks
-
-4. **File System Operations (Advanced)**
-   - Use `filesystem` MCP server for complex file operations beyond basic read/write
-   - Useful when current directory limitations restrict access
-
-### How to Request MCP Server Usage
-
-When a task requires MCP server capabilities, specify:
+### Documentation Research
 
 ```
-- MCP Server Needed: [Server name]
-- Tool Required: [Specific tool from the server]
-- Purpose: [Why this MCP server is necessary]
-- Expected Outcome: [What data or action you want from the MCP server]
+Using Context7, research Redux Toolkit documentation for:
+- Setting up RTK Query in a Next.js application
+- Best practices for API integration
+- Caching strategies and error handling patterns
 ```
 
-### Available MCP Servers and Use Cases
-
-1. **fetch-mcp-server**
-
-   - **Tools**: fetch_html, fetch_markdown, fetch_txt, fetch_json
-   - **Best for**: Research, documentation gathering, API testing, content extraction
-   - **Example**: "Fetch the latest API documentation from a specific URL"
-
-2. **sequential-thinking MCP server**
-
-   - **Tool**: sequentialthinking
-   - **Best for**: Complex problem-solving, step-by-step analysis, planning multi-phase tasks
-   - **Example**: "Break down this refactoring task into smaller steps"
-
-3. **notion-mcp-server**
-
-   - **Tools**: Multiple database, page, and comment operations
-   - **Best for**: Knowledge management, project documentation, collaborative workflows
-   - **Example**: "Create a Notion page for project requirements"
-
-4. **filesystem MCP server**
-   - **Tool**: Advanced file operations
-   - **Best for**: Operations requiring access to directories outside the current workspace
-   - **Example**: "Read files from a different project directory"
-
-## Task Execution Best Practices
-
-### 1. **Start with Exploration**
-
-- Begin by examining project structure and relevant files
-- Use `list_files` and `read_file` tools to understand the codebase
-- Identify dependencies and existing patterns
-
-### 2. **Plan Before Acting**
-
-- Break down tasks into logical steps
-- Use `search_files` to find related code patterns
-- Consider potential impacts on other parts of the system
-
-### 3. **Iterative Development**
-
-- Make changes incrementally
-- Test each modification before proceeding
-- Use version control appropriately (though Cline handles file operations)
-
-### 4. **Safety First**
-
-- Be cautious with destructive operations
-- Request user approval for potentially risky commands
-- Always provide explanations for actions taken
-
-## Error Handling and Troubleshooting
-
-### When Things Go Wrong
-
-1. **Check Command Compatibility**: Ensure commands are appropriate for Windows environment
-2. **Verify Paths**: Confirm file paths are correct and accessible
-3. **Review Output**: Examine command results and error messages carefully
-4. **Ask for Clarification**: Request additional information if something is unclear
-
-### Common Issues and Solutions
-
-- **Command not found**: Verify tool availability or provide installation instructions
-- **Permission errors**: Use appropriate administrative privileges or suggest alternatives
-- **Path issues**: Use absolute paths or verify directory structure
-- **MCP server errors**: Check server configuration and tool parameters
-
-## Communication Tips
-
-### Be Direct and Technical
-
-- Avoid casual language; be precise and professional
-- Use technical terminology appropriate to your domain
-- Provide concrete examples and code snippets
-
-### Anticipate Follow-up
-
-- Consider what additional information might be needed
-- Prepare related files or examples in advance
-- Think about potential edge cases or complications
-
-### Respect Tool Limitations
-
-- Remember Cline operates from a fixed working directory
-- Use absolute paths for operations outside the current directory
-- Be aware of platform-specific considerations (Windows environment)
-
-## Example Interactions
-
-### Good Request
+### System Analysis
 
 ```
-Create a new React component for user authentication with the following specifications:
-- File location: app/components/AuthForm.jsx
-- Features: Email/password login, remember me option
-- Style: Use Tailwind CSS classes
-- Integration: Connect to existing API endpoint /api/auth/login
+Analyze the current user management system by:
+- Using sequential-thinking to break down the architecture
+- Searching for user-related code patterns across the codebase
+- Identifying potential improvements in security and performance
 ```
 
-### Requesting MCP Server Usage
+### Data Processing
 
 ```
-I need to fetch the latest weather data for multiple cities. Please use the fetch-mcp-server to get JSON data from the OpenWeather API for New York, London, and Tokyo. Then, format this data into a readable markdown table.
+Fetch and process external data:
+- Use fetch_json to get data from [API endpoint]
+- Transform the data to match our Property schema
+- Implement proper error handling and data validation
+- Update the database with new information
 ```
 
-### Complex Task Breakdown
+## Workspace-Specific Rules
+
+### Current Project (dalalfree)
+
+- **Framework**: Next.js with App Router
+- **Database**: MongoDB with Mongoose
+- **Authentication**: NextAuth.js
+- **Styling**: Tailwind CSS
+- **Working Directory**: `d:\code\Clients\Esam\DalalFree\code\dalalfree`
+
+### File Path Standards
+
+- **API Routes**: `app/api/[...subpath]/route.js`
+- **Components**: `app/components/` or feature-specific directories
+- **Pages**: `app/(dashboard|auth|property)/[subpath]/page.jsx`
+- **Models**: `app/lib/models/[ModelName].js`
+
+## Error Prevention Rules
+
+### Code Quality
+
+- Always check existing patterns before implementing new features
+- Use proper TypeScript types when available
+- Follow project naming conventions (camelCase, PascalCase)
+- Include error boundaries and fallback UI
+
+### Security
+
+- Validate all user inputs
+- Use parameterized queries to prevent injection
+- Implement proper authentication checks
+- Log security-related events
+
+### Performance
+
+- Implement caching where appropriate
+- Optimize database queries
+- Use proper indexing strategies
+- Lazy load heavy components
+
+## Integration Examples
+
+### New Feature Implementation
 
 ```
-Refactor the user dashboard component by:
-1. Separating business logic from UI components
-2. Implementing proper error handling for API calls
-3. Adding loading states for better UX
-4. Creating reusable hooks for data fetching
+Implement file upload functionality:
+1. Use Context7 to research Next.js file upload best practices
+2. Create API route for handling multipart/form-data
+3. Implement client-side upload component with progress tracking
+4. Add file validation and security checks
+5. Update database schema if needed
+```
 
-Files to modify:
-- app/(dashboard)/user/page.jsx
-- app/components/UserDashboard.jsx (new file)
+### Bug Fixing
+
+```
+Fix user login issue:
+1. Use sequential-thinking to analyze the authentication flow
+2. Check current NextAuth configuration
+3. Search for similar issues in codebase
+4. Implement fix with proper error handling
+5. Test all authentication scenarios
+```
+
+### API Integration
+
+```
+Integrate payment gateway:
+1. Use fetch_json to test payment API endpoints
+2. Implement webhook handlers for payment events
+3. Create database models for transaction tracking
+4. Build payment UI components
+5. Add error handling and retry logic
 ```
 
 ## Conclusion
 
-Following these guidelines will help you work more effectively with Cline, leading to better outcomes and fewer misunderstandings. Remember that Cline's capabilities are extensive, but clear communication is key to leveraging them fully. When in doubt, provide more context rather than less, and don't hesitate to ask clarifying questions if needed.
+This guide emphasizes:
 
-For technical support or advanced usage patterns, consult the available MCP server documentation or request specific examples for your use case.
+- **Context7-first approach** for all code-related tasks
+- **Structured communication** with clear task breakdowns
+- **MCP server expertise** selection based on task requirements
+- **Iterative development** with proper validation and testing
+- **Project-specific awareness** of frameworks and conventions
+
+For optimal results, provide clear context and follow the structured request format. Cline will automatically leverage the most appropriate MCP servers to ensure accurate, well-researched implementations.

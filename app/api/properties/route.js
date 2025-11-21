@@ -11,15 +11,15 @@ export async function GET() {
   return NextResponse.json(properties);
 }
 
-// POST new property (only verified users)
+// POST new property (partners and sellers only)
 export const POST = requireAuth(async function (req) {
   await connectDB();
 
   const userId = req.user._id;
   const role = req.user.role;
-  if (role !== "partner")
+  if (role !== "partner" && role !== "seller")
     return NextResponse.json(
-      { error: "Only partners can list properties" },
+      { error: "Only partners and sellers can list properties" },
       { status: 403 }
     );
 

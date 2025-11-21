@@ -470,7 +470,7 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 #### POST `/api/properties`
 
 - **Purpose:** Create new property listing
-- **Auth:** Required (Partners only)
+- **Auth:** Required (Partners and Sellers only)
 - **Request Body:**
 
 ```json
@@ -524,7 +524,7 @@ All endpoints marked **"Auth: Required"** support JWT authentication:
 
 ```json
 {
-  "error": "Only partners can list properties"
+  "error": "Only partners and sellers can list properties"
 }
 ```
 

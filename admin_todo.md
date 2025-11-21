@@ -135,17 +135,82 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ### Database & Infrastructure
 
-- [ ] Setup MongoDB indexes for performance
-- [ ] Configure file storage for KYC videos/documents
-- [ ] Setup email notification system
-- [ ] Configure role-based permissions middleware
+#### Setup MongoDB indexes for performance
+
+- [ ] Create compound indexes for Users model: `role + accountStatus + registrationDate` (admin query optimization)
+- [ ] Create compound indexes for Properties model: `status + propertyType + createdAt` (property management queries)
+- [ ] Create compound indexes for KYC model: `status + approvalLevel + createdAt` (KYC workflow optimization)
+- [ ] Add single-field indexes for common filters: `viewsCount`, `likesCount`, `featured`, `boosted`
+- [ ] Implement database migration script for index creation
+- [ ] Update connection configuration with indexing strategy
+
+#### Configure local file storage for KYC videos/documents and property images/videos
+
+- [ ] Install multer dependency for file handling middleware
+- [ ] Create secure upload directory structure: `/uploads/kyc/videos/`, `/uploads/kyc/documents/`, `/uploads/properties/images/`, `/uploads/properties/videos/`, `/uploads/temp/`
+- [ ] Implement file upload API route for KYC content with validation (max 50MB videos, 10MB docs)
+- [ ] Implement file upload API route for property images/videos with validation (max 10MB images, 100MB videos)
+- [ ] Add file type validation and security checks (MIME types, file signatures)
+- [ ] Create secure file serving API with access control headers
+- [ ] Implement file deletion and cleanup utilities for temp/expired files
+- [ ] Add storage capacity monitoring and alerts
+
+#### Setup email notification system
+
+- [ ] Install nodemailer dependency for email functionality
+- [ ] Create email service configuration for SMTP (VPS-compatible settings)
+- [ ] Implement email templates for admin notifications: account approvals, property approvals, KYC status updates
+- [ ] Create queue-based email system for bulk notifications
+- [ ] Add email retry logic and error handling
+- [ ] Configure email authentication and security settings
+
+#### Configure role-based permissions middleware
+
+- [ ] Implement JWT-based authentication middleware for API protection
+- [ ] Create role hierarchy system: `superAdmin > admin > subAdmin`
+- [ ] Add resource-level permissions for different operations
+- [ ] Implement API endpoint access control based on user roles
+- [ ] Add admin audit logging middleware for all critical operations
+- [ ] Create permission validation helpers for frontend components
 
 ### Testing & QA
 
-- [ ] Unit tests for all API endpoints
-- [ ] Integration tests for admin workflows
-- [ ] Admin dashboard UI testing
-- [ ] Security testing for admin operations
+#### Unit tests for all API endpoints
+
+- [ ] Install Jest and Testing Library dependencies for Next.js
+- [ ] Create unit tests for admin user management APIs (`POST /api/admin/users`, `PUT /api/admin/users/[id]`)
+- [ ] Create unit tests for KYC management APIs (`GET/POST/PUT /api/admin/kyc`, `PUT /api/admin/kyc/[id]`)
+- [ ] Create unit tests for property management APIs (`GET/PUT/DELETE /api/admin/properties/[id]`)
+- [ ] Create tests for file upload APIs with mocks
+- [ ] Implement database mocking for isolated testing
+- [ ] Add coverage reporting and CI/CD integration
+
+#### Integration tests for admin workflows
+
+- [ ] Create end-to-end admin login and dashboard access tests
+- [ ] Implement bulk operations testing (mass user/property approvals)
+- [ ] Test KYC video review and approval workflows
+- [ ] Create property listing and management workflow tests
+- [ ] Test email notification triggers on admin actions
+- [ ] Implement performance testing for large dataset operations
+
+#### Admin dashboard UI testing
+
+- [ ] Set up component testing environment with React Testing Library
+- [ ] Create tests for admin tables (UsersManagementTable, KycManagementTable, PropertiesManagementTable)
+- [ ] Implement chart component tests (RevenueChart, PropertyStatsChart)
+- [ ] Test admin form interactions and validation
+- [ ] Add accessibility testing for admin components
+- [ ] Create snapshot tests for UI consistency
+
+#### Security testing for admin operations
+
+- [ ] Implement API security tests for unauthorized access prevention
+- [ ] Test file upload security (type validation, injection prevention)
+- [ ] Create role-based access control testing across all admin endpoints
+- [ ] Add input validation and sanitization tests
+- [ ] Implement SQL injection and XSS prevention testing
+- [ ] Test rate limiting and DDOS protection mechanisms
 
 ---
 
