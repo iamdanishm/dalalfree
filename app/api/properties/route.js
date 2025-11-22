@@ -6,34 +6,85 @@ import { requireAuth } from "@/app/lib/auth";
 
 // GET all properties
 export async function GET() {
-  await connectDB();
-  const properties = await Property.find().populate("ownerId", "name email");
-  return NextResponse.json(properties);
+  try {
+    await connectDB();
+    const properties = await Property.find().populate("ownerId", "name email");
+    return NextResponse.json(properties);
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+
+    // Check if it's a database connection error
+    if (
+      error.message?.includes("database") ||
+      error.message?.includes("connect")
+    ) {
+      return NextResponse.json(
+        {
+          error: "Database temporarily unavailable",
+          message:
+            "The backend server is currently experiencing database connectivity issues. Please try again in a few moments.",
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to fetch properties", message: error.message },
+      { status: 500 }
+    );
+  }
 }
 
 // POST new property (partners and sellers only)
 export const POST = requireAuth(async function (req) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const userId = req.user._id;
-  const role = req.user.role;
-  if (role !== "partner" && role !== "seller")
+    const userId = req.user._id;
+    const role = req.user.role;
+    if (role !== "partner" && role !== "seller") {
+      return NextResponse.json(
+        { error: "Only partners and sellers can list properties" },
+        { status: 403 }
+      );
+    }
+
+    // Check KYC status
+    const kyc = await Kyc.findOne({ userId });
+    if (!kyc || kyc.status !== "approved") {
+      return NextResponse.json({ error: "KYC not approved" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const property = await Property.create({
+      ...body,
+      ownerId: userId,
+      verified: true, // auto-verified since KYC approved
+    });
+
+    return NextResponse.json(property);
+  } catch (error) {
+    console.error("Error creating property:", error);
+
+    // Handle database connectivity issues
+    if (
+      error.message?.includes("database") ||
+      error.message?.includes("connect") ||
+      error.name === "MongooseError"
+    ) {
+      return NextResponse.json(
+        {
+          error: "Database temporarily unavailable",
+          message:
+            "Unable to create property due to database connectivity issues. Please try again later.",
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Only partners and sellers can list properties" },
-      { status: 403 }
+      { error: "Failed to create property", message: error.message },
+      { status: 500 }
     );
-
-  // Check KYC status
-  const kyc = await Kyc.findOne({ userId });
-  if (!kyc || kyc.status !== "approved")
-    return NextResponse.json({ error: "KYC not approved" }, { status: 403 });
-
-  const body = await req.json();
-  const property = await Property.create({
-    ...body,
-    ownerId: userId,
-    verified: true, // auto-verified since KYC approved
-  });
-
-  return NextResponse.json(property);
+  }
 });

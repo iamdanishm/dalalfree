@@ -2,12 +2,12 @@
 import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
 
 const propertyTypes = {
   residential: ["1 RK", "1 BHK", "2 BHK", "3 BHK", "4+ BHK"],
-  commercial: ["Office", "Shop", "Warehouse", "Showroom", "Commercial Plot"],
 };
 
 const cities = [
@@ -44,9 +44,11 @@ const budgetRanges = {
 };
 
 export default function HeroSearch() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("buy");
   const [propertyType, setPropertyType] = useState("");
   const [city, setCity] = useState("");
+  const [locality, setLocality] = useState("");
   const [budgetRange, setBudgetRange] = useState(null);
 
   const budgetOptions =
@@ -54,6 +56,26 @@ export default function HeroSearch() {
       value: range,
       label: range.label,
     })) || [];
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    params.set("tab", activeTab);
+    if (city) params.set("city", city);
+    if (locality) params.set("locality", locality);
+    if (propertyType) params.set("propertyType", propertyType);
+    if (budgetRange) {
+      params.set("budgetMin", budgetRange.min.toString());
+      params.set("budgetMax", budgetRange.max?.toString() || "");
+    }
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const resetFilters = () => {
+    setPropertyType("");
+    setCity("");
+    setLocality("");
+    setBudgetRange(null);
+  };
 
   return (
     <section className="relative bg-secondary text-white flex items-center justify-center py-20 md:py-28 overflow-hidden">
@@ -80,7 +102,7 @@ export default function HeroSearch() {
         >
           {/* Tabs */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {["Buy", "Rent", "Commercial"].map((tab) => (
+            {["Buy", "Rent"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -168,6 +190,8 @@ export default function HeroSearch() {
             <input
               type="text"
               placeholder="Locality"
+              value={locality}
+              onChange={(e) => setLocality(e.target.value)}
               className="border border-gray-200 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full"
               suppressHydrationWarning
             />
@@ -311,6 +335,7 @@ export default function HeroSearch() {
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
+              onClick={handleSearch}
               transition={{ duration: 0.2 }}
               className="bg-primary text-white font-semibold px-6 py-3 rounded-lg w-full sm:w-auto hover:opacity-90"
               suppressHydrationWarning

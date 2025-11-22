@@ -119,6 +119,7 @@ export default function FeaturedGrid() {
             }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => router.push("/search?tab=buy&featured=true")}
             className="bg-primary text-white font-medium text-sm px-6 py-2 rounded-full hover:opacity-90"
             suppressHydrationWarning
           >

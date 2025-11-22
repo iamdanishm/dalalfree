@@ -9,13 +9,6 @@ import {
   getStorageStats,
 } from "@/app/lib/upload";
 
-// Disable body parsing for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 // GET /api/properties/upload - Get property storage stats and limits
 export async function GET(req) {
   await connectDB();

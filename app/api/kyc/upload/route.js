@@ -9,13 +9,6 @@ import {
   getStorageStats,
 } from "@/app/lib/upload";
 
-// Disable body parsing for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 const runMiddleware = (req, res, fn) => {
   return new Promise((resolve, reject) => {
     fn(req, res, (result) => {
