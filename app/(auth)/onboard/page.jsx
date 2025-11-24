@@ -14,6 +14,9 @@ import {
   FiUsers,
   FiClock,
   FiLock,
+  FiUser,
+  FiTarget,
+  FiTrendingUp,
 } from "react-icons/fi";
 
 export default function OnboardPage() {
@@ -109,42 +112,205 @@ export default function OnboardPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8"
         >
-          {/* Progress Indicator */}
-          <div className="inline-flex items-center bg-white/80 backdrop-blur-sm border border-white/20 rounded-2xl px-8 py-3 mb-6 shadow-lg">
-            <motion.div
-              className="flex items-center gap-3"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-xl">
-                <span className="text-white font-black">✓</span>
+          {/* Professional Progress Indicator */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="max-w-lg mx-auto mb-12"
+          >
+            {/* Progress Steps Header */}
+            <div className="flex items-center justify-center gap-2 mb-4 text-sm font-medium text-gray-600">
+              <span>Onboarding Progress</span>
+            </div>
+
+            {/* Visual Progress Bar */}
+            <div className="relative">
+              {/* Background Track */}
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: "50%" }}
+                  transition={{
+                    duration: 1.5,
+                    delay: 0.5,
+                    ease: "easeInOut",
+                  }}
+                  className="h-full bg-gradient-to-r from-green-400 via-blue-500 to-blue-600 rounded-full relative"
+                >
+                  {/* Animated Shimmer Effect */}
+                  <motion.div
+                    animate={{
+                      x: ["-100%", "100%"],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  />
+                </motion.div>
               </div>
-              <span className="text-gray-800 font-bold text-sm">
-                Account Created
-              </span>
-            </motion.div>
-            <div className="mx-4 h-0.5 w-8 bg-gradient-to-r from-green-200 to-blue-200"></div>
-            <motion.div
-              className="flex items-center gap-3"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.4, type: "spring" }}
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                <span className="text-white font-bold">2</span>
+
+              {/* Step Indicators */}
+              <div className="flex justify-between items-center mt-4 px-2">
+                {/* Step 1 - Completed */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring" }}
+                  className="relative"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
+                  >
+                    <FiCheck className="w-6 h-6 text-white font-bold" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1 }}
+                    className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                  >
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                      Account Created
+                    </span>
+                  </motion.div>
+                </motion.div>
+
+                {/* Connecting Line */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 1.2, duration: 0.6 }}
+                  className="flex-1 h-0.5 bg-gray-300 mx-4 relative"
+                >
+                  <motion.div
+                    animate={{
+                      scaleX: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="w-full h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full"
+                  />
+                </motion.div>
+
+                {/* Step 2 - Current */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 1, type: "spring" }}
+                  className="relative"
+                >
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        "0 0 0 0px rgba(59, 130, 246, 0.5)",
+                        "0 0 0 8px rgba(59, 130, 246, 0)",
+                        "0 0 0 0px rgba(59, 130, 246, 0.5)",
+                      ],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white relative overflow-hidden"
+                  >
+                    {/* Pulsing background */}
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        opacity: [0.5, 0, 0.5],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="absolute inset-0 bg-blue-400 rounded-full"
+                    />
+                    <FiTarget className="w-6 h-6 text-white font-bold relative z-10" />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.2 }}
+                    className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                  >
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                      🔍 Choose Method
+                    </span>
+                  </motion.div>
+                </motion.div>
+
+                {/* Connecting Line to Step 3 */}
+                <motion.div
+                  className="flex-1 h-0.5 bg-gray-200 mx-4"
+                  style={{ opacity: 0.3 }}
+                />
+
+                {/* Step 3 - Upcoming */}
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0.5 }}
+                  animate={{ scale: 1, opacity: 0.7 }}
+                  transition={{ delay: 1.4 }}
+                  className="relative"
+                >
+                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center border-4 border-white">
+                    <FiTrendingUp className="w-6 h-6 text-gray-500" />
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.6 }}
+                    className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                  >
+                    <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+                      Start Using
+                    </span>
+                  </motion.div>
+                </motion.div>
               </div>
-              <span className="text-gray-900 font-bold text-sm">
-                Choose Method
-              </span>
+            </div>
+
+            {/* Progress Stats */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2 }}
+              className="text-center mt-16"
+            >
+              <div className="text-sm text-gray-500 mb-1">
+                Onboarding Progress
+              </div>
+              <div className="text-lg font-bold text-gray-900">
+                Step <span className="text-blue-600">2</span> of 3
+              </div>
+              <div className="w-24 h-1 bg-gray-200 rounded-full mx-auto mt-2">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: "50%" }}
+                  transition={{
+                    duration: 1.5,
+                    delay: 0.8,
+                    ease: "easeInOut",
+                  }}
+                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+                />
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
 
           {/* Compact Welcome Message */}
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-              <span className="text-2xl animate-pulse">🎯</span>
-            </div>
             <h1 className="text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 mb-4">
               Welcome{session?.user?.name ? ` ${session.user.name}` : ""}!
             </h1>
