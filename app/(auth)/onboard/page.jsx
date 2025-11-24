@@ -43,20 +43,8 @@ export default function OnboardPage() {
     setSelectedOption(choice);
     setIsLoading(true);
 
-    // Navigate based on choice
-    switch (choice) {
-      case "ads":
-        router.push("/user/dashboard");
-        break;
-      case "trial":
-        router.push("/trial/activate");
-        break;
-      case "purchase":
-        router.push("/purchase/contacts");
-        break;
-      default:
-        router.push("/user/dashboard");
-    }
+    // Navigate based on choice - all options lead to user dashboard
+    router.push("/user");
   };
 
   return (
