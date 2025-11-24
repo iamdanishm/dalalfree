@@ -1,4 +1,7 @@
+"use client";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   FiPhone,
   FiMail,
@@ -6,10 +9,41 @@ import {
   FiShield,
   FiUser,
   FiAward,
+  FiPlay,
+  FiCreditCard,
+  FiStar,
+  FiLock,
 } from "react-icons/fi";
+import ContactRevealModal from "./ContactRevealModal";
 
 export default function PropertyOwnerCard() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showRevealModal, setShowRevealModal] = useState(false);
+  const [revealMethod, setRevealMethod] = useState(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (status === "authenticated") {
+        try {
+          const response = await fetch("/api/users/profile");
+          if (response.ok) {
+            const data = await response.json();
+            setUserProfile(data.user);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error);
+        }
+      } else if (status !== "loading") {
+        setLoading(false);
+      }
+      setLoading(false);
+    };
+
+    fetchUserProfile();
+  }, [status]);
 
   // Using the mock data from original file - in production this would be from props or API
   const owner = {
@@ -22,6 +56,219 @@ export default function PropertyOwnerCard() {
     completedDeals: 25,
     memberSince: "2019",
     response: "Responds within 2 hours",
+  };
+
+  const calculateTrialDaysLeft = () => {
+    if (!userProfile?.freeTrialEndDate) return 0;
+    const now = new Date();
+    const endDate = new Date(userProfile.freeTrialEndDate);
+    const diffTime = endDate - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  };
+
+  const trialDaysLeft = calculateTrialDaysLeft();
+
+  const handleContactReveal = (method) => {
+    // For free users, show the reveal modal
+    if (method !== "schedule_visit") {
+      setRevealMethod(method);
+      setShowRevealModal(true);
+    } else {
+      // Handle schedule visit - placeholder
+      console.log("Schedule visit clicked");
+    }
+  };
+
+  const handleRevealSuccess = (method) => {
+    // Handle successful contact reveal - update state, deduct credits, etc.
+    console.log(`Successfully revealed contact via: ${method}`);
+    setShowRevealModal(false);
+    setRevealMethod(null);
+
+    // In production:
+    // 1. Deduct credits if applicable
+    // 2. Update user profile state
+    // 3. Call contact reveal API
+    // 4. Show contact details
+  };
+
+  const handleStartTrial = () => {
+    router.push("/profile");
+  };
+
+  const getSubscriptionUI = () => {
+    if (loading) {
+      return (
+        <div className="text-center p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      );
+    }
+
+    if (status !== "authenticated") {
+      return (
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <FiShield className="mx-auto mb-2 text-gray-400" size={24} />
+          <p className="text-sm text-gray-600 mb-3">
+            Login to view contact details
+          </p>
+          <button
+            onClick={() => router.push("/login")}
+            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      );
+    }
+
+    const subscriptionStatus = userProfile?.subscriptionStatus || "none";
+
+    // Free Trial Users - Full Access
+    if (subscriptionStatus === "free_trial") {
+      return (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+              <FiStar size={12} />
+              Trial Active: {trialDaysLeft} days left
+            </div>
+            <button
+              onClick={() => handleContactReveal("schedule_visit")}
+              className="px-3 py-1 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Schedule Visit
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center text-gray-700">
+              <FiPhone
+                className="mr-3 flex-shrink-0 text-green-600"
+                size={16}
+              />
+              <span className="text-sm font-medium">{owner.contact}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <FiMail className="mr-3 flex-shrink-0 text-green-600" size={16} />
+              <span className="text-sm font-medium">{owner.email}</span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Paid Users - Premium Access
+    if (subscriptionStatus === "active") {
+      return (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-xs font-medium">
+              <FiAward size={12} />
+              Premium Member
+            </div>
+            <button
+              onClick={() => handleContactReveal("schedule_visit")}
+              className="px-3 py-1 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Schedule Visit
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center text-gray-700">
+              <FiPhone className="mr-3 flex-shrink-0 text-primary" size={16} />
+              <span className="text-sm font-medium">{owner.contact}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <FiMail className="mr-3 flex-shrink-0 text-primary" size={16} />
+              <span className="text-sm font-medium">{owner.email}</span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Expired Users
+    if (subscriptionStatus === "expired") {
+      return (
+        <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+          <FiClock className="mx-auto mb-2 text-orange-500" size={24} />
+          <p className="text-sm text-orange-800 font-medium mb-2">
+            Access Expired
+          </p>
+          <p className="text-xs text-orange-600 mb-4">
+            Renew your subscription to contact owners
+          </p>
+          <button
+            onClick={handleStartTrial}
+            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors w-full"
+          >
+            <FiCreditCard className="inline mr-1" size={14} />
+            Renew Access
+          </button>
+        </div>
+      );
+    }
+
+    // Free Users - No Subscription
+    return (
+      <>
+        {/* Blurred Contact Preview */}
+        <div className="relative mb-4">
+          <div className="space-y-3 filter blur-sm">
+            <div className="flex items-center text-gray-300">
+              <FiPhone className="mr-3 flex-shrink-0" size={16} />
+              <span className="text-sm">XXX XXX XXXX</span>
+            </div>
+            <div className="flex items-center text-gray-300">
+              <FiMail className="mr-3 flex-shrink-0" size={16} />
+              <span className="text-sm">owner@example.com</span>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FiLock className="text-gray-400 text-xl" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2">
+          {/* Watch Ad Option */}
+          <button
+            onClick={() => handleContactReveal("ad_watch")}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+          >
+            <FiPlay size={18} />
+            <div className="text-left">
+              <div className="text-sm font-medium">Watch Ad (1 credit)</div>
+              <div className="text-xs opacity-75">Reveal contact instantly</div>
+            </div>
+          </button>
+
+          {/* Buy Package Option */}
+          <button
+            onClick={() => handleContactReveal("purchase")}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors border border-green-200"
+          >
+            <FiCreditCard size={18} />
+            <div className="text-left">
+              <div className="text-sm font-medium">₹200 - 30 contacts</div>
+              <div className="text-xs opacity-75">Lifetime access</div>
+            </div>
+          </button>
+
+          {/* Free Trial Option */}
+          <button
+            onClick={handleStartTrial}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors border border-purple-200"
+          >
+            <FiAward size={18} />
+            <div className="text-left">
+              <div className="text-sm font-medium">Start Free Trial</div>
+              <div className="text-xs opacity-75">30 days unlimited</div>
+            </div>
+          </button>
+        </div>
+      </>
+    );
   };
 
   return (
@@ -59,25 +306,21 @@ export default function PropertyOwnerCard() {
         <div className="text-xs text-gray-600">{owner.response}</div>
       </div>
 
-      {status === "authenticated" ? (
-        <div className="space-y-3">
-          <div className="flex items-center text-gray-600">
-            <FiPhone className="mr-3 flex-shrink-0" size={16} />
-            <span className="text-sm">{owner.contact}</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <FiMail className="mr-3 flex-shrink-0" size={16} />
-            <span className="text-sm">{owner.email}</span>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center p-4 bg-gray-50 rounded-lg">
-          <FiShield className="mx-auto mb-2 text-gray-400" size={24} />
-          <p className="text-sm text-gray-600">
-            Login to view owner contact details
-          </p>
-        </div>
-      )}
+      {/* Subscription-Based Contact Logic */}
+      {getSubscriptionUI()}
+
+      {/* Contact Reveal Modal */}
+      <ContactRevealModal
+        isOpen={showRevealModal}
+        onClose={() => {
+          setShowRevealModal(false);
+          setRevealMethod(null);
+        }}
+        owner={owner}
+        revealMethod={revealMethod}
+        onReveal={handleRevealSuccess}
+        userSubscription={userProfile}
+      />
     </div>
   );
 }
