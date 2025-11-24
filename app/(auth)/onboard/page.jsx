@@ -119,39 +119,16 @@ export default function OnboardPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-lg mx-auto mb-12"
           >
-            {/* Progress Steps Header */}
-            <div className="flex items-center justify-center gap-2 mb-4 text-sm font-medium text-gray-600">
-              <span>Onboarding Progress</span>
+            {/* Progress Steps Header with Mini Progress */}
+            <div className="flex flex-col items-center mb-4">
+              <div className="text-sm font-medium text-gray-600 mb-2">
+                Onboarding Progress
+              </div>
             </div>
 
             {/* Visual Progress Bar */}
             <div className="relative">
               {/* Background Track */}
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: "0%" }}
-                  animate={{ width: "50%" }}
-                  transition={{
-                    duration: 1.5,
-                    delay: 0.5,
-                    ease: "easeInOut",
-                  }}
-                  className="h-full bg-gradient-to-r from-green-400 via-blue-500 to-blue-600 rounded-full relative"
-                >
-                  {/* Animated Shimmer Effect */}
-                  <motion.div
-                    animate={{
-                      x: ["-100%", "100%"],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                  />
-                </motion.div>
-              </div>
 
               {/* Step Indicators */}
               <div className="flex justify-between items-center mt-4 px-2">
@@ -280,33 +257,6 @@ export default function OnboardPage() {
                 </motion.div>
               </div>
             </div>
-
-            {/* Progress Stats */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
-              className="text-center mt-16"
-            >
-              <div className="text-sm text-gray-500 mb-1">
-                Onboarding Progress
-              </div>
-              <div className="text-lg font-bold text-gray-900">
-                Step <span className="text-blue-600">2</span> of 3
-              </div>
-              <div className="w-24 h-1 bg-gray-200 rounded-full mx-auto mt-2">
-                <motion.div
-                  initial={{ width: "0%" }}
-                  animate={{ width: "50%" }}
-                  transition={{
-                    duration: 1.5,
-                    delay: 0.8,
-                    ease: "easeInOut",
-                  }}
-                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
-                />
-              </div>
-            </motion.div>
           </motion.div>
 
           {/* Compact Welcome Message */}
