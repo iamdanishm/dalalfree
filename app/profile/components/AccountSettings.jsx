@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   FiLock,
   FiTrash2,
@@ -142,31 +143,43 @@ export default function AccountSettings({ user, onProfileUpdate }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Account Settings
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Manage your account preferences and security
-        </p>
+    <motion.div
+      className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-5 border-b border-blue-200">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <h2 className="text-xl font-semibold text-gray-900">
+            Account Settings
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Manage your account preferences and security
+          </p>
+        </motion.div>
       </div>
 
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Email Notifications */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
               <FiBell className="text-blue-600" size={18} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-medium text-gray-900">Email Notifications</h3>
               <p className="text-sm text-gray-600">
                 Receive updates about your property searches and matches
               </p>
             </div>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input
               type="checkbox"
               className="sr-only peer"
@@ -180,19 +193,19 @@ export default function AccountSettings({ user, onProfileUpdate }) {
         </div>
 
         {/* Marketing Emails */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
+            <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
               <FiMail className="text-green-600" size={18} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-medium text-gray-900">Marketing Emails</h3>
               <p className="text-sm text-gray-600">
                 Get tips, property insights, and promotional offers
               </p>
             </div>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input
               type="checkbox"
               className="sr-only peer"
@@ -395,6 +408,6 @@ export default function AccountSettings({ user, onProfileUpdate }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

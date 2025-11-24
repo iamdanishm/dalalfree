@@ -86,194 +86,351 @@ export default function SubscriptionDashboard({ user }) {
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <motion.h2
-          className="text-xl font-semibold text-gray-900"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          Subscription & Credits
-        </motion.h2>
-        {staticSubscriptionData.subscriptionStatus === "free_trial" && (
-          <motion.div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-              staticSubscriptionData.subscriptionStatus
-            )}`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.4, type: "spring" }}
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-5 border-b border-green-200">
+        <div className="flex items-center justify-between">
+          <motion.h2
+            className="text-xl font-semibold text-gray-900"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            {trialDaysLeft} days left
-          </motion.div>
-        )}
+            Subscription & Credits
+          </motion.h2>
+          {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+            <motion.div
+              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                staticSubscriptionData.subscriptionStatus
+              )}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.4, type: "spring" }}
+              whileHover={{ scale: 1.05 }}
+            >
+              {trialDaysLeft} days left
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.6 }}
-      >
-        {/* Subscription Status Card */}
+      <div className="p-6">
+        {/* Premium Subscription Showcase */}
         <motion.div
-          className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/20 hover:shadow-lg transition-shadow duration-300"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          whileHover={{ y: -4 }}
+          className="bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-xl p-6 mb-6 text-white relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.6, type: "spring" }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <FiTrendingUp className="text-primary" size={20} />
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+          </div>
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                  {staticSubscriptionData.subscriptionStatus ===
+                  "free_trial" ? (
+                    <FiGift size={24} />
+                  ) : staticSubscriptionData.subscriptionStatus === "active" ? (
+                    <FiTrendingUp size={24} />
+                  ) : (
+                    <FiPlay size={24} />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl">
+                    {staticSubscriptionData.subscriptionStatus === "free_trial"
+                      ? "Free Trial Active"
+                      : staticSubscriptionData.subscriptionStatus === "active"
+                      ? "Premium Membership"
+                      : "Ad-Supported Access"}
+                  </h3>
+                  <p className="text-purple-100">
+                    {staticSubscriptionData.subscriptionStatus === "free_trial"
+                      ? "Unlimited contacts for 30 days"
+                      : staticSubscriptionData.subscriptionStatus === "active"
+                      ? "Full access to premium features"
+                      : "Watch ads to reveal contacts"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold">
+                  {staticSubscriptionData.subscriptionStatus === "free_trial"
+                    ? `${trialDaysLeft} days`
+                    : staticSubscriptionData.subscriptionStatus === "active"
+                    ? "Active"
+                    : "Free"}
+                </div>
+                {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+                  <div className="text-sm text-purple-200">trial remaining</div>
+                )}
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Current Plan</h3>
-              <p
-                className={`text-sm ${getStatusColor(
-                  staticSubscriptionData.subscriptionStatus
-                )}`}
+
+            {/* Status Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  staticSubscriptionData.subscriptionStatus === "active"
+                    ? "bg-green-400"
+                    : staticSubscriptionData.subscriptionStatus === "free_trial"
+                    ? "bg-blue-400"
+                    : "bg-orange-400"
+                }`}
+              ></div>
+              <span className="text-sm font-medium">
+                {staticSubscriptionData.subscriptionStatus === "active"
+                  ? "Premium Plan"
+                  : staticSubscriptionData.subscriptionStatus === "free_trial"
+                  ? "30-Day Free Trial"
+                  : "Ad-Supported"}
+              </span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
+          {/* Contact Credits Card - Left Side */}
+          <motion.div
+            className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-xl p-4 md:p-6 text-white relative overflow-hidden group col-span-1"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.3 } }}
+          >
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full -translate-y-12 translate-x-12"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white rounded-full translate-y-8 -translate-x-8"></div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="text-center mb-6">
+                <motion.div
+                  className="inline-flex items-center gap-3 mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <motion.div
+                    className="p-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30"
+                    whileHover={{ rotate: 180, scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <FiZap size={20} />
+                  </motion.div>
+                  <div className="text-center">
+                    <h3 className="font-bold text-lg text-white">Credits</h3>
+                    <p className="text-emerald-100 text-sm">
+                      Property contacts
+                    </p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="text-7xl font-black text-white mb-2 drop-shadow-lg"
+                  initial={{ scale: 0, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 300 }}
+                >
+                  {staticSubscriptionData.adUnlockCredits}
+                </motion.div>
+
+                <motion.div
+                  className="space-y-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0 }}
+                >
+                  <p className="text-emerald-100 text-sm font-medium">
+                    Available to use
+                  </p>
+                  <p className="text-emerald-200/80 text-xs">
+                    1 credit = 1 contact reveal
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Plan Details Card */}
+          <motion.div
+            className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 col-span-1 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            whileHover={{ y: -6, scale: 1.01 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <motion.div
+                className="p-3 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl shadow-lg"
+                whileHover={{ rotate: -5, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400 }}
               >
-                {getStatusText(staticSubscriptionData.subscriptionStatus)}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-sm text-gray-600">
-            {staticSubscriptionData.subscriptionStatus === "free_trial" && (
-              <>
-                <div className="flex justify-between">
-                  <span>Trial started:</span>
-                  <span>
-                    {formatDate(staticSubscriptionData.freeTrialStartDate)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Trial expires:</span>
-                  <span>
-                    {formatDate(staticSubscriptionData.freeTrialEndDate)}
-                  </span>
-                </div>
-              </>
-            )}
-            {staticSubscriptionData.subscriptionStatus === "active" && (
-              <>
-                <div className="flex justify-between">
-                  <span>Active since:</span>
-                  <span>
-                    {formatDate(staticSubscriptionData.subscriptionStartDate)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Expires:</span>
-                  <span>
-                    {formatDate(staticSubscriptionData.subscriptionEndDate)}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Contact Reveal Credits Card */}
-        <motion.div
-          className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200 hover:shadow-lg transition-shadow duration-300"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          whileHover={{ y: -4 }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <FiZap className="text-green-600" size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Contact Credits</h3>
-              <p className="text-sm text-gray-600">Reveal property contacts</p>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-1">
-              {staticSubscriptionData.adUnlockCredits}
-            </div>
-            <p className="text-sm text-gray-600">Available Credits</p>
-          </div>
-
-          {staticSubscriptionData.adUnlockCredits === 0 &&
-            staticSubscriptionData.subscriptionStatus !== "none" && (
-              <button className="w-full mt-3 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center gap-2">
-                <FiPlus size={16} />
-                Get More Credits
-              </button>
-            )}
-        </motion.div>
-      </motion.div>
-
-      {/* Trial Warning */}
-      {staticSubscriptionData.subscriptionStatus === "free_trial" &&
-        trialDaysLeft <= 3 && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <FiClock className="text-yellow-500" size={20} />
+                <FiCreditCard className="text-white" size={24} />
+              </motion.div>
               <div>
-                <p className="font-medium text-yellow-800">
-                  Only {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
-                  in your free trial
-                </p>
-                <p className="text-sm text-yellow-600 mt-1">
-                  Upgrade to premium to continue revealing contact details
-                  without interruptions.
+                <h3 className="font-bold text-gray-900 text-lg">
+                  Plan Details
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {staticSubscriptionData.subscriptionStatus === "active"
+                    ? "Your premium subscription details"
+                    : staticSubscriptionData.subscriptionStatus === "free_trial"
+                    ? "Trial period information"
+                    : "Upgrade to unlock premium features"}
                 </p>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+                <>
+                  <motion.div
+                    className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <span className="text-gray-600">Trial started:</span>
+                    <span className="font-semibold text-gray-900">
+                      {formatDate(staticSubscriptionData.freeTrialStartDate)}
+                    </span>
+                  </motion.div>
+                  <motion.div
+                    className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.0 }}
+                  >
+                    <span className="text-gray-600">Trial expires:</span>
+                    <span className="font-semibold text-orange-600">
+                      {formatDate(staticSubscriptionData.freeTrialEndDate)}
+                    </span>
+                  </motion.div>
+                </>
+              )}
+              {staticSubscriptionData.subscriptionStatus === "active" && (
+                <>
+                  <motion.div
+                    className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <span className="text-gray-600">Active since:</span>
+                    <span className="font-semibold text-gray-900">
+                      {formatDate(staticSubscriptionData.subscriptionStartDate)}
+                    </span>
+                  </motion.div>
+                  <motion.div
+                    className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.0 }}
+                  >
+                    <span className="text-gray-600">Expires:</span>
+                    <span className="font-semibold text-gray-900">
+                      {formatDate(staticSubscriptionData.subscriptionEndDate)}
+                    </span>
+                  </motion.div>
+                </>
+              )}
+              {staticSubscriptionData.subscriptionStatus === "none" && (
+                <div className="col-span-2 text-center py-8">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <div className="text-4xl mb-3">🚀</div>
+                    <h4 className="font-bold text-gray-900 mb-2">
+                      Upgrade to Premium
+                    </h4>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Get unlimited contact reveals and premium features
+                    </p>
+                  </motion.div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Trial Warning */}
+        {staticSubscriptionData.subscriptionStatus === "free_trial" &&
+          trialDaysLeft <= 3 && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <FiClock className="text-yellow-500" size={20} />
+                <div>
+                  <p className="font-medium text-yellow-800">
+                    Only {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}{" "}
+                    left in your free trial
+                  </p>
+                  <p className="text-sm text-yellow-600 mt-1">
+                    Upgrade to premium to continue revealing contact details
+                    without interruptions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Upgrade CTA */}
+        {(staticSubscriptionData.subscriptionStatus === "free_trial" ||
+          staticSubscriptionData.subscriptionStatus === "none" ||
+          staticSubscriptionData.subscriptionStatus === "expired") && (
+          <div className="mt-6 text-center">
+            {!staticSubscriptionData.freeTrialUsed ? (
+              // Show Free Trial button for new users
+              <motion.button
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiGift size={18} />
+                Start Free Trial
+              </motion.button>
+            ) : (
+              // Show Upgrade button for users who have used their trial
+              <motion.button
+                className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiCreditCard size={18} />
+                Upgrade to ₹200 Contact Plan
+              </motion.button>
+            )}
+            <p className="text-sm text-gray-600 mt-2">
+              {!staticSubscriptionData.freeTrialUsed
+                ? "Get 30 days free trial with unlimited contact reveals"
+                : "Get 30 direct contact reveals for ₹200/month"}
+            </p>
           </div>
         )}
-
-      {/* Upgrade CTA */}
-      {(staticSubscriptionData.subscriptionStatus === "free_trial" ||
-        staticSubscriptionData.subscriptionStatus === "none" ||
-        staticSubscriptionData.subscriptionStatus === "expired") && (
-        <div className="mt-6 text-center">
-          {!staticSubscriptionData.freeTrialUsed ? (
-            // Show Free Trial button for new users
-            <motion.button
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8, duration: 0.4 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiGift size={18} />
-              Start Free Trial
-            </motion.button>
-          ) : (
-            // Show Upgrade button for users who have used their trial
-            <motion.button
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8, duration: 0.4 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiCreditCard size={18} />
-              Upgrade to ₹200 Contact Plan
-            </motion.button>
-          )}
-          <p className="text-sm text-gray-600 mt-2">
-            {!staticSubscriptionData.freeTrialUsed
-              ? "Get 30 days free trial with unlimited contact reveals"
-              : "Get 30 direct contact reveals for ₹200/month"}
-          </p>
-        </div>
-      )}
+      </div>
     </motion.div>
   );
 }

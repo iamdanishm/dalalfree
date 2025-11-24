@@ -117,24 +117,31 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Profile Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Profile Header & Settings */}
-            <div className="lg:col-span-1 space-y-6">
-              <ProfileHeader
-                user={userProfile}
-                onProfileUpdate={fetchUserProfile}
-              />
-              <AccountSettings
-                user={userProfile}
-                onProfileUpdate={fetchUserProfile}
-              />
-            </div>
+          {/* Profile Content - Card-Based Dashboard */}
+          <div className="space-y-6 md:space-y-8">
+            {/* Profile Hero Card - Full Width */}
+            <ProfileHeader
+              user={userProfile}
+              onProfileUpdate={fetchUserProfile}
+            />
 
-            {/* Right Column - Dashboard */}
-            <div className="lg:col-span-2 space-y-6">
-              <SubscriptionDashboard user={userProfile} />
-              <ActivityStats user={userProfile} />
+            {/* Stats Cards Grid */}
+            <ActivityStats user={userProfile} />
+
+            {/* Main Content Cards - Responsive Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+              {/* Left Column */}
+              <div className="space-y-4 md:space-y-6">
+                <SubscriptionDashboard user={userProfile} />
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-4 md:space-y-6">
+                <AccountSettings
+                  user={userProfile}
+                  onProfileUpdate={fetchUserProfile}
+                />
+              </div>
             </div>
           </div>
         </div>
