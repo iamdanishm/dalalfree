@@ -258,15 +258,52 @@ function SearchPageContent() {
                     ...provided,
                     border: "1px solid #e5e7eb",
                     borderRadius: "0.5rem",
-                    padding: "0.1rem",
-                    minHeight: "42px",
+                    padding: "0.25rem",
+                    minHeight: "48px",
                     boxShadow: "none",
+                    "&:hover": {
+                      border: "1px solid #e5e7eb",
+                    },
+                    "&:focus-within": {
+                      borderColor: "var(--color-primary)",
+                      borderWidth: "3px",
+                      boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                    },
+                  }),
+                  singleValue: (provided, state) => ({
+                    ...provided,
+                    color: "#374151",
+                  }),
+                  placeholder: (provided, state) => ({
+                    ...provided,
+                    color: "#9ca3af",
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected
+                      ? "var(--color-primary)"
+                      : state.isFocused
+                      ? "#f3f4f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#374151",
+                    cursor: "pointer",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    zIndex: 9999,
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
                   }),
                 }}
                 components={{
                   DropdownIndicator: () => (
                     <MdKeyboardArrowDown
-                      className="text-gray-400 mr-1"
+                      className="text-gray-400 mr-2"
                       size={16}
                     />
                   ),
@@ -291,15 +328,52 @@ function SearchPageContent() {
                     ...provided,
                     border: "1px solid #e5e7eb",
                     borderRadius: "0.5rem",
-                    padding: "0.1rem",
-                    minHeight: "42px",
+                    padding: "0.25rem",
+                    minHeight: "48px",
                     boxShadow: "none",
+                    "&:hover": {
+                      border: "1px solid #e5e7eb",
+                    },
+                    "&:focus-within": {
+                      borderColor: "var(--color-primary)",
+                      borderWidth: "3px",
+                      boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                    },
+                  }),
+                  singleValue: (provided, state) => ({
+                    ...provided,
+                    color: "#374151",
+                  }),
+                  placeholder: (provided, state) => ({
+                    ...provided,
+                    color: "#9ca3af",
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected
+                      ? "var(--color-primary)"
+                      : state.isFocused
+                      ? "#f3f4f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#374151",
+                    cursor: "pointer",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    zIndex: 9999,
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
                   }),
                 }}
                 components={{
                   DropdownIndicator: () => (
                     <MdKeyboardArrowDown
-                      className="text-gray-400 mr-1"
+                      className="text-gray-400 mr-2"
                       size={16}
                     />
                   ),
@@ -330,15 +404,52 @@ function SearchPageContent() {
                     ...provided,
                     border: "1px solid #e5e7eb",
                     borderRadius: "0.5rem",
-                    padding: "0.1rem",
-                    minHeight: "42px",
+                    padding: "0.25rem",
+                    minHeight: "48px",
                     boxShadow: "none",
+                    "&:hover": {
+                      border: "1px solid #e5e7eb",
+                    },
+                    "&:focus-within": {
+                      borderColor: "var(--color-primary)",
+                      borderWidth: "3px",
+                      boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                    },
+                  }),
+                  singleValue: (provided, state) => ({
+                    ...provided,
+                    color: "#374151",
+                  }),
+                  placeholder: (provided, state) => ({
+                    ...provided,
+                    color: "#9ca3af",
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected
+                      ? "var(--color-primary)"
+                      : state.isFocused
+                      ? "#f3f4f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#374151",
+                    cursor: "pointer",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    zIndex: 9999,
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
                   }),
                 }}
                 components={{
                   DropdownIndicator: () => (
                     <MdKeyboardArrowDown
-                      className="text-gray-400 mr-1"
+                      className="text-gray-400 mr-2"
                       size={16}
                     />
                   ),
@@ -371,15 +482,52 @@ function SearchPageContent() {
                     ...provided,
                     border: "1px solid #e5e7eb",
                     borderRadius: "0.5rem",
-                    padding: "0.1rem",
-                    minHeight: "42px",
+                    padding: "0.25rem",
+                    minHeight: "48px",
                     boxShadow: "none",
+                    "&:hover": {
+                      border: "1px solid #e5e7eb",
+                    },
+                    "&:focus-within": {
+                      borderColor: "var(--color-primary)",
+                      borderWidth: "3px",
+                      boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                    },
+                  }),
+                  singleValue: (provided, state) => ({
+                    ...provided,
+                    color: "#374151",
+                  }),
+                  placeholder: (provided, state) => ({
+                    ...provided,
+                    color: "#9ca3af",
+                  }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isSelected
+                      ? "var(--color-primary)"
+                      : state.isFocused
+                      ? "#f3f4f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#374151",
+                    cursor: "pointer",
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    zIndex: 9999,
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
                   }),
                 }}
                 components={{
                   DropdownIndicator: () => (
                     <MdKeyboardArrowDown
-                      className="text-gray-400 mr-1"
+                      className="text-gray-400 mr-2"
                       size={16}
                     />
                   ),
@@ -455,9 +603,49 @@ function SearchPageContent() {
                       styles={{
                         control: (provided) => ({
                           ...provided,
+                          border: "1px solid #e5e7eb",
                           borderRadius: "0.75rem",
                           padding: "0.25rem",
                           minHeight: "48px",
+                          boxShadow: "none",
+                          "&:hover": {
+                            border: "1px solid #e5e7eb",
+                          },
+                          "&:focus-within": {
+                            borderColor: "var(--color-primary)",
+                            borderWidth: "3px",
+                            boxShadow:
+                              "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                          },
+                        }),
+                        singleValue: (provided, state) => ({
+                          ...provided,
+                          color: "#374151",
+                        }),
+                        placeholder: (provided, state) => ({
+                          ...provided,
+                          color: "#9ca3af",
+                        }),
+                        option: (provided, state) => ({
+                          ...provided,
+                          backgroundColor: state.isSelected
+                            ? "var(--color-primary)"
+                            : state.isFocused
+                            ? "#f3f4f6"
+                            : "white",
+                          color: state.isSelected ? "white" : "#374151",
+                          cursor: "pointer",
+                        }),
+                        menu: (provided) => ({
+                          ...provided,
+                          borderRadius: "0.5rem",
+                          border: "1px solid #e5e7eb",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                          zIndex: 9999,
+                        }),
+                        menuPortal: (provided) => ({
+                          ...provided,
+                          zIndex: 9999,
                         }),
                       }}
                       components={{
@@ -781,6 +969,13 @@ const mockProperties = [
 
 const propertyTypes = {
   residential: ["1 RK", "1 BHK", "2 BHK", "3 BHK", "4+ BHK"],
+  commercial: [
+    "Office Space",
+    "Retail Space",
+    "Warehouse",
+    "Showroom",
+    "Co-working",
+  ],
 };
 
 const cities = [
