@@ -85,25 +85,49 @@ export default function SubscriptionDashboard({ user }) {
   const trialDaysLeft = calculateTrialDaysLeft();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <motion.div
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <motion.h2
+          className="text-xl font-semibold text-gray-900"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           Subscription & Credits
-        </h2>
+        </motion.h2>
         {staticSubscriptionData.subscriptionStatus === "free_trial" && (
-          <div
+          <motion.div
             className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
               staticSubscriptionData.subscriptionStatus
             )}`}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.4, type: "spring" }}
           >
             {trialDaysLeft} days left
-          </div>
+          </motion.div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
         {/* Subscription Status Card */}
-        <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/20">
+        <motion.div
+          className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/20 hover:shadow-lg transition-shadow duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          whileHover={{ y: -4 }}
+        >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-primary/20 rounded-lg">
               <FiTrendingUp className="text-primary" size={20} />
@@ -154,10 +178,16 @@ export default function SubscriptionDashboard({ user }) {
               </>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Contact Reveal Credits Card */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+        <motion.div
+          className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200 hover:shadow-lg transition-shadow duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          whileHover={{ y: -4 }}
+        >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-green-100 rounded-lg">
               <FiZap className="text-green-600" size={20} />
@@ -182,8 +212,8 @@ export default function SubscriptionDashboard({ user }) {
                 Get More Credits
               </button>
             )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Trial Warning */}
       {staticSubscriptionData.subscriptionStatus === "free_trial" &&
@@ -212,16 +242,30 @@ export default function SubscriptionDashboard({ user }) {
         <div className="mt-6 text-center">
           {!staticSubscriptionData.freeTrialUsed ? (
             // Show Free Trial button for new users
-            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto">
+            <motion.button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8, duration: 0.4 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <FiGift size={18} />
               Start Free Trial
-            </button>
+            </motion.button>
           ) : (
             // Show Upgrade button for users who have used their trial
-            <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto">
+            <motion.button
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8, duration: 0.4 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <FiCreditCard size={18} />
               Upgrade to ₹200 Contact Plan
-            </button>
+            </motion.button>
           )}
           <p className="text-sm text-gray-600 mt-2">
             {!staticSubscriptionData.freeTrialUsed
@@ -230,6 +274,6 @@ export default function SubscriptionDashboard({ user }) {
           </p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
