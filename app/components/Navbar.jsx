@@ -23,6 +23,17 @@ export default function Navbar() {
   const mobileMenuRef = useRef(null);
   const { data: session } = useSession();
 
+  // Get user initials for avatar
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -183,8 +194,8 @@ export default function Navbar() {
                     aria-expanded={userDropdownOpen}
                     aria-haspopup="true"
                   >
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                      <FiUser className="text-white" size={16} />
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      {getInitials(session.user.name)}
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">
@@ -219,8 +230,8 @@ export default function Navbar() {
                         {/* User Info Header */}
                         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl">
                           <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                              <FiUser className="text-white" size={20} />
+                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-lg font-semibold">
+                              {getInitials(session.user.name)}
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-gray-900">
@@ -289,10 +300,10 @@ export default function Navbar() {
             {session && (
               <Link
                 href="/profile"
-                className="p-2 rounded-md text-secondary mr-2"
+                className="w-9 h-9 bg-primary rounded-full flex items-center justify-center mr-2 text-white text-sm font-semibold"
                 aria-label="Profile"
               >
-                <FiUser size={22} />
+                {getInitials(session.user.name)}
               </Link>
             )}
             <button
@@ -325,8 +336,8 @@ export default function Navbar() {
               {session && (
                 <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                      <FiUser className="text-white" size={20} />
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      {getInitials(session.user.name)}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
