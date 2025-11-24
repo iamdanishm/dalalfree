@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -71,7 +72,21 @@ export default function RegisterPage() {
       const res = await axios.post("/api/auth/register", data);
       if (res.status === 201) {
         setSuccessMsg("Account created successfully!");
-        setTimeout(() => router.push("/login"), 1500);
+
+        // Auto-login the user with NextAuth
+        const signInResult = await signIn("credentials", {
+          email: data.email,
+          password: data.password,
+          redirect: false, // Don't auto-redirect
+        });
+
+        if (signInResult?.ok) {
+          // Success - redirect to onboarding
+          setTimeout(() => router.push("/onboard"), 1500);
+        } else {
+          // Fallback - redirect to login if auto-login fails
+          setTimeout(() => router.push("/login"), 1500);
+        }
       }
     } catch (err) {
       setErrorMsg(err.response?.data?.error || "Registration failed.");
@@ -188,6 +203,41 @@ export default function RegisterPage() {
                 className="text-xs text-red-500 mt-1 block"
               >
                 {errors.email.message}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Mobile Number */}
+        <motion.div variants={itemVariants}>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Mobile Number
+          </label>
+          <motion.input
+            type="tel"
+            {...register("phone", {
+              required: "Mobile number is required",
+              pattern: {
+                value: /^[6-9]\d{9}$/,
+                message:
+                  "Please enter a valid 10-digit mobile number starting with 6-9",
+              },
+            })}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+            placeholder="9876543210"
+            whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
+          />
+          <AnimatePresence>
+            {errors.phone && (
+              <motion.span
+                key="phone-error"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-red-500 mt-1 block"
+              >
+                {errors.phone.message}
               </motion.span>
             )}
           </AnimatePresence>

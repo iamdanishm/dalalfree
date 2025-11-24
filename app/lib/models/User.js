@@ -37,30 +37,16 @@ const UserSchema = new mongoose.Schema(
     subscriptionStatus: {
       type: String,
       enum: ["free_trial", "active", "expired", "cancelled", "none"],
-      default: function () {
-        // New buyers get free trial
-        return this.role === "buyer" ? "free_trial" : "none";
-      },
+      default: "none", // Buyers start with no subscription, must activate trial
     },
     subscriptionStartDate: { type: Date },
     subscriptionEndDate: { type: Date },
     freeTrialUsed: { type: Boolean, default: false },
     freeTrialStartDate: { type: Date },
-    freeTrialEndDate: {
-      type: Date,
-      default: function () {
-        // Set 1-month free trial for new buyers
-        return this.role === "buyer"
-          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          : null;
-      },
-    },
+    freeTrialEndDate: { type: Date }, // No default - set only when trial is activated
     adUnlockCredits: {
       type: Number,
-      default: function () {
-        // Buyers get some free ad unlock credits
-        return this.role === "buyer" ? 5 : 0;
-      },
+      default: 0, // Must watch ads or purchase to get credits
       min: 0,
     },
   },

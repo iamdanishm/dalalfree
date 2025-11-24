@@ -15,18 +15,19 @@ export async function POST(req) {
       );
     }
 
-    const { name, email, password, role } = body;
+    const { name, email, password, role, phone } = body;
 
     const errors = [];
     if (!name) errors.push("name");
     if (!email) errors.push("email");
     if (!password) errors.push("password");
+    if (!phone) errors.push("phone");
 
     if (errors.length > 0) {
       return NextResponse.json(
         {
           error: "Missing required fields",
-          required: ["name", "email", "password"],
+          required: ["name", "email", "phone", "password"],
           missing: errors,
         },
         { status: 400 }
@@ -48,16 +49,27 @@ export async function POST(req) {
       name,
       email,
       password: hashed,
+      phone,
       role: role || "buyer",
     });
+
+    // Auto-login the user after registration
+    const userForSession = {
+      id: newUser._id.toString(),
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+    };
 
     return NextResponse.json(
       {
         message: "User registered successfully",
+        redirectTo: "/onboard", // Auto-redirect to onboarding
         user: {
           id: newUser._id,
           name: newUser.name,
           email: newUser.email,
+          phone: newUser.phone,
           role: newUser.role,
           accountStatus: newUser.accountStatus,
           isVerified: newUser.isVerified,

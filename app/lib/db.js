@@ -53,7 +53,8 @@ export const connectDB = async () => {
       );
       connectionAttempts = 0; // Reset for next attempts
       throw new Error(
-        `Failed to connect to database after ${MAX_CONNECTION_ATTEMPTS} attempts: ${error.message}`
+        "Database is unavailable. Please try again later."
+        // `Failed to connect to database after ${MAX_CONNECTION_ATTEMPTS} attempts: ${error.message}`
       );
     }
 

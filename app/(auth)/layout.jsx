@@ -23,7 +23,9 @@ export default function AuthLayout({ children }) {
       </Link>
 
       {/* Auth Card */}
-      <div className="w-full max-w-md p-8">{children}</div>
+      <div className="w-full max-w-[95vw] lg:max-w-[1400px] p-6 lg:p-8">
+        {children}
+      </div>
 
       {/* Footer line */}
       <p className="text-xs text-gray-500 mt-8 text-center">
