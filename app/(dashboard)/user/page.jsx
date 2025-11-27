@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import LogoLoader from "@/app/components/LogoLoader";
 import HeroSearch from "./components/HeroSearch";
 import TrustBanner from "./components/TrustBanner";
 import CTASection from "./components/CTASection";
@@ -44,13 +45,7 @@ export default function UserExplore() {
   };
 
   if (loading) {
-    return (
-      <div className="bg-background text-foreground font-sans">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <LogoLoader />;
   }
 
   return (

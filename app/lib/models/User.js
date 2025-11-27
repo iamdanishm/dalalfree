@@ -49,6 +49,10 @@ const UserSchema = new mongoose.Schema(
       default: 0, // Must watch ads or purchase to get credits
       min: 0,
     },
+
+    // Password reset OTP fields
+    resetPasswordOtp: { type: String },
+    resetPasswordOtpExpiry: { type: Date },
   },
   { timestamps: true }
 );

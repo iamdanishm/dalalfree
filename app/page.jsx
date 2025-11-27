@@ -8,6 +8,7 @@ import AdminDashboard from "./(dashboard)/admin/page";
 import PartnerDashboard from "./(dashboard)/partner/page";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import LogoLoader from "./components/LogoLoader";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -37,11 +38,7 @@ export default function Home() {
 
   // Show loading while checking authentication
   if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LogoLoader />;
   }
 
   // For authenticated users, render their appropriate dashboard

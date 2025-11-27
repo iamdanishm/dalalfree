@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,10 +14,39 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm();
 
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const password = watch("password");
+
+  // Password strength indicator
+  const getPasswordStrength = (password) => {
+    if (!password) return { score: 0, label: "", color: "" };
+
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[^A-Za-z\d]/.test(password)) score += 1;
+
+    const strength = {
+      0: { label: "Very Weak", color: "bg-red-500" },
+      1: { label: "Weak", color: "bg-red-400" },
+      2: { label: "Fair", color: "bg-yellow-500" },
+      3: { label: "Good", color: "bg-yellow-400" },
+      4: { label: "Strong", color: "bg-green-500" },
+      5: { label: "Very Strong", color: "bg-green-600" },
+    };
+
+    return { score, ...strength[Math.min(score, 5)] };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
 
   // Animation variants
   const containerVariants = {
@@ -248,19 +278,65 @@ export default function RegisterPage() {
           <label className="block text-sm font-medium mb-2 text-gray-700">
             Password
           </label>
-          <motion.input
-            type="password"
-            {...register("password", {
-              required: "Password is required",
-              minLength: {
-                value: 6,
-                message: "Minimum 6 characters required",
-              },
-            })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
-            placeholder="••••••••"
-            whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
-          />
+          <div className="relative">
+            <motion.input
+              type={showPassword ? "text" : "password"}
+              {...register("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 8,
+                  message: "Password must be at least 8 characters long",
+                },
+                validate: (value) => {
+                  const hasUpperCase = /[A-Z]/.test(value);
+                  const hasLowerCase = /[a-z]/.test(value);
+                  const hasNumbers = /\d/.test(value);
+
+                  if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+                    return "Password must contain at least one uppercase letter, one lowercase letter, and one number.";
+                  }
+                  return true;
+                },
+              })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 pr-10"
+              placeholder="••••••••"
+              whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+            </button>
+          </div>
+
+          {/* Password Strength Indicator */}
+          {password && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              transition={{ duration: 0.3 }}
+              className="mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <motion.div
+                    className={`h-2 rounded-full ${passwordStrength.color}`}
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${(passwordStrength.score / 5) * 100}%`,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  {passwordStrength.label}
+                </span>
+              </div>
+            </motion.div>
+          )}
+
           <AnimatePresence>
             {errors.password && (
               <motion.span

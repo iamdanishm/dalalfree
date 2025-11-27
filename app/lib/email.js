@@ -172,6 +172,57 @@ const emailTemplates = {
     }\n\nBest regards,\nDalalFree Admin Team`,
   }),
 
+  passwordResetOtp: (data) => ({
+    subject: "Password Reset OTP - DalalFree",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">DalalFree</h1>
+          <p style="color: #e2e8f0; margin: 5px 0 0 0; font-size: 16px;">Secure Password Reset</p>
+        </div>
+
+        <div style="padding: 40px 30px;">
+          <h2 style="color: #1a202c; margin: 0 0 20px 0; text-align: center;">Reset Your Password</h2>
+
+          <p style="color: #4a5568; margin: 0 0 30px 0; text-align: center; font-size: 16px; line-height: 1.6;">
+            We received a request to reset your password. Use the verification code below to proceed:
+          </p>
+
+          <div style="background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+            <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 18px;">Your Verification Code</h3>
+            <div style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+              ${data.otp}
+            </div>
+          </div>
+
+          <div style="background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="color: #c53030; margin: 0; font-size: 14px; text-align: center;">
+              <strong>⚠️ Important:</strong> This code will expire in 15 minutes for security reasons.
+            </p>
+          </div>
+
+          <p style="color: #718096; margin: 20px 0; text-align: center; font-size: 14px;">
+            If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+          </p>
+
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; text-align: center;">
+            <p style="color: #a0aec0; margin: 0; font-size: 12px;">
+              For your security, please do not share this code with anyone.
+            </p>
+          </div>
+        </div>
+
+        <div style="background: #f7fafc; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
+          <p style="color: #718096; margin: 0; font-size: 14px;">
+            Best regards,<br>
+            <strong>The DalalFree Team</strong>
+          </p>
+        </div>
+      </div>
+    `,
+    text: `Password Reset - DalalFree\n\nYour verification code: ${data.otp}\n\nThis code expires in 15 minutes.\n\nIf you didn't request this reset, please ignore this email.\n\nBest regards,\nDalalFree Team`,
+  }),
+
   adminNotification: (data) => ({
     subject: `DalalFree Alert: ${data.type}`,
     html: `
@@ -274,8 +325,10 @@ export const verifyEmailConfig = async () => {
   }
 };
 
-export default {
+const emailService = {
   sendEmail,
   sendBulkEmails,
   verifyEmailConfig,
 };
+
+export default emailService;

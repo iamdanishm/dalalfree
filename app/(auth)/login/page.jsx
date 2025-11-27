@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { FcGoogle } from "react-icons/fc";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm();
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Animation variants
   const containerVariants = {
@@ -198,13 +200,22 @@ export default function LoginPage() {
           <label className="block text-sm font-medium mb-2 text-gray-700">
             Password
           </label>
-          <motion.input
-            type="password"
-            {...register("password", { required: "Password is required" })}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
-            placeholder="••••••••"
-            whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
-          />
+          <div className="relative">
+            <motion.input
+              type={showPassword ? "text" : "password"}
+              {...register("password", { required: "Password is required" })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 pr-10"
+              placeholder="••••••••"
+              whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+            </button>
+          </div>
           <AnimatePresence>
             {errors.password && (
               <motion.span
@@ -219,6 +230,16 @@ export default function LoginPage() {
               </motion.span>
             )}
           </AnimatePresence>
+        </motion.div>
+
+        {/* Forgot Password Link */}
+        <motion.div className="flex justify-end mb-4" variants={itemVariants}>
+          <Link
+            href="/forgot-password"
+            className="text-sm text-primary hover:text-primary/80 font-medium transition-colors duration-200"
+          >
+            Forgot Password?
+          </Link>
         </motion.div>
 
         {/* Submit */}
