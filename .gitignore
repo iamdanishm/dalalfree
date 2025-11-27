@@ -41,3 +41,6 @@ next-env.d.ts
 
 # cline rules (user-specific, should not be committed)
 .clinerules
+
+# agent instructions (user-specific, should not be committed)
+agent.md

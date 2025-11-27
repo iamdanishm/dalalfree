@@ -2,34 +2,34 @@
 
 ## Core Rules (MANDATORY)
 
-### 🔑 **Context7 Integration for Code Generation**
+### 🔑 **Natural Language First Approach**
 
-- **ALWAYS use Upstash Context7 MCP server** for any code generation, library research, or documentation lookup
-- Before writing code, use `resolve-library-id` to get accurate library IDs for frameworks/libraries you need to implement
-- Use `get-library-docs` to fetch current documentation and best practices directly from sources
-- Only fetch external docs via `fetch-mcp-server` for non-code and code topics (APIs, specifications, articles)
+- **Start with natural language** - describe your needs conversationally
+- **AI suggests MCP tools** - let Cline recommend which MCP server to use based on your request
+- **Accept or override** - use AI suggestions or specify different tools if needed
+- **Context-aware intelligence** - Cline considers your project structure, open files, and agent.md guidelines
 
-### 📋 **Structured Request Format**
+### 📋 **Optional Structured Format (When Needed)**
 
-Always structure your requests using this format:
+For complex tasks requiring detailed specification, you can structure your requests:
 
 ```
-TASK: [Brief description]
-CONTEXT: [Project framework, current file, existing code]
-REQUIREMENTS: [Specific needs, constraints, outputs]
-STEPS: [If complex, break down expected steps]
-MCP: [MCP servers/tools needed and why]
+TASK: [One-line description]
+CONTEXT: [Current scope or constraints]
+MCP: [Specific MCP tools if AI suggestion isn't what you want]
 ```
 
-### 🔍 **MCP Server Auto-Selection Rules**
+**When to use structure**: Only for highly complex tasks where clarity is crucial.
 
-Cline will automatically choose the right MCP server based on task type:
+### 🔍 **Smart MCP Tool Selection**
 
-- **Code generation/library research**: Context7 (`resolve-library-id`, `get-library-docs`)
-- **Web content/data fetching**: fetch-mcp-server (`fetch_html`, `fetch_json`, `fetch_txt`, `fetch_markdown`)
-- **Complex problem solving**: sequential-thinking (`sequentialthinking`)
-- **Notion workspace management**: notion-mcp-server (API operations for databases, pages, comments)
-- **Advanced file operations**: filesystem MCP server (read/write files, directory management)
+Cline proactively suggests the right MCP server based on your natural language:
+
+- **"Find the best library for [task]"** → Suggests Context7 for research
+- **"Get data from [API]"** → Suggests fetch-mcp-server
+- **"Analyze this complex problem"** → Suggests sequential-thinking
+- **"Work with Notion content"** → Suggests notion-mcp-server
+- **"Browse files"** → Suggests filesystem MCP server
 
 ## Effective Workflows
 
@@ -166,42 +166,36 @@ Resolve the correct library ID first, then fetch documentation.
 
 ## Practical Request Formats
 
-### Code Implementation
+### Natural Language Examples
+
+#### Simple Requests (AI suggests MCP tools)
 
 ```
-Create a user authentication API in Next.js with the following:
-- Use Context7 to research best practices for NextAuth.js integration
-- Implement login/register endpoints with validation
-- Include rate limiting and security headers
-- Use existing project patterns from app/api/
+"Just create a user auth API"
+→ Cline recognizes Next.js + MongoDB context
+→ Suggests: "I can use Context7 to research NextAuth.js best practices"
+→ Alternatively: "Let me check the existing API patterns first"
+
+"Fix the login redirect"
+→ Cline analyzes current auth flow
+→ May suggest: "Shall I use sequential-thinking to trace the redirect logic?"
 ```
 
-### Documentation Research
+#### Guided Conversations (when clarity needed)
 
 ```
-Using Context7, research Redux Toolkit documentation for:
-- Setting up RTK Query in a Next.js application
-- Best practices for API integration
-- Caching strategies and error handling patterns
+User: "Add a new user profile page"
+Cline: "I'd suggest using notion-mcp-server to check if you want to sync this with any documentation pages"
+User: "Yes, that would be helpful for the user guide"
+Cline: "Great! I'll use notion-mcp-server to create matching documentation"
 ```
 
-### System Analysis
+#### Structured When Valuable (optional)
 
 ```
-Analyze the current user management system by:
-- Using sequential-thinking to break down the architecture
-- Searching for user-related code patterns across the codebase
-- Identifying potential improvements in security and performance
-```
-
-### Data Processing
-
-```
-Fetch and process external data:
-- Use fetch_json to get data from [API endpoint]
-- Transform the data to match our Property schema
-- Implement proper error handling and data validation
-- Update the database with new information
+TASK: Add chat feature to user dashboard
+CONTEXT: Using existing Tailwind + Zustand patterns
+MCP: Consider fetch-mcp-server for real-time chat libraries research
 ```
 
 ## Workspace-Specific Rules
@@ -283,10 +277,10 @@ Integrate payment gateway:
 
 This guide emphasizes:
 
-- **Context7-first approach** for all code-related tasks
-- **Structured communication** with clear task breakdowns
-- **MCP server expertise** selection based on task requirements
-- **Iterative development** with proper validation and testing
-- **Project-specific awareness** of frameworks and conventions
+- **Natural language first approach** - conversational interaction over rigid structure
+- **Smart MCP tool suggestions** - AI recommends appropriate servers based on context
+- **Context-aware intelligence** - leverages project structure, open files, and guidelines
+- **Flexible interaction patterns** - supports both natural conversation and structured input when needed
+- **Project-specific awareness** - adapts to your tech stack and development patterns
 
-For optimal results, provide clear context and follow the structured request format. Cline will automatically leverage the most appropriate MCP servers to ensure accurate, well-researched implementations.
+Start conversations naturally, and let Cline intelligently suggest the right MCP tools and approaches for your tasks. The structured format is available when you need detailed specifications, but should not be the default way of working.
