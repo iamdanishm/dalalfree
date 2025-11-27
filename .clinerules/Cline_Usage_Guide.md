@@ -4,7 +4,7 @@
 
 ### 🔑 **Context7 Integration for Code Generation**
 
-- **ALWAYS use Context7 MCP server** for any code generation, library research, or documentation lookup
+- **ALWAYS use Upstash Context7 MCP server** for any code generation, library research, or documentation lookup
 - Before writing code, use `resolve-library-id` to get accurate library IDs for frameworks/libraries you need to implement
 - Use `get-library-docs` to fetch current documentation and best practices directly from sources
 - Only fetch external docs via `fetch-mcp-server` for non-code and code topics (APIs, specifications, articles)
@@ -26,10 +26,10 @@ MCP: [MCP servers/tools needed and why]
 Cline will automatically choose the right MCP server based on task type:
 
 - **Code generation/library research**: Context7 (`resolve-library-id`, `get-library-docs`)
-- **Web data/API research**: fetch-mcp-server (`fetch_json`, `fetch_markdown`)
+- **Web content/data fetching**: fetch-mcp-server (`fetch_html`, `fetch_json`, `fetch_txt`, `fetch_markdown`)
 - **Complex problem solving**: sequential-thinking (`sequentialthinking`)
-- **Documentation/Note management**: notion-mcp-server (database/page operations)
-- **Cross-directory operations**: filesystem MCP server (advanced file ops)
+- **Notion workspace management**: notion-mcp-server (API operations for databases, pages, comments)
+- **Advanced file operations**: filesystem MCP server (read/write files, directory management)
 
 ## Effective Workflows
 
@@ -63,6 +63,11 @@ Cline will automatically choose the right MCP server based on task type:
 - Researching library/framework usage
 - Getting current documentation
 - Finding implementation examples
+
+**TOOLS:**
+
+- `resolve-library-id`: Resolves package/product names to Context7-compatible library IDs with relevance scoring
+- `get-library-docs`: Fetches up-to-date documentation, supports 'code' (API references) and 'info' (conceptual guides) modes
 
 **HOW TO USE:**
 
@@ -98,6 +103,10 @@ Resolve the correct library ID first, then fetch documentation.
 - Workflow optimization
 - Architecture planning
 
+**TOOLS:**
+
+- `sequentialthinking`: Facilitates a detailed, step-by-step thinking process for problem-solving and analysis. Allows breaking down complex problems, revising thoughts, and generating/verifying solution hypotheses.
+
 ### **notion-mcp-server - Knowledge Management**
 
 **WHEN TO USE:**
@@ -108,6 +117,28 @@ Resolve the correct library ID first, then fetch documentation.
 - Collaborative workflows
 - Knowledge base creation
 
+**TOOLS:**
+
+- `API-get-user`: Retrieve a user
+- `API-get-users`: List all users
+- `API-get-self`: Retrieve your token's bot user
+- `API-post-database-query`: Query a database
+- `API-post-search`: Search by title
+- `API-get-block-children`: Retrieve block children
+- `API-patch-block-children`: Append block children
+- `API-retrieve-a-block`: Retrieve a block
+- `API-update-a-block`: Update a block
+- `API-delete-a-block`: Delete a block
+- `API-retrieve-a-page`: Retrieve a page
+- `API-patch-page`: Update page properties
+- `API-post-page`: Create a page
+- `API-create-a-database`: Create a database
+- `API-update-a-database`: Update a database
+- `API-retrieve-a-database`: Retrieve a database
+- `API-retrieve-a-page-property`: Retrieve a page property item
+- `API-retrieve-a-comment`: Retrieve comments
+- `API-create-a-comment`: Create comment
+
 ### **filesystem MCP - Advanced File Ops**
 
 **WHEN TO USE:**
@@ -116,6 +147,22 @@ Resolve the correct library ID first, then fetch documentation.
 - Batch file processing
 - Cross-project operations
 - System-wide configuration changes
+
+**TOOLS:**
+
+- `read_text_file`: Read complete contents of a file as text
+- `read_media_file`: Read an image or audio file, returns base64 data and MIME type
+- `read_multiple_files`: Read multiple files simultaneously
+- `write_file`: Create new file or overwrite existing (exercise caution)
+- `edit_file`: Make selective edits with advanced pattern matching
+- `create_directory`: Create new directory or ensure it exists
+- `list_directory`: List directory contents with file/directory prefixes
+- `list_directory_with_sizes`: List directory contents with sizes
+- `move_file`: Move or rename files and directories
+- `search_files`: Recursively search for files/directories matching patterns
+- `directory_tree`: Get recursive JSON tree structure of directory contents
+- `get_file_info`: Get detailed file/directory metadata
+- `list_allowed_directories`: List all directories the server is allowed to access
 
 ## Practical Request Formats
 
