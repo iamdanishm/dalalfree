@@ -3,6 +3,7 @@ import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import Kyc from "@/app/lib/models/Kyc";
 import { requireAuth } from "@/app/lib/auth";
+import { generateUniquePropertySlug } from "@/app/lib/slug";
 
 // GET all properties
 export async function GET() {
@@ -56,8 +57,13 @@ export const POST = requireAuth(async function (req) {
     }
 
     const body = await req.json();
+
+    // Generate unique slug from title if not provided
+    const slug = body.slug || (await generateUniquePropertySlug(body.title));
+
     const property = await Property.create({
       ...body,
+      slug,
       ownerId: userId,
       verified: true, // auto-verified since KYC approved
     });

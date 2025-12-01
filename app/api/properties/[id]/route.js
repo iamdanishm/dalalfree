@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import { requireAuth } from "@/app/lib/auth";
+import { generateUniquePropertySlug } from "@/app/lib/slug";
 
 // GET single property
 export async function GET(_, { params }) {
@@ -31,7 +32,16 @@ export const PUT = requireAuth(async function (req, { params }) {
   }
 
   const body = await req.json();
-  const updated = await Property.findByIdAndUpdate(id, body, {
+
+  // Regenerate slug if title is being updated or if slug is provided
+  let updateData = body;
+  if (body.title || body.slug) {
+    const newSlug =
+      body.slug || (await generateUniquePropertySlug(body.title, id));
+    updateData = { ...body, slug: newSlug };
+  }
+
+  const updated = await Property.findByIdAndUpdate(id, updateData, {
     new: true,
   });
   return NextResponse.json(updated);

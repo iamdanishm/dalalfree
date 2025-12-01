@@ -11,6 +11,7 @@ const propertySchema = new mongoose.Schema(
 
     // Basic fields (enhanced)
     title: { type: String, required: true },
+    slug: { type: String, unique: true, index: true }, // SEO-friendly URL slug
     description: String,
     subtitle: String, // "Premium 2BHK Apartment"
     price: Number,
