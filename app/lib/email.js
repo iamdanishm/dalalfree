@@ -37,11 +37,11 @@ const emailTemplates = {
         <p>You can now:</p>
         <ul>
           ${
-            data.role === "seller" || data.role === "partner"
+            data.role === "user" || data.role === "partner"
               ? "<li>List and manage properties</li>"
               : ""
           }
-          ${data.role === "buyer" ? "<li>Browse and contact sellers</li>" : ""}
+          ${data.role === "user" ? "<li>Browse and contact sellers</li>" : ""}
           ${data.role === "partner" ? "<li>Access partner dashboard</li>" : ""}
         </ul>
 

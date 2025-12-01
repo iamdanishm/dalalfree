@@ -50,7 +50,7 @@ export async function POST(req) {
       email,
       password: hashed,
       phone,
-      role: role || "buyer",
+      role: role || "user",
     });
 
     // Auto-login the user after registration

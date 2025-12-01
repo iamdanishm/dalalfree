@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   FiMenu,
   FiX,
@@ -19,9 +20,11 @@ import { useSession, signOut, signIn } from "next-auth/react";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const { data: session } = useSession();
+  const router = useRouter();
 
   // Get user initials for avatar
   const getInitials = (name) => {
@@ -53,6 +56,7 @@ export default function Navbar() {
     function handleEscapeKey(event) {
       if (event.key === "Escape") {
         setUserDropdownOpen(false);
+        setLoginPromptOpen(false);
         setOpen(false);
       }
     }
@@ -168,15 +172,21 @@ export default function Navbar() {
 
             {/* Right-side actions */}
             <div className="flex items-center gap-6">
-              {session?.user?.role !== "user" && (
-                <Link
-                  href="/partner/post"
-                  className="inline-flex items-center px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-95 transition-opacity duration-200"
-                >
-                  <FiPlus className="mr-2" size={16} />
-                  Post Property
-                </Link>
-              )}
+              <button
+                onClick={() => {
+                  if (!session) {
+                    setLoginPromptOpen(true);
+                  } else if (session.user.role === "partner") {
+                    router.push("/partner/post");
+                  } else {
+                    router.push("/user/properties/new");
+                  }
+                }}
+                className="inline-flex items-center px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-95 transition-opacity duration-200"
+              >
+                <FiPlus className="mr-2" size={16} />
+                Post Property
+              </button>
 
               {!session ? (
                 <button
@@ -201,11 +211,6 @@ export default function Navbar() {
                       <p className="text-sm font-medium text-gray-900">
                         {session.user.name?.split(" ")[0] || "User"}
                       </p>
-                      {session.user.role && (
-                        <p className="text-xs text-gray-500 capitalize">
-                          {session.user.role}
-                        </p>
-                      )}
                     </div>
                     <FiChevronDown
                       className={`text-gray-400 transition-transform duration-200 ${
@@ -240,11 +245,6 @@ export default function Navbar() {
                               <p className="text-xs text-gray-500">
                                 {session.user.email}
                               </p>
-                              {session.user.role && (
-                                <span className="inline-block mt-1 px-2 py-1 text-xs bg-primary text-white rounded-full capitalize">
-                                  {session.user.role}
-                                </span>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -346,11 +346,6 @@ export default function Navbar() {
                       <p className="text-xs text-gray-500">
                         {session.user.email}
                       </p>
-                      {session.user.role && (
-                        <span className="inline-block mt-1 px-2 py-1 text-xs bg-primary text-white rounded-full">
-                          {session.user.role}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -385,18 +380,26 @@ export default function Navbar() {
               </nav>
 
               {/* Action buttons */}
-              {session?.user?.role !== "user" && (
-                <div className="pt-4">
-                  <Link
-                    href="/partner/post"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center justify-center w-full px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors duration-150 touch-manipulation"
-                  >
-                    <FiPlus className="mr-2" size={20} />
-                    Post Property
-                  </Link>
-                </div>
-              )}
+              <div className="pt-4">
+                <button
+                  onClick={() => {
+                    if (!session) {
+                      setOpen(false);
+                      setLoginPromptOpen(true);
+                    } else if (session.user.role === "partner") {
+                      setOpen(false);
+                      router.push("/partner/post");
+                    } else {
+                      setOpen(false);
+                      router.push("/user/properties/new");
+                    }
+                  }}
+                  className="flex items-center justify-center w-full px-4 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors duration-150 touch-manipulation"
+                >
+                  <FiPlus className="mr-2" size={20} />
+                  Post Property
+                </button>
+              </div>
 
               {/* User actions */}
               <div className="pt-4 border-t border-gray-100">
@@ -449,6 +452,136 @@ export default function Navbar() {
                 )}
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Login Prompt Popup */}
+      <AnimatePresence>
+        {loginPromptOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setLoginPromptOpen(false)}
+          >
+            <motion.div
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  scale: 0.95,
+                  transition: { duration: 0.2 },
+                },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  transition: { duration: 0.2 },
+                },
+              }}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Join Dalal Free
+                  </h3>
+                  <button
+                    onClick={() => setLoginPromptOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close popup"
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Create your account to start buying and selling properties
+                  today!
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FiPlus className="text-primary" size={16} />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        List Your Property
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Reach thousands of verified buyers across the platform.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FiSearch className="text-primary" size={16} />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        Find Your Dream Home
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Browse from hundreds of verified property listings.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FiSettings className="text-primary" size={16} />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        Access Premium Tools
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Use advanced buyer inquiry and property management
+                        tools.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Success Message */}
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>Free to Start:</strong> Register now and get started
+                    immediately. No charges for listing or browsing properties!
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setLoginPromptOpen(false)}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Maybe Later
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLoginPromptOpen(false);
+                      signIn();
+                    }}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary border border-transparent rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    Get Started
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -25,16 +25,19 @@ export default function ProfilePage() {
       return;
     }
 
-    // If authenticated but not a buyer, redirect to appropriate dashboard
+    // If authenticated but not a user (regular user), redirect to appropriate dashboard
     if (status === "authenticated" && session?.user) {
       const userRole = session.user.role;
-      if (userRole !== "buyer") {
+      if (userRole !== "user") {
         switch (userRole) {
           case "admin":
             router.push("/admin");
             break;
           case "partner":
             router.push("/partner");
+            break;
+          case "subadmin":
+            router.push("/admin"); // Redirect subadmins to admin panel too
             break;
           default:
             router.push("/");
@@ -86,11 +89,11 @@ export default function ProfilePage() {
     return null;
   }
 
-  // If authenticated but not a buyer, don't render anything (will redirect)
+  // If authenticated but not a user (regular user), don't render anything (will redirect)
   if (
     status === "authenticated" &&
     session?.user &&
-    session.user.role !== "buyer"
+    session.user.role !== "user"
   ) {
     return null;
   }

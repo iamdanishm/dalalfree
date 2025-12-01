@@ -8,8 +8,8 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String },
     role: {
       type: String,
-      enum: ["buyer", "seller", "partner", "sub-admin", "admin"],
-      default: "buyer",
+      enum: ["user", "partner", "subadmin", "admin"],
+      default: "user",
     },
     isSubAdmin: { type: Boolean, default: false },
     accountStatus: {

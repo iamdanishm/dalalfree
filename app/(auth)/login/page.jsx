@@ -111,8 +111,7 @@ export default function LoginPage() {
           case "partner":
             router.push("/partner");
             break;
-          case "buyer":
-          case "seller":
+          case "user":
           default:
             router.push("/user");
             break;

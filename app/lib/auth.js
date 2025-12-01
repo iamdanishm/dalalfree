@@ -10,14 +10,19 @@ export const isAdmin = (user) => {
   return user && user.role === "admin";
 };
 
-// Check if user is user
+// Check if user is user (basic user role that can buy and sell)
 export const isUser = (user) => {
-  return user && user.role === "buyer";
+  return user && user.role === "user";
 };
 
 // Check if user is partner
 export const isPartner = (user) => {
   return user && user.role === "partner";
+};
+
+// Check if user can list/sell properties
+export const canListProperties = (user) => {
+  return user && (user.role === "user" || user.role === "partner");
 };
 
 // Require authentication middleware supporting both NextAuth sessions and JWT tokens

@@ -44,11 +44,13 @@ export async function GET(req) {
     ...user,
     role:
       user.role === "user"
-        ? "Buyer"
+        ? "User"
         : user.role === "partner"
         ? "Partner"
         : user.role === "admin"
         ? "Admin"
+        : user.role === "subadmin"
+        ? "Sub-Admin"
         : user.role,
     accountStatus:
       user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
@@ -69,7 +71,7 @@ export async function GET(req) {
   });
 }
 
-// POST /api/admin/users - Admin create user (any role: buyer, seller, partner, admin, sub-admin: buyer, seller, partner, admin, sub-admin)
+// POST /api/admin/users - Admin create user (any role: user, partner, admin, sub-admin: user, partner, admin, sub-admin)
 export async function POST(req) {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -79,7 +81,7 @@ export async function POST(req) {
       { status: 403 }
     );
 
-  const { name, email, password, phone, role = "buyer" } = await req.json();
+  const { name, email, password, phone, role = "user" } = await req.json();
 
   // Validate required fields
   const errors = [];
@@ -117,7 +119,7 @@ export async function POST(req) {
     password: hashedPassword,
     phone,
     role,
-    isSubAdmin: role === "admin" && true, // Set isSubAdmin for admin roles
+    isSubAdmin: role === "subadmin", // Set isSubAdmin for subadmin roles
     accountStatus: "active",
   });
 

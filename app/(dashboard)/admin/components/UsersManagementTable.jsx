@@ -154,9 +154,7 @@ export default function UsersManagementTable() {
         return "bg-indigo-100 text-indigo-800";
       case "partner":
         return "bg-blue-100 text-blue-800";
-      case "seller":
-        return "bg-orange-100 text-orange-800";
-      case "buyer":
+      case "user":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -242,8 +240,7 @@ export default function UsersManagementTable() {
               onChange={setRoleFilter}
               options={[
                 { value: "", label: "All Roles" },
-                { value: "buyer", label: "Buyers" },
-                { value: "seller", label: "Sellers" },
+                { value: "user", label: "User" },
                 { value: "partner", label: "Partner" },
                 { value: "sub-admin", label: "Sub-Admin" },
                 { value: "admin", label: "Admin" },
@@ -441,10 +438,8 @@ export default function UsersManagementTable() {
                         user.role
                       )}`}
                     >
-                      {user.role === "buyer"
-                        ? "Buyer"
-                        : user.role === "seller"
-                        ? "Seller"
+                      {user.role === "user"
+                        ? "User"
                         : user.role === "partner"
                         ? "Partner"
                         : user.role === "sub-admin"

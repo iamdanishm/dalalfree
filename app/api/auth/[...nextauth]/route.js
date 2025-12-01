@@ -20,7 +20,7 @@ export const authOptions = {
           id: user._id,
           email: user.email,
           name: user.name,
-          role: user.role || "buyer",
+          role: user.role || "user",
         };
       },
     }),
@@ -39,7 +39,7 @@ export const authOptions = {
           await User.create({
             name: user.name,
             email: user.email,
-            role: "buyer", // new buyers from Google signup
+            role: "user", // new users from Google signup
           });
         }
       }
@@ -49,7 +49,7 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id || user._id;
-        token.role = user.role || "buyer";
+        token.role = user.role || "user";
       }
       return token;
     },
