@@ -757,7 +757,9 @@ function SearchPageContent() {
                     duration: 0.2,
                   },
                 }}
-                onClick={() => router.push(`/property/${property.id}`)}
+                onClick={() =>
+                  router.push(`/property/${property.slug || property.id}`)
+                }
                 className="bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden border border-gray-100 flex flex-col group cursor-pointer"
                 style={{ willChange: "transform" }}
               >
@@ -838,7 +840,9 @@ function SearchPageContent() {
                       whileTap={{ scale: 0.98 }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/property/${property.id}`);
+                        router.push(
+                          `/property/${property.slug || property.id}`
+                        );
                       }}
                       transition={{ duration: 0.2 }}
                       className="w-full bg-primary text-white text-sm font-semibold py-3 px-4 rounded-xl hover:shadow-sm transition-shadow"
@@ -877,6 +881,7 @@ function SearchPageContent() {
 const mockProperties = [
   {
     id: 1,
+    slug: "green-heights-baner",
     price: "₹95 Lakh",
     title: "Green Heights, Baner",
     location: "Pune, Maharashtra",
@@ -895,6 +900,7 @@ const mockProperties = [
   },
   {
     id: 2,
+    slug: "skyline-residency-hsr",
     price: "₹45,000/mo",
     title: "Skyline Residency, HSR",
     location: "Bengaluru, Karnataka",
@@ -913,6 +919,7 @@ const mockProperties = [
   },
   {
     id: 3,
+    slug: "grade-a-space-cybercity",
     price: "₹1.2 Lakh/mo",
     title: "Grade-A Space, Cybercity",
     location: "Gurgaon, Haryana",
@@ -931,6 +938,7 @@ const mockProperties = [
   },
   {
     id: 4,
+    slug: "sunshine-apartments-andheri",
     price: "₹75 Lakh",
     title: "Sunshine Apartments, Andheri",
     location: "Mumbai, Maharashtra",
@@ -949,6 +957,7 @@ const mockProperties = [
   },
   {
     id: 5,
+    slug: "tech-park-office-whitefield",
     price: "₹85,000/mo",
     title: "Tech Park Office, Whitefield",
     location: "Bengaluru, Karnataka",
