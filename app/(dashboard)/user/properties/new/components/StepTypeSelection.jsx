@@ -48,7 +48,7 @@ const categories = [
     icon: FiTrendingDown,
     features: ["Business spaces", "Investment", "Yield potential"],
   },
-  {
+  /* {
     id: "Industrial",
     label: "Industrial",
     description: "Factories, warehouses & industrial spaces",
@@ -65,7 +65,7 @@ const categories = [
     gradient: "from-yellow-500 to-amber-600",
     icon: FiMapPin,
     features: ["Investment", "Development", "Future value"],
-  },
+  }, */
 ];
 
 export default function StepTypeSelection({

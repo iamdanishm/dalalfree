@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,23 +74,42 @@ export default function PropertyWizard({ params }) {
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const formRef = useRef(null);
 
-  // Load saved form data on mount
+  // Load temporary session data for step navigation (cleared on refresh)
   useEffect(() => {
-    const savedData = localStorage.getItem("propertyWizardData");
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
+    const tempData = sessionStorage.getItem("propertyWizardTempData");
+    if (tempData) {
+      setFormData(JSON.parse(tempData));
+      // Clear the temp data after loading
+      sessionStorage.removeItem("propertyWizardTempData");
     }
   }, []);
 
-  // Auto-save form data every 30 seconds
+  // Clear any temp data when user leaves the page
   useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      localStorage.setItem("propertyWizardData", JSON.stringify(formData));
-    }, 30000);
+    const handleBeforeUnload = () => {
+      sessionStorage.removeItem("propertyWizardTempData");
+    };
 
-    return () => clearInterval(autoSaveInterval);
-  }, [formData]);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Smooth scroll to top when step changes
+  useEffect(() => {
+    if (currentStep > 1) {
+      // Delay to allow Framer Motion animation to complete
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }, 400); // Slightly longer delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
 
   const updateFormData = (data) => {
     setFormData((prev) => ({
@@ -121,12 +140,29 @@ export default function PropertyWizard({ params }) {
           stepErrors.price = "Please enter a valid price";
         }
         if (!formData.location?.trim()) {
-          stepErrors.location = "Location is required";
+          stepErrors.location = "Area/Locality is required";
+        }
+        if (!formData.city?.trim()) {
+          stepErrors.city = "City is required";
+        }
+        if (!formData.state?.trim()) {
+          stepErrors.state = "State is required";
+        }
+        if (!formData.pincode?.trim()) {
+          stepErrors.pincode = "Pincode is required";
+        } else if (formData.pincode.length !== 6) {
+          stepErrors.pincode = "Pincode must be 6 digits";
+        }
+        if (!formData.coordinates?.lat || isNaN(formData.coordinates.lat)) {
+          stepErrors.coordinates = "Latitude is required";
+        }
+        if (!formData.coordinates?.lng || isNaN(formData.coordinates.lng)) {
+          stepErrors.coordinates = "Longitude is required";
         }
         break;
 
       case 3: // Specifications
-        // Make these required only for Residential properties
+        // BHK and Area required for Residential properties
         if (formData.category === "Residential") {
           if (!formData.bhk) {
             stepErrors.bhk = "BHK is required for residential properties";
@@ -134,6 +170,28 @@ export default function PropertyWizard({ params }) {
           if (!formData.area) {
             stepErrors.area = "Area is required";
           }
+        } else {
+          // Area required for all other property types
+          if (!formData.area) {
+            stepErrors.area = "Area is required";
+          }
+        }
+
+        // Common required fields for all property types
+        if (!formData.floor?.trim()) {
+          stepErrors.floor = "Floor is required";
+        }
+        if (!formData.totalFloors && formData.totalFloors !== 0) {
+          stepErrors.totalFloors = "Total floors is required";
+        }
+        if (!formData.age && formData.age !== 0) {
+          stepErrors.age = "Property age is required";
+        }
+        if (!formData.parking) {
+          stepErrors.parking = "Parking information is required";
+        }
+        if (!formData.facing) {
+          stepErrors.facing = "Property facing is required";
         }
         break;
 
@@ -154,6 +212,11 @@ export default function PropertyWizard({ params }) {
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < steps.length) {
+        // Save current form data temporarily for step navigation
+        sessionStorage.setItem(
+          "propertyWizardTempData",
+          JSON.stringify(formData)
+        );
         setCurrentStep(currentStep + 1);
       }
     }
@@ -161,11 +224,18 @@ export default function PropertyWizard({ params }) {
 
   const handlePrevious = () => {
     if (currentStep > 1) {
+      // Save current form data temporarily for step navigation
+      sessionStorage.setItem(
+        "propertyWizardTempData",
+        JSON.stringify(formData)
+      );
       setCurrentStep(currentStep - 1);
     }
   };
 
   const jumpToStep = (stepId) => {
+    // Save current form data temporarily for step navigation
+    sessionStorage.setItem("propertyWizardTempData", JSON.stringify(formData));
     // Allow jumping to any step that's valid, but validate completed steps
     setCurrentStep(stepId);
   };
@@ -175,6 +245,24 @@ export default function PropertyWizard({ params }) {
 
     setIsSubmitting(true);
     try {
+      // Combine floor and totalFloors for storage
+      const combinedFloor =
+        formData.floor && formData.totalFloors
+          ? `${formData.floor} of ${formData.totalFloors}`
+          : formData.floor || "";
+
+      // Upload media files first if any
+      let uploadedImages = [];
+      let uploadedVideos = [];
+
+      if (formData.images && formData.images.length > 0) {
+        uploadedImages = await uploadMediaFiles(formData.images, "images");
+      }
+
+      if (formData.videos && formData.videos.length > 0) {
+        uploadedVideos = await uploadMediaFiles(formData.videos, "videos");
+      }
+
       const response = await fetch("/api/properties", {
         method: "POST",
         headers: {
@@ -182,6 +270,9 @@ export default function PropertyWizard({ params }) {
         },
         body: JSON.stringify({
           ...formData,
+          images: uploadedImages,
+          videos: uploadedVideos,
+          floor: combinedFloor,
           ownerId: session?.user?._id,
           status: "pending", // All new properties start as pending
         }),
@@ -194,8 +285,9 @@ export default function PropertyWizard({ params }) {
 
       const property = await response.json();
 
-      // Clear saved data
+      // Clear all saved data
       localStorage.removeItem("propertyWizardData");
+      sessionStorage.removeItem("propertyWizardTempData");
 
       // Redirect to success page or property management
       router.push(`/user/properties?success=true&propertyId=${property._id}`);
@@ -205,6 +297,55 @@ export default function PropertyWizard({ params }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Upload media files function
+  const uploadMediaFiles = async (mediaFiles, type) => {
+    const uploadedFiles = [];
+
+    for (const mediaFile of mediaFiles) {
+      if (!mediaFile.file) continue; // Skip if no actual file object
+
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", mediaFile.file);
+      formDataUpload.append("type", type);
+      formDataUpload.append("category", mediaFile.category || "other");
+      formDataUpload.append("alt", mediaFile.alt || mediaFile.name);
+
+      try {
+        const response = await fetch("/api/properties/upload", {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to upload ${mediaFile.name}`);
+          continue; // Skip failed uploads
+        }
+
+        const result = await response.json();
+
+        // Add uploaded file info
+        uploadedFiles.push({
+          url: result.url,
+          src: result.url,
+          type: type === "images" ? "image" : "video",
+          category: mediaFile.category,
+          alt: mediaFile.alt,
+          order: mediaFile.order,
+          ...(type === "videos" && {
+            thumbnail: result.thumbnail,
+            title: mediaFile.name,
+            duration: result.duration || 0,
+          }),
+        });
+      } catch (error) {
+        console.error(`Error uploading ${mediaFile.name}:`, error);
+        // Continue with other files
+      }
+    }
+
+    return uploadedFiles;
   };
 
   const handleSaveDraft = () => {
@@ -231,9 +372,9 @@ export default function PropertyWizard({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div id="wizard-top" className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Responsive Progress Bar */}
-        <div className="mb-8">
+        <div id="progress-section" className="mb-8">
           {/* Desktop: Horizontal steps */}
           <div className="hidden md:flex items-center justify-between mb-4">
             {steps.map((step, index) => {
@@ -321,6 +462,7 @@ export default function PropertyWizard({ params }) {
 
         {/* Main Content */}
         <motion.div
+          ref={formRef}
           key={currentStep}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -334,6 +476,9 @@ export default function PropertyWizard({ params }) {
               updateFormData={updateFormData}
               errors={errors}
               setErrors={setErrors}
+              onStepChange={jumpToStep}
+              onPublish={handleSubmit}
+              isPublishing={isSubmitting}
             />
           </div>
         </motion.div>

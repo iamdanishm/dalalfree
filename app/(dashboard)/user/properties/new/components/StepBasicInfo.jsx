@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Select from "react-select";
-import { FiTag, FiMapPin, FiFileText, FiCheck } from "react-icons/fi";
+import {
+  FiTag,
+  FiMapPin,
+  FiFileText,
+  FiCheck,
+  FiLoader,
+  FiNavigation,
+} from "react-icons/fi";
 
 const priceSuggestions = {
   Residential: {
@@ -67,20 +74,36 @@ const generateTitleSuggestions = (category, city = "", propertyType = "") => {
       ],
     },
     Commercial: {
-      sell: `${category} Space for Sale in ${city} - Prime Business Location`,
-      rent: `${category} on Rent in ${city} - High Footfall Area`,
+      sell: [
+        `${category} Space for Sale in ${city} - Prime Business Location`,
+        `Commercial Property Available for Sale in ${city}`,
+        `Investment Opportunity in ${city} - ${category} Space`,
+        `Business Premises for Sale in ${city} - High Visibility`,
+        `Commercial Real Estate in ${city} - Ready for Business`,
+      ],
+      rent: [
+        `${category} on Rent in ${city} - High Footfall Area`,
+        `Commercial Space Available for Lease in ${city}`,
+        `Business Premises for Rent in ${city} - Prime Location`,
+        `Office/Shop Space on Rent in ${city}`,
+        `Commercial Property Rental in ${city} - Immediate Occupancy`,
+      ],
     },
     Land: {
-      sell: `Prime Land for Sale in ${city} - Investment Opportunity`,
+      sell: [
+        `Prime Land for Sale in ${city} - Investment Opportunity`,
+        `Development Land Available in ${city}`,
+        `Plot for Sale in ${city} - Ready for Construction`,
+        `Investment Property in ${city} - Land Parcel`,
+        `Agricultural/Residential Land in ${city}`,
+      ],
     },
   };
 
   if (!baseTitles[category]) return [];
 
   const suggestions = baseTitles[category];
-  return typeof suggestions === "string"
-    ? [suggestions]
-    : suggestions[propertyType] || [];
+  return suggestions[propertyType] || [];
 };
 
 export default function StepBasicInfo({
@@ -89,6 +112,8 @@ export default function StepBasicInfo({
   errors,
   setErrors,
 }) {
+  const [locationStatus, setLocationStatus] = useState(null); // 'loading', 'success', 'error'
+  const [locationError, setLocationError] = useState(null);
   // Animation variants matching project theme
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -198,6 +223,69 @@ export default function StepBasicInfo({
 
   const applyPriceSuggestion = (suggestion) => {
     updateFormData({ price: suggestion.max });
+  };
+
+  // Get current location coordinates
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser");
+      setLocationStatus("error");
+      return;
+    }
+
+    setLocationStatus("loading");
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        // Update coordinates in form data
+        updateFormData({
+          coordinates: {
+            lat: latitude,
+            lng: longitude,
+          },
+        });
+
+        setLocationStatus("success");
+        setLocationError(null);
+
+        // Clear success status after 3 seconds
+        setTimeout(() => {
+          setLocationStatus(null);
+        }, 3000);
+      },
+      (error) => {
+        setLocationStatus("error");
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError(
+              "Location access denied. Please enable location permissions and try again."
+            );
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError(
+              "Location information is unavailable. Please check your GPS settings."
+            );
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out. Please try again.");
+            break;
+          default:
+            setLocationError(
+              "An unknown error occurred while retrieving location."
+            );
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000, // 5 minutes
+      }
+    );
   };
 
   return (
@@ -425,6 +513,11 @@ export default function StepBasicInfo({
                 singleValue: (base) => ({
                   ...base,
                   color: "#111827",
+                  fontWeight: "500",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0.25rem 0.5rem",
                 }),
                 menu: (base) => ({
                   ...base,
@@ -433,14 +526,23 @@ export default function StepBasicInfo({
                 option: (base, state) => ({
                   ...base,
                   fontSize: "0.875rem",
-                  backgroundColor: state.isFocused ? "#fef2f2" : "white",
-                  color: state.isFocused ? "#111827" : "#374151",
+                  backgroundColor: state.isSelected
+                    ? "#e90914"
+                    : state.isFocused
+                    ? "#fef2f2"
+                    : "white",
+                  color: state.isSelected
+                    ? "white"
+                    : state.isFocused
+                    ? "#111827"
+                    : "#374151",
+                  cursor: "pointer",
                   "&:hover": {
-                    backgroundColor: "#fef2f2",
-                    color: "#111827",
+                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                    color: state.isSelected ? "white" : "#111827",
                   },
                   "&:active": {
-                    backgroundColor: "#fecaca",
+                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
                   },
                 }),
                 clearIndicator: (base, state) => ({
@@ -501,6 +603,11 @@ export default function StepBasicInfo({
                 singleValue: (base) => ({
                   ...base,
                   color: "#111827",
+                  fontWeight: "500",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0.25rem 0.5rem",
                 }),
                 menu: (base) => ({
                   ...base,
@@ -509,14 +616,23 @@ export default function StepBasicInfo({
                 option: (base, state) => ({
                   ...base,
                   fontSize: "0.875rem",
-                  backgroundColor: state.isFocused ? "#fef2f2" : "white",
-                  color: state.isFocused ? "#111827" : "#374151",
+                  backgroundColor: state.isSelected
+                    ? "#e90914"
+                    : state.isFocused
+                    ? "#fef2f2"
+                    : "white",
+                  color: state.isSelected
+                    ? "white"
+                    : state.isFocused
+                    ? "#111827"
+                    : "#374151",
+                  cursor: "pointer",
                   "&:hover": {
-                    backgroundColor: "#fef2f2",
-                    color: "#111827",
+                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                    color: state.isSelected ? "white" : "#111827",
                   },
                   "&:active": {
-                    backgroundColor: "#fecaca",
+                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
                   },
                 }),
               }}
@@ -551,39 +667,336 @@ export default function StepBasicInfo({
       </motion.div>
 
       {/* Location Section */}
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={itemVariants} className="space-y-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
             <FiMapPin className="text-white" size={18} />
           </div>
-          <label className="text-xl font-bold text-heading">Location</label>
+          <label className="text-xl font-bold text-heading">
+            Location Details
+          </label>
         </div>
 
+        {/* Address */}
         <div className="space-y-3">
+          <label className="text-sm font-medium text-heading">
+            Full Address
+          </label>
+          <textarea
+            value={formData.address || ""}
+            onChange={(e) => updateFormData({ address: e.target.value })}
+            placeholder="Enter complete property address with landmark"
+            className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 resize-none"
+            rows={3}
+            maxLength={200}
+          />
+          <div className="text-sm text-muted">
+            {formData.address?.length || 0}/200 characters
+          </div>
+        </div>
+
+        {/* Location/Area */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-heading">
+            Area/Locality
+          </label>
           <input
             type="text"
             value={formData.location || ""}
             onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder="e.g., Baner, Pune, Maharashtra"
+            placeholder="e.g., Baner, Andheri West, Koramangala"
             className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
           />
+        </div>
 
-          {errors.location && (
+        {/* City, State, Pincode Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* City */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-heading">City *</label>
+            <input
+              type="text"
+              value={formData.city || ""}
+              onChange={(e) => updateFormData({ city: e.target.value })}
+              placeholder="e.g., Mumbai, Delhi, Bangalore"
+              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+            />
+          </div>
+
+          {/* State */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-heading">State *</label>
+            <Select
+              value={
+                formData.state
+                  ? { value: formData.state, label: formData.state }
+                  : null
+              }
+              onChange={(selectedOption) => {
+                updateFormData({ state: selectedOption?.value || "" });
+              }}
+              options={[
+                { value: "", label: "Select State", isDisabled: true },
+                { value: "Andhra Pradesh", label: "Andhra Pradesh" },
+                { value: "Arunachal Pradesh", label: "Arunachal Pradesh" },
+                { value: "Assam", label: "Assam" },
+                { value: "Bihar", label: "Bihar" },
+                { value: "Chhattisgarh", label: "Chhattisgarh" },
+                { value: "Delhi", label: "Delhi" },
+                { value: "Goa", label: "Goa" },
+                { value: "Gujarat", label: "Gujarat" },
+                { value: "Haryana", label: "Haryana" },
+                { value: "Himachal Pradesh", label: "Himachal Pradesh" },
+                { value: "Jharkhand", label: "Jharkhand" },
+                { value: "Karnataka", label: "Karnataka" },
+                { value: "Kerala", label: "Kerala" },
+                { value: "Madhya Pradesh", label: "Madhya Pradesh" },
+                { value: "Maharashtra", label: "Maharashtra" },
+                { value: "Manipur", label: "Manipur" },
+                { value: "Meghalaya", label: "Meghalaya" },
+                { value: "Mizoram", label: "Mizoram" },
+                { value: "Nagaland", label: "Nagaland" },
+                { value: "Odisha", label: "Odisha" },
+                { value: "Punjab", label: "Punjab" },
+                { value: "Rajasthan", label: "Rajasthan" },
+                { value: "Sikkim", label: "Sikkim" },
+                { value: "Tamil Nadu", label: "Tamil Nadu" },
+                { value: "Telangana", label: "Telangana" },
+                { value: "Tripura", label: "Tripura" },
+                { value: "Uttar Pradesh", label: "Uttar Pradesh" },
+                { value: "Uttarakhand", label: "Uttarakhand" },
+                { value: "West Bengal", label: "West Bengal" },
+              ]}
+              placeholder="Select State"
+              isClearable={false}
+              className="text-sm"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  border: "1px solid #d1d5db",
+                  borderRadius: "0.5rem",
+                  padding: "0.125rem",
+                  fontSize: "0.875rem",
+                  backgroundColor: "white",
+                  "&:hover": {
+                    borderColor: "#e90914",
+                  },
+                  "&:focus-within": {
+                    borderColor: "#e90914",
+                    boxShadow: "0 0 0 1px #e90914",
+                  },
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9ca3af",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: "#111827",
+                  fontWeight: "500",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0.25rem 0.5rem",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  fontSize: "0.875rem",
+                  backgroundColor: state.isSelected
+                    ? "#e90914"
+                    : state.isFocused
+                    ? "#fef2f2"
+                    : "white",
+                  color: state.isSelected
+                    ? "white"
+                    : state.isFocused
+                    ? "#111827"
+                    : "#374151",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                    color: state.isSelected ? "white" : "#111827",
+                  },
+                  "&:active": {
+                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
+                  },
+                }),
+              }}
+            />
+          </div>
+
+          {/* Pincode */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-heading">
+              Pincode *
+            </label>
+            <input
+              type="text"
+              value={formData.pincode || ""}
+              onChange={(e) => {
+                // Only allow digits and limit to 6 characters
+                const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                updateFormData({ pincode: value });
+              }}
+              placeholder="e.g., 400001"
+              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+              maxLength={6}
+            />
+          </div>
+        </div>
+
+        {/* Validation Errors */}
+        {errors.location && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.location}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Google Maps Coordinates */}
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50"
+        >
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-heading">
+              Google Maps Coordinates *
+            </label>
+            <span className="text-xs text-muted">
+              Required for precise location
+            </span>
+          </div>
+
+          {/* Coordinates Input Grid */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              {/* Latitude */}
+              <div>
+                <label className="block text-sm font-medium text-heading mb-2">
+                  Latitude *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.coordinates?.lat || ""}
+                  onChange={(e) => {
+                    const lat = parseFloat(e.target.value);
+                    updateFormData({
+                      coordinates: {
+                        lat: isNaN(lat) ? undefined : lat,
+                        lng: formData.coordinates?.lng,
+                      },
+                    });
+                  }}
+                  placeholder="e.g., 19.0760"
+                  className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                  required
+                />
+              </div>
+
+              {/* Longitude */}
+              <div>
+                <label className="block text-sm font-medium text-heading mb-2">
+                  Longitude *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.coordinates?.lng || ""}
+                  onChange={(e) => {
+                    const lng = parseFloat(e.target.value);
+                    updateFormData({
+                      coordinates: {
+                        lat: formData.coordinates?.lat,
+                        lng: isNaN(lng) ? undefined : lng,
+                      },
+                    });
+                  }}
+                  placeholder="e.g., 72.8777"
+                  className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                  required
+                />
+              </div>
+
+              {/* Use Current Location Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={getCurrentLocation}
+                disabled={locationStatus === "loading"}
+                className={`px-4 py-3 rounded-lg font-medium transition-all border text-sm ${
+                  locationStatus === "loading"
+                    ? "bg-blue-50 text-blue-600 border-blue-200 cursor-not-allowed"
+                    : locationStatus === "success"
+                    ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                    : locationStatus === "error"
+                    ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                    : "bg-primary text-primary-foreground border-primary hover:opacity-90"
+                }`}
+              >
+                {locationStatus === "loading" ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <FiLoader className="animate-spin" size={16} />
+                    <span>Getting...</span>
+                  </div>
+                ) : locationStatus === "success" ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <FiCheck size={16} />
+                    <span>Location Set!</span>
+                  </div>
+                ) : locationStatus === "error" ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <FiNavigation size={16} />
+                    <span>Try Again</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-2">
+                    <FiNavigation size={16} />
+                    <span>Use Current Location</span>
+                  </div>
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Location Error Display */}
+          {locationError && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="p-3 bg-red-50 border border-red-200 rounded-lg"
             >
-              <p className="text-red-600 text-sm font-medium">
-                {errors.location}
-              </p>
+              <p className="text-red-700 text-sm">{locationError}</p>
             </motion.div>
           )}
 
-          <p className="text-sm text-muted flex items-center">
-            <FiMapPin className="mr-2" size={14} />
-            Enter full address including area, city, and state for better
-            visibility
+          <p className="text-xs text-muted">
+            Use the &ldquo;Current&rdquo; button to auto-populate coordinates
+            from your location, or enter them manually for precise property
+            mapping.
+          </p>
+        </motion.div>
+
+        {/* Location Tips */}
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <h4 className="font-semibold text-red-800 mb-2 flex items-center">
+            <FiMapPin className="mr-2" size={16} />
+            Location Importance
+          </h4>
+          <p className="text-red-700 text-sm">
+            Accurate location details help buyers find your property easily and
+            improve search visibility. Include landmark details in the full
+            address for better results.
           </p>
         </div>
       </motion.div>
