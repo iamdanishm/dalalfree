@@ -10,6 +10,8 @@ import {
   FiSettings,
   FiCheckCircle,
   FiImage,
+  FiVideo,
+  FiMapPin,
   FiCheck,
   FiSave,
   FiChevronRight,
@@ -37,7 +39,6 @@ export default function StepReviewPublish({
   isPublishing = false,
 }) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [saveAsDraft, setSaveAsDraft] = useState(false);
 
   // Animation variants
   const containerVariants = {
@@ -124,22 +125,6 @@ export default function StepReviewPublish({
     return amenityIds?.map((id) => amenityMap[id]).filter(Boolean) || [];
   };
 
-  // Handle publish
-  const handlePublish = () => {
-    if (!acceptedTerms) {
-      setErrors({ terms: "Please accept the terms and conditions to publish" });
-      return;
-    }
-
-    if (saveAsDraft) {
-      // Save as draft - this would be handled differently
-      alert("Draft saving functionality to be implemented");
-      return;
-    }
-
-    onPublish && onPublish();
-  };
-
   const stepSections = [
     {
       id: 1,
@@ -177,7 +162,8 @@ export default function StepReviewPublish({
               { label: "Furnishing", value: formData.furnishing },
             ]
           : []),
-        { label: "Area", value: formatArea(formData.area) },
+        { label: "Built-up Area", value: formatArea(formData.builtUpArea) },
+        { label: "Carpet Area", value: formatArea(formData.carpetArea) },
         {
           label: "Floor",
           value: formData.floor
@@ -249,58 +235,115 @@ export default function StepReviewPublish({
       className="space-y-8"
       style={{ willChange: "transform" }}
     >
-      {/* Page Header */}
-      <motion.div variants={itemVariants} className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-heading mb-2">
+      {/* Enhanced Page Header */}
+      <motion.div variants={itemVariants} className="text-center mb-10">
+        <motion.div
+          className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary to-primary/80 rounded-full mb-4 shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FiEye className="text-white" size={24} />
+        </motion.div>
+        <h1 className="text-4xl font-bold text-heading mb-3 bg-gradient-to-r from-heading to-heading/80 bg-clip-text">
           Review & Publish
         </h1>
-        <p className="text-muted text-lg">
-          Review your property details and publish when ready
+        <p className="text-muted text-lg max-w-2xl mx-auto">
+          Your property is ready! Review all details below and publish when
+          you're satisfied
         </p>
+        <motion.div
+          className="mt-4 inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <FiCheck size={14} />
+          <span>All steps completed successfully</span>
+        </motion.div>
       </motion.div>
 
-      {/* Property Overview Card */}
+      {/* Enhanced Property Overview Card */}
       <motion.div
         variants={itemVariants}
-        className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-6"
+        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-blue-50 border border-primary/20 rounded-2xl p-8 shadow-xl"
       >
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-heading">
-              {formData.title || "Property Title"}
-            </h3>
-            <p className="text-muted">{formData.location || "Location"}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary">
-              {formatPrice(formData.price)}
-            </div>
-            <div className="text-sm text-muted">
-              {getCategoryDisplay(formData.category)}
-            </div>
-          </div>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/50 rounded-full translate-y-12 -translate-x-12"></div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="text-center">
-            <div className="text-lg font-semibold text-heading">
-              {formData.images?.length || 0}
+        <div className="relative">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <motion.h3
+                className="text-2xl font-bold text-heading mb-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                {formData.title || "Property Title"}
+              </motion.h3>
+              <motion.p
+                className="text-muted text-lg flex items-center"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <FiMapPin className="mr-2 text-primary" size={16} />
+                {formData.location || "Location"}
+              </motion.p>
             </div>
-            <div className="text-sm text-muted">Photos</div>
+            <motion.div
+              className="text-right"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="text-3xl font-bold text-primary mb-1">
+                {formatPrice(formData.price)}
+              </div>
+              <div className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                {getCategoryDisplay(formData.category)}
+              </div>
+            </motion.div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-heading">
-              {formData.videos?.length || 0}
+
+          {/* Enhanced Quick Stats */}
+          <motion.div
+            className="grid grid-cols-3 gap-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+              <motion.div
+                className="text-2xl font-bold text-primary mb-1"
+                whileHover={{ scale: 1.1 }}
+              >
+                {formData.images?.length || 0}
+              </motion.div>
+              <div className="text-sm text-muted font-medium">Photos</div>
             </div>
-            <div className="text-sm text-muted">Videos</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-heading">
-              {formData.societyAmenities?.length || 0}
+            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+              <motion.div
+                className="text-2xl font-bold text-blue-600 mb-1"
+                whileHover={{ scale: 1.1 }}
+              >
+                {formData.videos?.length || 0}
+              </motion.div>
+              <div className="text-sm text-muted font-medium">Videos</div>
             </div>
-            <div className="text-sm text-muted">Amenities</div>
-          </div>
+            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+              <motion.div
+                className="text-2xl font-bold text-green-600 mb-1"
+                whileHover={{ scale: 1.1 }}
+              >
+                {formData.societyAmenities?.length || 0}
+              </motion.div>
+              <div className="text-sm text-muted font-medium">Amenities</div>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 
@@ -348,23 +391,23 @@ export default function StepReviewPublish({
                   {formData.images && formData.images.length > 0 && (
                     <div>
                       <h5 className="font-medium text-heading mb-2">Images:</h5>
-                      <div className="grid grid-cols-4 gap-2">
-                        {formData.images.slice(0, 8).map((image, index) => (
+                      <div className="grid grid-cols-6 gap-2">
+                        {formData.images.slice(0, 12).map((image, index) => (
                           <div
                             key={index}
                             className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
                           >
                             <img
                               src={image.url || image.src}
-                              alt={`Image ${index + 1}`}
+                              alt={image.name || `Image ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         ))}
-                        {formData.images.length > 8 && (
+                        {formData.images.length > 12 && (
                           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                             <span className="text-sm text-muted">
-                              +{formData.images.length - 8} more
+                              +{formData.images.length - 12} more
                             </span>
                           </div>
                         )}
@@ -375,9 +418,25 @@ export default function StepReviewPublish({
                   {formData.videos && formData.videos.length > 0 && (
                     <div>
                       <h5 className="font-medium text-heading mb-2">Videos:</h5>
-                      <div className="text-sm text-muted">
-                        {formData.videos.length} video
-                        {formData.videos.length > 1 ? "s" : ""} uploaded
+                      <div className="space-y-2">
+                        {formData.videos.map((video, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"
+                          >
+                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                              <FiVideo className="text-red-600" size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-heading truncate">
+                                {video.name}
+                              </p>
+                              <p className="text-xs text-muted">
+                                Video {index + 1}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -426,79 +485,6 @@ export default function StepReviewPublish({
             <p className="text-red-700 text-sm">{errors.terms}</p>
           </motion.div>
         )}
-      </motion.div>
-
-      {/* Publish Options */}
-      <motion.div
-        variants={itemVariants}
-        className="bg-blue-50 border border-blue-200 rounded-lg p-6"
-      >
-        <h4 className="font-semibold text-blue-900 mb-4">Ready to Publish?</h4>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="draft"
-              checked={saveAsDraft}
-              onChange={(e) => setSaveAsDraft(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label
-              htmlFor="draft"
-              className="text-sm font-medium text-blue-900 cursor-pointer"
-            >
-              Save as Draft (Publish later)
-            </label>
-          </div>
-
-          <div className="text-sm text-blue-700">
-            {saveAsDraft
-              ? "Your property will be saved as a draft and you can publish it later from your dashboard."
-              : "Your property will be submitted for approval and become visible to buyers once approved by our team."}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Action Buttons */}
-      <motion.div
-        variants={itemVariants}
-        className="flex justify-end space-x-4"
-      >
-        <button
-          onClick={() => onStepChange && onStepChange(5)}
-          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-        >
-          Back to Edit
-        </button>
-
-        <button
-          onClick={handlePublish}
-          disabled={isPublishing || !acceptedTerms}
-          className={`flex items-center space-x-3 px-8 py-3 rounded-lg font-medium transition-all ${
-            isPublishing || !acceptedTerms
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : saveAsDraft
-              ? "bg-yellow-500 text-white hover:bg-yellow-600"
-              : "bg-green-500 text-white hover:bg-green-600"
-          }`}
-        >
-          {isPublishing ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-              <span>Publishing...</span>
-            </>
-          ) : saveAsDraft ? (
-            <>
-              <FiSave size={16} />
-              <span>Save as Draft</span>
-            </>
-          ) : (
-            <>
-              <FiCheck size={16} />
-              <span>Publish Property</span>
-            </>
-          )}
-        </button>
       </motion.div>
     </motion.div>
   );

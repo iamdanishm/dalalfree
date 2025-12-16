@@ -28,31 +28,58 @@ export default function StepMediaUpload({
   const [playingVideo, setPlayingVideo] = useState(null);
 
   // Initialize state once from props.
-  const [localImages, setLocalImages] = useState(formData.images || []);
-  const [localVideos, setLocalVideos] = useState(formData.videos || []);
+  const [localImages, setLocalImages] = useState([]);
+  const [localVideos, setLocalVideos] = useState([]);
 
   const fileInputRef = useRef(null);
 
-  // Sync to parent ONLY when local state changes
+  // Sync local state with formData when navigating between steps (only when formData changes externally)
   useEffect(() => {
-    // Simple deep comparison to avoid infinite loops
+    const currentImages = formData.images || [];
+    const currentVideos = formData.videos || [];
+
+    // Only update if the formData has different items (by ID comparison)
+    const localImageIds = localImages.map((i) => i.id).sort();
+    const formImageIds = currentImages.map((i) => i.id).sort();
+    const imagesDifferent =
+      JSON.stringify(localImageIds) !== JSON.stringify(formImageIds);
+
+    const localVideoIds = localVideos.map((v) => v.id).sort();
+    const formVideoIds = currentVideos.map((v) => v.id).sort();
+    const videosDifferent =
+      JSON.stringify(localVideoIds) !== JSON.stringify(formVideoIds);
+
+    if (imagesDifferent) {
+      setLocalImages(currentImages);
+    }
+    if (videosDifferent) {
+      setLocalVideos(currentVideos);
+    }
+  }, [formData.images, formData.videos]); // Removed localImages, localVideos to break circular dependency
+
+  // Sync to parent ONLY when local state changes (use refs to avoid circular dependency)
+  const prevImagesRef = useRef();
+  const prevVideosRef = useRef();
+
+  useEffect(() => {
+    const prevImages = prevImagesRef.current || [];
+    const prevVideos = prevVideosRef.current || [];
+
     const imagesChanged =
       JSON.stringify(localImages.map((i) => i.id)) !==
-      JSON.stringify((formData.images || []).map((i) => i.id));
+      JSON.stringify(prevImages.map((i) => i.id));
     const videosChanged =
       JSON.stringify(localVideos.map((v) => v.id)) !==
-      JSON.stringify((formData.videos || []).map((v) => v.id));
+      JSON.stringify(prevVideos.map((v) => v.id));
 
     if (imagesChanged || videosChanged) {
       updateFormData({ images: localImages, videos: localVideos });
     }
-  }, [
-    localImages,
-    localVideos,
-    updateFormData,
-    formData.images,
-    formData.videos,
-  ]);
+
+    // Update refs for next comparison
+    prevImagesRef.current = localImages;
+    prevVideosRef.current = localVideos;
+  }, [localImages, localVideos, updateFormData]); // Removed formData dependencies to break circular dependency
 
   // Cleanup memory leaks on unmount
   useEffect(() => {
@@ -71,27 +98,34 @@ export default function StepMediaUpload({
   }, []);
 
   // Validation
-  const validateFile = (file) => {
-    if (file.size > MAX_FILE_SIZE) {
-      setErrors({ media: `File ${file.name} is too large. Max size: 10MB` });
-      return false;
-    }
-    if (
-      file.type.startsWith("image/") &&
-      !ALLOWED_IMAGE_TYPES.includes(file.type)
-    ) {
-      setErrors({ media: `File ${file.name} is not a supported image format` });
-      return false;
-    }
-    if (
-      file.type.startsWith("video/") &&
-      !ALLOWED_VIDEO_TYPES.includes(file.type)
-    ) {
-      setErrors({ media: `File ${file.name} is not a supported video format` });
-      return false;
-    }
-    return true;
-  };
+  const validateFile = useCallback(
+    (file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        setErrors({ media: `File ${file.name} is too large. Max size: 10MB` });
+        return false;
+      }
+      if (
+        file.type.startsWith("image/") &&
+        !ALLOWED_IMAGE_TYPES.includes(file.type)
+      ) {
+        setErrors({
+          media: `File ${file.name} is not a supported image format`,
+        });
+        return false;
+      }
+      if (
+        file.type.startsWith("video/") &&
+        !ALLOWED_VIDEO_TYPES.includes(file.type)
+      ) {
+        setErrors({
+          media: `File ${file.name} is not a supported video format`,
+        });
+        return false;
+      }
+      return true;
+    },
+    [setErrors]
+  );
 
   // Process Files
   const handleFiles = useCallback(

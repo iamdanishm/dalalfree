@@ -436,83 +436,149 @@ export default function StepSpecifications({
         </motion.div>
       )}
 
-      {/* Area Section - Common for all categories */}
-      <motion.div variants={itemVariants} className="space-y-1">
+      {/* Area Section - Built-up & Carpet Area */}
+      <motion.div variants={itemVariants} className="space-y-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
             <FiHome className="text-white" size={18} />
           </div>
           <label className="text-xl font-bold text-heading">
-            Area{" "}
-            {formData.category === "Land"
-              ? "(in sq.ft or acres)"
-              : "(in sq.ft)"}
+            Area Details (in sq.ft)
           </label>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 items-end">
-          <div className="space-y-3 flex-1">
+        {/* Area Fields Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Built-up Area */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-heading flex items-center">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              Built-up Area *
+            </label>
             <input
               type="number"
-              value={formData.area || ""}
+              value={formData.builtUpArea || ""}
               onChange={(e) =>
-                handleInputChange("area", parseFloat(e.target.value) || "")
+                handleInputChange(
+                  "builtUpArea",
+                  parseFloat(e.target.value) || ""
+                )
               }
-              placeholder={`Enter area in ${
-                formData.category === "Land" ? "sq.ft" : "sq.ft"
-              }`}
+              placeholder="Total built-up area"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
               min="1"
             />
-
-            {formData.area && (
+            {formData.builtUpArea && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-sm text-primary font-medium bg-primary/5 px-3 py-1 rounded-full inline-block"
+                className="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full inline-block"
               >
-                {formatArea(formData.area)}
-              </motion.div>
-            )}
-
-            {errors.area && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-3 bg-red-50 border border-red-200 rounded-lg"
-              >
-                <p className="text-red-600 text-sm font-medium">
-                  {errors.area}
-                </p>
+                {formatArea(formData.builtUpArea)}
               </motion.div>
             )}
           </div>
 
-          {/* Area Suggestions - Properly aligned */}
-          {getAreaSuggestions.length > 0 && (
-            <div className="space-y-3 min-w-[200px]">
-              <label className="text-sm font-medium text-heading block">
-                Common sizes:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {getAreaSuggestions.map((area, index) => (
-                  <motion.button
-                    key={area}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleInputChange("area", area)}
-                    className="px-3 py-2 text-sm bg-gray-100 hover:bg-primary hover:text-white rounded-lg transition-colors"
-                  >
-                    {formatArea(area)}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Carpet Area */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-heading flex items-center">
+              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+              Carpet Area
+            </label>
+            <input
+              type="number"
+              value={formData.carpetArea || ""}
+              onChange={(e) =>
+                handleInputChange(
+                  "carpetArea",
+                  parseFloat(e.target.value) || ""
+                )
+              }
+              placeholder="Usable carpet area"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+              min="1"
+            />
+            {formData.carpetArea && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-sm text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full inline-block"
+              >
+                {formatArea(formData.carpetArea)}
+              </motion.div>
+            )}
+          </div>
         </div>
+
+        {/* Area Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+              <span className="text-white text-xs">ℹ️</span>
+            </div>
+            <div>
+              <h4 className="font-medium text-blue-900 mb-1">
+                Area Information
+              </h4>
+              <p className="text-sm text-blue-700">
+                <strong>Built-up Area:</strong> Total area including walls and
+                balconies
+                <br />
+                <strong>Carpet Area:</strong> Actual usable area inside the
+                property
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Validation Errors */}
+        {(errors.area || errors.builtUpArea || errors.carpetArea) && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.area || errors.builtUpArea || errors.carpetArea}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Common Sizes Suggestions - For Built-up Area */}
+        {getAreaSuggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-r from-primary/5 to-blue-50 border border-primary/20 rounded-xl p-4"
+          >
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">💡</span>
+              </div>
+              <label className="text-sm font-semibold text-heading">
+                Common built-up sizes for {formData.category?.toLowerCase()}{" "}
+                properties:
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {getAreaSuggestions.map((area, index) => (
+                <motion.button
+                  key={area}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => handleInputChange("builtUpArea", area)}
+                  className="px-4 py-2 text-sm bg-white hover:bg-primary hover:text-white rounded-lg transition-all duration-200 shadow-sm border border-gray-200 hover:border-primary font-medium"
+                >
+                  {formatArea(area)}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Floor, Age, and Parking - Single Row */}
@@ -628,14 +694,37 @@ export default function StepSpecifications({
                     },
                   }),
                   placeholder: (base) => ({ ...base, color: "#9ca3af" }),
-                  singleValue: (base) => ({ ...base, color: "#111827" }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: "#111827",
+                    fontWeight: "500",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0.25rem 0.5rem",
+                  }),
                   menu: (base) => ({ ...base, zIndex: 9999 }),
                   option: (base, state) => ({
                     ...base,
                     fontSize: "0.875rem",
-                    backgroundColor: state.isFocused ? "#fef2f2" : "white",
-                    color: state.isFocused ? "#111827" : "#374151",
-                    "&:hover": { backgroundColor: "#fef2f2", color: "#111827" },
+                    backgroundColor: state.isSelected
+                      ? "#e90914"
+                      : state.isFocused
+                      ? "#fef2f2"
+                      : "white",
+                    color: state.isSelected
+                      ? "white"
+                      : state.isFocused
+                      ? "#111827"
+                      : "#374151",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                      color: state.isSelected ? "white" : "#111827",
+                    },
+                    "&:active": {
+                      backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
+                    },
                   }),
                 }}
               />
@@ -686,14 +775,37 @@ export default function StepSpecifications({
                   },
                 }),
                 placeholder: (base) => ({ ...base, color: "#9ca3af" }),
-                singleValue: (base) => ({ ...base, color: "#111827" }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: "#111827",
+                  fontWeight: "500",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0.25rem 0.5rem",
+                }),
                 menu: (base) => ({ ...base, zIndex: 9999 }),
                 option: (base, state) => ({
                   ...base,
                   fontSize: "0.875rem",
-                  backgroundColor: state.isFocused ? "#fef2f2" : "white",
-                  color: state.isFocused ? "#111827" : "#374151",
-                  "&:hover": { backgroundColor: "#fef2f2", color: "#111827" },
+                  backgroundColor: state.isSelected
+                    ? "#e90914"
+                    : state.isFocused
+                    ? "#fef2f2"
+                    : "white",
+                  color: state.isSelected
+                    ? "white"
+                    : state.isFocused
+                    ? "#111827"
+                    : "#374151",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                    color: state.isSelected ? "white" : "#111827",
+                  },
+                  "&:active": {
+                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
+                  },
                 }),
               }}
             />
@@ -830,7 +942,7 @@ export default function StepSpecifications({
             <h4 className="text-lg font-bold text-heading">Property Summary</h4>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl p-4 border border-gray-100">
               <div className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">
                 BHK
@@ -842,10 +954,19 @@ export default function StepSpecifications({
 
             <div className="bg-white rounded-xl p-4 border border-gray-100">
               <div className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">
-                Area
+                Built-up Area
               </div>
               <div className="text-lg font-bold text-green-600">
-                {formData.area ? formatArea(formData.area) : "—"}
+                {formData.builtUpArea ? formatArea(formData.builtUpArea) : "—"}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <div className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">
+                Carpet Area
+              </div>
+              <div className="text-lg font-bold text-blue-600">
+                {formData.carpetArea ? formatArea(formData.carpetArea) : "—"}
               </div>
             </div>
 
@@ -866,6 +987,15 @@ export default function StepSpecifications({
                 {formData.furnishing
                   ? formData.furnishing.replace("-", " ")
                   : "—"}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <div className="text-xs font-medium text-muted mb-1 uppercase tracking-wide">
+                Balcony
+              </div>
+              <div className="text-xl font-bold text-orange-600">
+                {formData.balcony ? `${formData.balcony}` : "—"}
               </div>
             </div>
           </div>

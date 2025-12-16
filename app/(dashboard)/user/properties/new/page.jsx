@@ -167,8 +167,8 @@ export default function PropertyWizard({ params }) {
           if (!formData.bhk) {
             stepErrors.bhk = "BHK is required for residential properties";
           }
-          if (!formData.area) {
-            stepErrors.area = "Area is required";
+          if (!formData.builtUpArea) {
+            stepErrors.builtUpArea = "Built-up area is required";
           }
         } else {
           // Area required for all other property types
@@ -373,89 +373,122 @@ export default function PropertyWizard({ params }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div id="wizard-top" className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Responsive Progress Bar */}
-        <div id="progress-section" className="mb-8">
-          {/* Desktop: Horizontal steps */}
-          <div className="hidden md:flex items-center justify-between mb-4">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isCompleted = step.id < currentStep;
-              const isCurrent = step.id === currentStep;
-
-              return (
-                <div key={step.id} className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                        isCompleted
-                          ? "bg-green-500 text-white"
-                          : isCurrent
-                          ? "bg-primary text-white"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {isCompleted ? <FiCheck size={16} /> : <Icon size={16} />}
-                    </div>
-                    <span
-                      className={`text-xs mt-2 text-center ${
-                        isCurrent ? "text-primary font-medium" : "text-gray-500"
-                      }`}
-                    >
-                      {step.title}
-                    </span>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div
-                      className={`w-12 h-0.5 mx-4 ${
-                        step.id < currentStep ? "bg-green-500" : "bg-gray-200"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
+        {/* Enhanced Progress Bar */}
+        <div className="mb-16">
+          {/* Progress Overview */}
+          <div className="text-center mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100"
+            >
+              <span className="text-sm font-medium text-heading">
+                Step {currentStep} of {steps.length}
+              </span>
+              <div className="w-px h-4 bg-gray-300"></div>
+              <span className="text-sm text-muted">
+                {Math.round((currentStep / steps.length) * 100)}% Complete
+              </span>
+            </motion.div>
           </div>
 
-          {/* Mobile: Simplified progress indicator */}
-          <div className="md:hidden flex items-center justify-center mb-4">
-            <div className="flex items-center space-x-2">
-              {steps.map((step, index) => {
-                const isCompleted = step.id < currentStep;
-                const isCurrent = step.id === currentStep;
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="relative">
+              {/* Background Track */}
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${(currentStep / steps.length) * 100}%`,
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                />
+              </div>
 
-                return (
-                  <div key={step.id} className="flex items-center">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
-                        isCompleted
-                          ? "bg-green-500 text-white"
-                          : isCurrent
-                          ? "bg-primary text-white"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
+              {/* Step Indicators */}
+              <div className="absolute -top-2 left-0 right-0 flex justify-between px-3">
+                {steps.map((step, index) => {
+                  const Icon = step.icon;
+                  const isCompleted = step.id < currentStep;
+                  const isCurrent = step.id === currentStep;
+
+                  return (
+                    <motion.div
+                      key={step.id}
+                      className="flex flex-col items-center"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        delay: index * 0.1,
+                        duration: 0.5,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                      }}
                     >
-                      {isCompleted ? <FiCheck size={10} /> : step.id}
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div
-                        className={`w-4 h-0.5 mx-1 ${
-                          step.id < currentStep ? "bg-green-500" : "bg-gray-200"
+                      {/* Step Circle */}
+                      <motion.div
+                        className={`relative w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md ${
+                          isCompleted
+                            ? "bg-green-500 text-white"
+                            : isCurrent
+                            ? "bg-primary text-white ring-4 ring-primary/30"
+                            : "bg-white text-gray-400 border-2 border-gray-300"
                         }`}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {isCompleted ? (
+                          <FiCheck size={10} />
+                        ) : isCurrent ? (
+                          <Icon size={10} />
+                        ) : (
+                          step.id
+                        )}
 
-          {/* Current step info */}
-          <div className="text-center">
-            <div className="text-lg font-semibold text-heading">
-              {currentStepData?.title}
-            </div>
-            <div className="text-sm text-muted">
-              {currentStepData?.subtitle}
+                        {/* Pulse Animation for Current Step */}
+                        {isCurrent && (
+                          <motion.div
+                            className="absolute inset-0 rounded-full bg-primary/30"
+                            animate={{
+                              scale: [1, 1.5, 1],
+                              opacity: [0.5, 0, 0.5],
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        )}
+                      </motion.div>
+
+                      {/* Step Label */}
+                      <motion.div
+                        className="mt-3 text-center"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                      >
+                        <div
+                          className={`text-xs font-medium ${
+                            isCompleted
+                              ? "text-green-600"
+                              : isCurrent
+                              ? "text-primary"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {step.title}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
