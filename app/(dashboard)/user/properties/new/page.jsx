@@ -20,6 +20,7 @@ import StepBasicInfo from "./components/StepBasicInfo";
 import StepSpecifications from "./components/StepSpecifications";
 import StepAmenities from "./components/StepAmenities";
 import StepMediaUpload from "./components/StepMediaUpload";
+import StepKycVerification from "./components/StepKycVerification";
 import StepReviewPublish from "./components/StepReviewPublish";
 
 const steps = [
@@ -60,6 +61,13 @@ const steps = [
   },
   {
     id: 6,
+    title: "KYC Verification",
+    subtitle: "Verify your identity",
+    icon: FiCheckCircle,
+    component: StepKycVerification,
+  },
+  {
+    id: 7,
     title: "Review & Publish",
     subtitle: "Final review before publishing",
     icon: FiEye,
@@ -75,6 +83,8 @@ export default function PropertyWizard({ params }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [kycStatus, setKycStatus] = useState(null);
+  const [isLoadingKyc, setIsLoadingKyc] = useState(true);
   const formRef = useRef(null);
 
   // Load temporary session data for step navigation (cleared on refresh)
@@ -96,6 +106,32 @@ export default function PropertyWizard({ params }) {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
+
+  // Check KYC status on component mount
+  useEffect(() => {
+    const checkKycStatus = async () => {
+      if (session?.user?._id) {
+        try {
+          const response = await fetch("/api/kyc");
+          if (response.ok) {
+            const kycData = await response.json();
+            setKycStatus(kycData.status || "none");
+          } else {
+            setKycStatus("none");
+          }
+        } catch (error) {
+          console.error("Error checking KYC status:", error);
+          setKycStatus("none");
+        } finally {
+          setIsLoadingKyc(false);
+        }
+      }
+    };
+
+    if (status === "authenticated") {
+      checkKycStatus();
+    }
+  }, [session, status]);
 
   // Smooth scroll to top when step changes
   useEffect(() => {
@@ -202,7 +238,12 @@ export default function PropertyWizard({ params }) {
         }
         break;
 
-      case 6: // Review & Publish
+      case 6: // KYC Verification
+        // For demo purposes, KYC step doesn't require validation
+        // In full implementation, this would check if KYC documents are uploaded
+        break;
+
+      case 7: // Review & Publish
         if (!acceptedTerms) {
           stepErrors.terms =
             "You must accept the terms and conditions to publish";
@@ -359,6 +400,13 @@ export default function PropertyWizard({ params }) {
   const handleSaveDraft = () => {
     localStorage.setItem("propertyWizardData", JSON.stringify(formData));
     // Could add toast notification here
+  };
+
+  const handleCompleteKyc = () => {
+    // Save current form data before redirecting
+    sessionStorage.setItem("propertyWizardTempData", JSON.stringify(formData));
+    // Redirect to KYC upload page
+    router.push("/kyc");
   };
 
   // Show loading state while checking authentication
@@ -548,32 +596,42 @@ export default function PropertyWizard({ params }) {
                 </button>
               )}
 
-              <button
-                onClick={
-                  currentStep === steps.length ? handleSubmit : handleNext
-                }
-                disabled={isSubmitting}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  isSubmitting
-                    ? "bg-muted text-muted cursor-not-allowed"
-                    : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
-                }`}
-              >
-                {isSubmitting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                ) : null}
-                {currentStep === steps.length ? (
-                  <>
+              {currentStep === steps.length ? (
+                // Show KYC button or Publish button based on KYC status
+                kycStatus === "approved" ? (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                      isSubmitting
+                        ? "bg-muted text-muted cursor-not-allowed"
+                        : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    ) : null}
                     <FiCheck size={16} />
                     Publish Property
-                  </>
+                  </button>
                 ) : (
-                  <>
-                    Next
-                    <FiArrowRight size={16} />
-                  </>
-                )}
-              </button>
+                  <button
+                    onClick={handleCompleteKyc}
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg font-medium transition-all hover:scale-105 shadow-sm"
+                  >
+                    <FiCheck size={16} />
+                    Complete KYC First
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground hover:opacity-90 rounded-lg font-medium transition-all hover:scale-105 shadow-sm"
+                >
+                  Next
+                  <FiArrowRight size={16} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -590,32 +648,42 @@ export default function PropertyWizard({ params }) {
                 </button>
               )}
 
-              <button
-                onClick={
-                  currentStep === steps.length ? handleSubmit : handleNext
-                }
-                disabled={isSubmitting}
-                className={`flex items-center justify-center gap-2 flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                  isSubmitting
-                    ? "bg-muted text-muted cursor-not-allowed"
-                    : "bg-primary text-primary-foreground active:scale-95 shadow-sm"
-                }`}
-              >
-                {isSubmitting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
-                ) : null}
-                {currentStep === steps.length ? (
-                  <>
+              {currentStep === steps.length ? (
+                // Show KYC button or Publish button based on KYC status
+                kycStatus === "approved" ? (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`flex items-center justify-center gap-2 flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                      isSubmitting
+                        ? "bg-muted text-muted cursor-not-allowed"
+                        : "bg-primary text-primary-foreground active:scale-95 shadow-sm"
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
+                    ) : null}
                     <FiCheck size={16} />
                     Publish
-                  </>
+                  </button>
                 ) : (
-                  <>
-                    Next
-                    <FiArrowRight size={16} />
-                  </>
-                )}
-              </button>
+                  <button
+                    onClick={handleCompleteKyc}
+                    className="flex items-center justify-center gap-2 flex-1 px-4 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg font-medium transition-all active:scale-95 shadow-sm"
+                  >
+                    <FiCheck size={16} />
+                    Complete KYC
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="flex items-center justify-center gap-2 flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium transition-all active:scale-95 shadow-sm"
+                >
+                  Next
+                  <FiArrowRight size={16} />
+                </button>
+              )}
             </div>
           </div>
         </div>

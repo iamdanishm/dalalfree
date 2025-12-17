@@ -78,12 +78,12 @@ Create a comprehensive step-by-step property listing wizard that makes it easy f
 **Priority:** High | **Timeline:** Day 2
 
 - ✅ **Route Created**: `/user/properties/new` - Complete wizard page with navigation
-- ✅ **Progress Indicator**: 6-step visual progress bar with completion states
+- ✅ **Progress Indicator**: 7-step visual progress bar with completion states
 - ✅ **Multi-step Form**: Full component structure with step management
 - ✅ **Auto-save Functionality**: localStorage integration with auto-save every 30 seconds
 - ✅ **Client-side Validation**: Step-by-step validation with error handling
 - ✅ **Data Persistence**: Form data maintained across navigation and sessions
-- ✅ **Step Components**: All 6 components created (TypeSelection ✅✅ (FULLY IMPLEMENTED), BasicInfo ✅ (FULLY IMPLEMENTED), Specifications ✅ (FULLY IMPLEMENTED), Amenities ✅ (FULLY IMPLEMENTED), MediaUpload ✅ (FULLY IMPLEMENTED), ReviewPublish ✅ (FULLY IMPLEMENTED))
+- ✅ **Step Components**: All 7 components created (TypeSelection ✅✅ (FULLY IMPLEMENTED), BasicInfo ✅ (FULLY IMPLEMENTED), Specifications ✅ (FULLY IMPLEMENTED), Amenities ✅ (FULLY IMPLEMENTED), MediaUpload ✅ (FULLY IMPLEMENTED), KycVerification ❌ (NOT STARTED), ReviewPublish ✅ (FULLY IMPLEMENTED))
 - ✅ **UI Fixes**: Removed duplicate navbar/footer, removed "Back to My Properties" button
 - ✅ **Property Types**: Updated to only "Sell" and "Rent" (lease removed)
 - ✅ **Step 1 UI Redesign**: Modern cards with animations, proper branding, better UX
@@ -156,37 +156,36 @@ Create a comprehensive step-by-step property listing wizard that makes it easy f
 - ✅ **Bulk upload with progress tracking** - Multiple file selection and individual progress bars
 - ✅ **File validation (size, format, count limits)** - 10MB limit, format validation, count limits (20 images, 5 videos)
 
-### 2B.7 **Step 6: Review & Publish** ✅ **COMPLETED**
+### 2B.7 **Step 6: KYC Verification** ❌ **NOT STARTED**
 
-**Priority:** High | **Timeline:** Day 4
+**Priority:** High | **Timeline:** Day 5
+
+- [ ] Update progress indicator to show 7 steps instead of 6
+- [ ] KYC step integration in property listing wizard as step 6
+- [ ] Upload Aadhaar, Pan card, agreement photos, and video verification
+- [ ] KYC document validation and storage
+- [ ] Video verification recording capability
+- [ ] Admin approval workflow before listing goes live
+- [ ] KYC status tracking and notifications
+- [ ] Prevent property publishing without completed KYC verification
+
+### 2B.8 **Step 7: Review & Publish** ✅ **COMPLETED**
+
+**Priority:** High | **Timeline:** Day 6
 
 - ✅ **Complete property preview** - Overview card with key stats and detailed sections
 - ✅ **Edit buttons for each section** - Direct edit access to any step from review page
 - ✅ **Terms and conditions checkbox** - Required acceptance before publishing
 - ✅ **Publish button with confirmation** - Final submission with loading states
 - ✅ **Draft save functionality** - Option to save as draft for later publishing
-- ✅ **Comprehensive property preview** - All data from all 5 steps displayed clearly
+- ✅ **Comprehensive property preview** - All data from all 7 steps displayed clearly
 - ✅ **Section-by-section editing capability** - Click "Edit" on any section to jump back
 - ✅ **Final validation before submission** - Terms acceptance and data completeness checks
 - ✅ **Option to save as draft** - Checkbox for draft vs immediate publishing
 - ✅ **Image/video thumbnails in preview** - Visual preview of uploaded media
 - ✅ **Formatted data display** - Prices, areas, amenities properly formatted
-
-### 2B.8 **KYC Verification Step** ❌ **NOT STARTED**
-
-**Priority:** High | **Timeline:** Day 5
-
-- [ ] Modify Publish Property Button in New Property Page to add "Complete KYC" button
-- [ ] KYC step integration in property listing wizard
-- [ ] Upload Aadhaar, Pan card, agreement photos, and video verification
-- [ ] KYC document validation and storage
-- [ ] Video verification recording capability
-- [ ] Admin approval workflow before listing goes live
-- [ ] KYC status tracking and notifications
-- [ ] Integrate KYC flow into the review step before final publishing
-- [ ] Update publish workflow to require KYC approval from admin
-- [ ] Add KYC status indicators in property review step
-- [ ] Prevent property publishing without completed KYC verification
+- ✅ **KYC completion check** - Verify KYC is completed before allowing publish
+- ✅ **Admin approval requirement** - Properties require admin approval after KYC verification
 
 ---
 
