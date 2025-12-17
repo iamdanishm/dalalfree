@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   FiUpload,
@@ -50,9 +51,11 @@ export default function StepMediaUpload({
       JSON.stringify(localVideoIds) !== JSON.stringify(formVideoIds);
 
     if (imagesDifferent) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setLocalImages(currentImages);
     }
     if (videosDifferent) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setLocalVideos(currentVideos);
     }
   }, [formData.images, formData.videos]); // Removed localImages, localVideos to break circular dependency
@@ -197,7 +200,7 @@ export default function StepMediaUpload({
         setLocalVideos((prev) => [...prev, ...newVideos]);
       }
     },
-    [localImages.length, localVideos.length, errors, setErrors]
+    [localImages.length, localVideos.length, errors, setErrors, validateFile]
   );
 
   // Drag & Drop Handlers
@@ -265,7 +268,7 @@ export default function StepMediaUpload({
       {/* Upload Area */}
       <div className="space-y-6">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg">
+          <div className="p-2 bg-linear-to-r from-purple-500 to-purple-600 rounded-lg">
             <FiUpload className="text-white" size={18} />
           </div>
           <div>
@@ -320,7 +323,7 @@ export default function StepMediaUpload({
           <div className="p-4 md:p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in zoom-in duration-300">
             <div className="flex items-start space-x-3">
               <FiAlertCircle
-                className="text-red-500 mt-0.5 flex-shrink-0"
+                className="text-red-500 mt-0.5 shrink-0"
                 size={18}
               />
               <p className="text-red-700 text-sm md:text-sm font-medium leading-relaxed">
@@ -335,7 +338,7 @@ export default function StepMediaUpload({
       {localImages.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+            <div className="p-2 bg-linear-to-r from-green-500 to-green-600 rounded-lg">
               <FiImage className="text-white" size={18} />
             </div>
             <div>
@@ -355,12 +358,13 @@ export default function StepMediaUpload({
                 transition={{ duration: 0.3 }}
                 className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="aspect-square relative bg-gray-100 flex items-center justify-center overflow-hidden min-h-[120px] md:min-h-[80px]">
+                <div className="aspect-square relative bg-gray-100 flex items-center justify-center overflow-hidden min-h-[120px] md:min-h-20">
                   {image.url ? (
-                    <img
+                    <Image
                       src={image.url}
                       alt={image.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="text-gray-400 text-4xl">📷</div>
@@ -389,7 +393,7 @@ export default function StepMediaUpload({
       {localVideos.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
+            <div className="p-2 bg-linear-to-r from-red-500 to-red-600 rounded-lg">
               <FiVideo className="text-white" size={18} />
             </div>
             <div>
