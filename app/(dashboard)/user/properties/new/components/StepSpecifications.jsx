@@ -145,6 +145,47 @@ export default function StepSpecifications({
     }
   };
 
+  // Fill dummy data function - Development only
+  const fillDummyData = () => {
+    const dummyData = {
+      // Residential specifications
+      bhk: "3BHK",
+      bathrooms: 3,
+      balcony: 2,
+      furnishing: "semi-furnished",
+
+      // Area details
+      builtUpArea: 1800,
+      carpetArea: 1500,
+
+      // Floor details
+      floor: "5th",
+      totalFloors: 12,
+
+      // Property age
+      age: 3,
+      ageUnit: "years old",
+
+      // Parking
+      parking: "2 Covered Parking",
+
+      // Property facing
+      facing: "east",
+
+      // Possession status
+      possessionStatus: "ready-to-move",
+
+      // Optional maintenance cost
+      maintenance: "₹3,500/month",
+    };
+
+    // Update form data with dummy values
+    updateFormData(dummyData);
+
+    // Clear any existing errors
+    setErrors({});
+  };
+
   // Format area display
   const formatArea = (area) => {
     if (!area) return "";
@@ -189,14 +230,45 @@ export default function StepSpecifications({
       style={{ willChange: "transform" }}
     >
       {/* Page Header */}
-      <motion.div variants={itemVariants} className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-heading mb-2">
-          Property Specifications
-        </h1>
-        <p className="text-muted text-lg">
-          Tell us about the detailed specifications of your{" "}
-          {formData.category?.toLowerCase()} property
-        </p>
+      <motion.div variants={itemVariants} className="relative mb-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-heading mb-2">
+            Property Specifications
+          </h1>
+          <p className="text-muted text-lg">
+            Tell us about the detailed specifications of your{" "}
+            {formData.category?.toLowerCase()} property
+          </p>
+        </div>
+
+        {/* Fill Data Button - Development Only */}
+        {process.env.NODE_ENV === "development" && (
+          <motion.div
+            variants={itemVariants}
+            className="absolute top-0 right-0"
+          >
+            <button
+              onClick={fillDummyData}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              title="Fill with dummy data (Development Only)"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Fill Data
+            </button>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Residential Properties Section */}
@@ -209,11 +281,11 @@ export default function StepSpecifications({
                 <FiHome className="text-white" size={18} />
               </div>
               <label className="text-xl font-bold text-heading">
-                BHK Configuration
+                BHK Configuration <span className="text-red-500">*</span>
               </label>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-3">
               {bhkOptions.map((option, index) => (
                 <motion.button
                   key={option.value}
@@ -253,7 +325,7 @@ export default function StepSpecifications({
             {/* Bathrooms */}
             <div className="space-y-3">
               <label className="text-sm font-medium text-heading">
-                Bathrooms
+                Bathrooms <span className="text-red-500">*</span>
               </label>
               <Select
                 value={
@@ -320,12 +392,23 @@ export default function StepSpecifications({
                   }),
                 }}
               />
+              {errors.bathrooms && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                >
+                  <p className="text-red-600 text-sm font-medium">
+                    {errors.bathrooms}
+                  </p>
+                </motion.div>
+              )}
             </div>
 
             {/* Balcony */}
             <div className="space-y-3">
               <label className="text-sm font-medium text-heading">
-                Balcony
+                Balcony <span className="text-red-500">*</span>
               </label>
               <Select
                 value={
@@ -395,6 +478,17 @@ export default function StepSpecifications({
                   }),
                 }}
               />
+              {errors.balcony && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                >
+                  <p className="text-red-600 text-sm font-medium">
+                    {errors.balcony}
+                  </p>
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -405,11 +499,11 @@ export default function StepSpecifications({
                 <FiSettings className="text-white" size={18} />
               </div>
               <label className="text-xl font-bold text-heading">
-                Furnishing Status
+                Furnishing Status <span className="text-red-500">*</span>
               </label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-6 sm:gap-4 md:grid-cols-3 md:gap-4">
               {furnishingOptions.map((option, index) => (
                 <motion.button
                   key={option.value}
@@ -432,6 +526,18 @@ export default function StepSpecifications({
                 </motion.button>
               ))}
             </div>
+
+            {errors.furnishing && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.furnishing}
+                </p>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       )}
@@ -448,7 +554,7 @@ export default function StepSpecifications({
         </div>
 
         {/* Area Fields Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {/* Built-up Area */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-heading flex items-center">
@@ -483,7 +589,7 @@ export default function StepSpecifications({
           <div className="space-y-3">
             <label className="text-sm font-medium text-heading flex items-center">
               <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-              Carpet Area
+              Carpet Area <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -597,7 +703,7 @@ export default function StepSpecifications({
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="text-sm font-medium text-heading flex items-center">
               <FiHome className="mr-2" size={14} />
-              Floor
+              Floor <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -625,7 +731,9 @@ export default function StepSpecifications({
                   max="100"
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
                 />
-                <div className="text-xs text-muted mt-1">Building floors</div>
+                <div className="text-xs text-muted mt-1">
+                  Building floors <span className="text-red-500">*</span>
+                </div>
               </div>
             </div>
             {(formData.floor || formData.totalFloors) && (
@@ -635,13 +743,25 @@ export default function StepSpecifications({
                   : formData.floor || `${formData.totalFloors} floors`}
               </div>
             )}
+
+            {(errors.floor || errors.totalFloors) && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.floor || errors.totalFloors}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Age */}
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="text-sm font-medium text-heading flex items-center">
               <FiCalendar className="mr-2" size={14} />
-              Property Age
+              Property Age <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <input
@@ -735,13 +855,23 @@ export default function StepSpecifications({
                 {formData.ageUnit === "years old" ? "years" : "months"} old
               </div>
             )}
+
+            {errors.age && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">{errors.age}</p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Parking */}
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="text-sm font-medium text-heading flex items-center">
               <FiTruck className="mr-2" size={14} />
-              Parking
+              Parking <span className="text-red-500">*</span>
             </label>
             <Select
               value={
@@ -809,6 +939,17 @@ export default function StepSpecifications({
                 }),
               }}
             />
+            {errors.parking && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.parking}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </motion.div>
@@ -820,7 +961,7 @@ export default function StepSpecifications({
             <FiCompass className="text-white" size={18} />
           </div>
           <label className="text-xl font-bold text-heading">
-            Property Facing
+            Property Facing <span className="text-red-500">*</span>
           </label>
         </div>
 
@@ -869,7 +1010,7 @@ export default function StepSpecifications({
             <FiCalendar className="text-white" size={18} />
           </div>
           <label className="text-xl font-bold text-heading">
-            Possession Status
+            Possession Status <span className="text-red-500">*</span>
           </label>
         </div>
 
@@ -898,6 +1039,18 @@ export default function StepSpecifications({
             </motion.button>
           ))}
         </div>
+
+        {errors.possessionStatus && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.possessionStatus}
+            </p>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Maintenance Cost - For Residential/Rent or Commercial */}

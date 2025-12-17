@@ -288,6 +288,28 @@ export default function StepBasicInfo({
     );
   };
 
+  // Development helper function to fill form with sample data
+  const fillSampleData = () => {
+    updateFormData({
+      title: "Beautiful 3BHK Apartment in Prime Location with Modern Amenities",
+      price: 8500000,
+      marketRange: "₹50-1.5 Crores",
+      negotiable: "Yes",
+      location: "Baner, Pune",
+      city: "Pune",
+      state: "Maharashtra",
+      pincode: "411045",
+      address:
+        "123 Main Street, Baner Pashan Link Road, Near Aundh IT Park, Baner, Pune - 411045",
+      coordinates: {
+        lat: 18.5642,
+        lng: 73.7769,
+      },
+      description:
+        "This stunning 3BHK apartment offers a perfect blend of modern luxury and comfort. Located in the heart of Baner, this property features spacious rooms, modern kitchen with appliances, 2 bathrooms, and a beautiful balcony with city views. The apartment comes with covered parking, 24/7 security, and access to world-class amenities including gym, swimming pool, and landscaped gardens. Close to IT parks, schools, hospitals, and shopping malls. Ready to move in condition with all basic furnishings included.",
+    });
+  };
+
   return (
     <motion.div
       variants={containerVariants}
@@ -296,6 +318,17 @@ export default function StepBasicInfo({
       className="space-y-8"
       style={{ willChange: "transform" }}
     >
+      {/* Development Fill Data Button */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={fillSampleData}
+            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Fill Sample Data
+          </button>
+        </div>
+      )}
       {/* Property Title Section */}
       <motion.div variants={itemVariants} className="space-y-4">
         <div className="flex items-center space-x-3">
@@ -303,7 +336,7 @@ export default function StepBasicInfo({
             <FiTag className="text-white" size={18} />
           </div>
           <label className="text-xl font-bold text-heading">
-            Property Title
+            Property Title <span className="text-red-500">*</span>
           </label>
         </div>
 
@@ -323,27 +356,30 @@ export default function StepBasicInfo({
             <div className="text-sm text-muted">
               {formData.title?.length || 0}/100 characters
             </div>
-            {formData.title && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex items-center space-x-1 text-green-600 text-sm"
-              >
-                <FiCheck size={14} />
-                <span>Looking good!</span>
-              </motion.div>
-            )}
+            <div className="flex items-center space-x-2">
+              {formData.title && !errors.title && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center space-x-1 text-green-600 text-sm"
+                >
+                  <FiCheck size={14} />
+                  <span>Looking good!</span>
+                </motion.div>
+              )}
+              {errors.title && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                >
+                  <p className="text-red-600 text-sm font-medium">
+                    {errors.title}
+                  </p>
+                </motion.div>
+              )}
+            </div>
           </div>
-
-          {errors.title && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-3 bg-red-50 border border-red-200 rounded-lg"
-            >
-              <p className="text-red-600 text-sm font-medium">{errors.title}</p>
-            </motion.div>
-          )}
         </div>
 
         {/* Title Suggestions */}
@@ -358,14 +394,14 @@ export default function StepBasicInfo({
               Suggested titles
             </h3>
 
-            <div className="grid gap-2">
+            <div className="grid gap-2 max-h-48 overflow-y-auto sm:max-h-none sm:overflow-visible">
               {suggestedTitles.map((title, index) => (
                 <motion.button
                   key={index}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => applyTitleSuggestion(title)}
-                  className="w-full text-left p-3 text-sm text-body bg-background border border-border rounded-lg hover:border-primary hover:text-primary transition-all duration-200 group"
+                  className="w-full text-left p-3 sm:p-3 text-sm text-body bg-background border border-border rounded-lg hover:border-primary hover:text-primary transition-all duration-200 group touch-manipulation"
                 >
                   <span className="line-clamp-2 group-hover:font-medium">
                     {title}
@@ -393,12 +429,12 @@ export default function StepBasicInfo({
           </label>
         </div>
 
-        <div className="flex flex-row gap-6 items-start flex-wrap">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="space-y-3 w-80"
+            className="space-y-3 w-full sm:w-80"
           >
             <label className="text-sm font-medium text-gray-700 block">
               Enter Price (₹):
@@ -408,7 +444,7 @@ export default function StepBasicInfo({
               value={formData.price || ""}
               onChange={(e) => handlePriceChange(e.target.value)}
               placeholder="Enter price in rupees"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
+              className="w-full border border-gray-300 rounded-lg px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 touch-manipulation"
               min="0"
             />
 
@@ -439,121 +475,137 @@ export default function StepBasicInfo({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="space-y-3 min-w-[280px]"
+            className="space-y-3 w-full sm:w-80"
           >
             <label className="text-sm font-medium text-gray-700 block">
-              Market Range ({formData.propertyType}):
+              Market Range ({formData.propertyType}):{" "}
+              <span className="text-red-500">*</span>
             </label>
-            <Select
-              value={
-                formData.price && formData.price > 0
-                  ? priceSuggestionsList.find(
-                      (s) => formData.price >= s.min && formData.price <= s.max
-                    )
-                    ? {
-                        value: priceSuggestionsList
-                          .find(
+            <div className="touch-manipulation">
+              <Select
+                value={
+                  formData.price && formData.price > 0
+                    ? priceSuggestionsList.find(
+                        (s) =>
+                          formData.price >= s.min && formData.price <= s.max
+                      )
+                      ? {
+                          value: priceSuggestionsList
+                            .find(
+                              (s) =>
+                                formData.price >= s.min &&
+                                formData.price <= s.max
+                            )
+                            .min.toString(),
+                          label: priceSuggestionsList.find(
                             (s) =>
                               formData.price >= s.min && formData.price <= s.max
-                          )
-                          .min.toString(),
-                        label: priceSuggestionsList.find(
-                          (s) =>
-                            formData.price >= s.min && formData.price <= s.max
-                        ).label,
-                      }
+                          ).label,
+                        }
+                      : null
                     : null
-                  : null
-              }
-              onChange={(selectedOption) => {
-                if (selectedOption && selectedOption.value !== "") {
-                  // Find the suggestion by min value to get max
-                  const suggestion = priceSuggestionsList.find(
-                    (s) => s.min.toString() === selectedOption.value
-                  );
-                  if (suggestion) {
-                    handlePriceChange(suggestion.max);
-                  }
-                } else {
-                  // Clear selection
-                  updateFormData({ price: "" });
                 }
-              }}
-              options={[
-                { value: "", label: "Select market range", isDisabled: true },
-                ...priceSuggestionsList.map((suggestion) => ({
-                  value: suggestion.min.toString(),
-                  label: suggestion.label,
-                  max: suggestion.max,
-                })),
-              ]}
-              placeholder="Select market range"
-              isClearable={true}
-              className="text-sm"
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  border: "1px solid #d1d5db",
-                  borderRadius: "0.5rem",
-                  padding: "0.125rem",
-                  fontSize: "0.875rem",
-                  backgroundColor: "white",
-                  "&:hover": {
-                    borderColor: "#e90914",
-                  },
-                  "&:focus-within": {
-                    borderColor: "#e90914",
-                    boxShadow: "0 0 0 1px #e90914",
-                  },
-                }),
-                placeholder: (base) => ({
-                  ...base,
-                  color: "#9ca3af",
-                }),
-                singleValue: (base) => ({
-                  ...base,
-                  color: "#111827",
-                  fontWeight: "500",
-                }),
-                valueContainer: (base) => ({
-                  ...base,
-                  padding: "0.25rem 0.5rem",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-                option: (base, state) => ({
-                  ...base,
-                  fontSize: "0.875rem",
-                  backgroundColor: state.isSelected
-                    ? "#e90914"
-                    : state.isFocused
-                    ? "#fef2f2"
-                    : "white",
-                  color: state.isSelected
-                    ? "white"
-                    : state.isFocused
-                    ? "#111827"
-                    : "#374151",
-                  cursor: "pointer",
-                  "&:hover": {
-                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
-                    color: state.isSelected ? "white" : "#111827",
-                  },
-                  "&:active": {
-                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
-                  },
-                }),
-                clearIndicator: (base, state) => ({
-                  ...base,
-                  color: state.isHovered ? "#dc2626" : "#6b7280",
-                  "&:hover": {
-                    color: "#dc2626",
-                  },
-                }),
-              }}
-            />
+                onChange={(selectedOption) => {
+                  if (selectedOption && selectedOption.value !== "") {
+                    // Find the suggestion by min value to get max
+                    const suggestion = priceSuggestionsList.find(
+                      (s) => s.min.toString() === selectedOption.value
+                    );
+                    if (suggestion) {
+                      handlePriceChange(suggestion.max);
+                    }
+                  } else {
+                    // Clear selection
+                    updateFormData({ price: "" });
+                  }
+                }}
+                options={[
+                  { value: "", label: "Select market range", isDisabled: true },
+                  ...priceSuggestionsList.map((suggestion) => ({
+                    value: suggestion.min.toString(),
+                    label: suggestion.label,
+                    max: suggestion.max,
+                  })),
+                ]}
+                placeholder="Select market range"
+                isClearable={true}
+                className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    border: "1px solid #d1d5db",
+                    borderRadius: "0.5rem",
+                    padding: "0.125rem",
+                    fontSize: "0.875rem",
+                    backgroundColor: "white",
+                    "&:hover": {
+                      borderColor: "#e90914",
+                    },
+                    "&:focus-within": {
+                      borderColor: "#e90914",
+                      boxShadow: "0 0 0 1px #e90914",
+                    },
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: "#9ca3af",
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: "#111827",
+                    fontWeight: "500",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0.25rem 0.5rem",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    fontSize: "0.875rem",
+                    backgroundColor: state.isSelected
+                      ? "#e90914"
+                      : state.isFocused
+                      ? "#fef2f2"
+                      : "white",
+                    color: state.isSelected
+                      ? "white"
+                      : state.isFocused
+                      ? "#111827"
+                      : "#374151",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                      color: state.isSelected ? "white" : "#111827",
+                    },
+                    "&:active": {
+                      backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
+                    },
+                  }),
+                  clearIndicator: (base, state) => ({
+                    ...base,
+                    color: state.isHovered ? "#dc2626" : "#6b7280",
+                    "&:hover": {
+                      color: "#dc2626",
+                    },
+                  }),
+                }}
+              />
+            </div>
+            {errors.marketRange && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.marketRange}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.div
@@ -563,7 +615,7 @@ export default function StepBasicInfo({
             className="space-y-3 min-w-[200px]"
           >
             <label className="text-sm font-medium text-gray-700 block">
-              Negotiable:
+              Negotiable: <span className="text-red-500">*</span>
             </label>
             <Select
               value={
@@ -637,6 +689,17 @@ export default function StepBasicInfo({
                 }),
               }}
             />
+            {errors.negotiable && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.negotiable}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
 
@@ -680,33 +743,65 @@ export default function StepBasicInfo({
         {/* Address */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-heading">
-            Full Address
+            Full Address <span className="text-red-500">*</span>
           </label>
           <textarea
             value={formData.address || ""}
             onChange={(e) => updateFormData({ address: e.target.value })}
             placeholder="Enter complete property address with landmark"
-            className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 resize-none"
+            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation resize-none ${
+              errors.address
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-red-500"
+            }`}
             rows={3}
             maxLength={200}
           />
-          <div className="text-sm text-muted">
-            {formData.address?.length || 0}/200 characters
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted">
+              {formData.address?.length || 0}/200 characters
+            </div>
+            {errors.address && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.address}
+                </p>
+              </motion.div>
+            )}
           </div>
         </div>
 
         {/* Location/Area */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-heading">
-            Area/Locality
+            Area/Locality <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.location || ""}
             onChange={(e) => handleLocationChange(e.target.value)}
             placeholder="e.g., Baner, Andheri West, Koramangala"
-            className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
+              errors.location
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-red-500"
+            }`}
           />
+          {errors.location && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-3 bg-red-50 border border-red-200 rounded-lg"
+            >
+              <p className="text-red-600 text-sm font-medium">
+                {errors.location}
+              </p>
+            </motion.div>
+          )}
         </div>
 
         {/* City, State, Pincode Grid */}
@@ -719,114 +814,146 @@ export default function StepBasicInfo({
               value={formData.city || ""}
               onChange={(e) => updateFormData({ city: e.target.value })}
               placeholder="e.g., Mumbai, Delhi, Bangalore"
-              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
+                errors.city
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-red-500"
+              }`}
             />
+            {errors.city && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.city}
+                </p>
+              </motion.div>
+            )}
           </div>
 
           {/* State */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-heading">State *</label>
-            <Select
-              value={
-                formData.state
-                  ? { value: formData.state, label: formData.state }
-                  : null
-              }
-              onChange={(selectedOption) => {
-                updateFormData({ state: selectedOption?.value || "" });
-              }}
-              options={[
-                { value: "", label: "Select State", isDisabled: true },
-                { value: "Andhra Pradesh", label: "Andhra Pradesh" },
-                { value: "Arunachal Pradesh", label: "Arunachal Pradesh" },
-                { value: "Assam", label: "Assam" },
-                { value: "Bihar", label: "Bihar" },
-                { value: "Chhattisgarh", label: "Chhattisgarh" },
-                { value: "Delhi", label: "Delhi" },
-                { value: "Goa", label: "Goa" },
-                { value: "Gujarat", label: "Gujarat" },
-                { value: "Haryana", label: "Haryana" },
-                { value: "Himachal Pradesh", label: "Himachal Pradesh" },
-                { value: "Jharkhand", label: "Jharkhand" },
-                { value: "Karnataka", label: "Karnataka" },
-                { value: "Kerala", label: "Kerala" },
-                { value: "Madhya Pradesh", label: "Madhya Pradesh" },
-                { value: "Maharashtra", label: "Maharashtra" },
-                { value: "Manipur", label: "Manipur" },
-                { value: "Meghalaya", label: "Meghalaya" },
-                { value: "Mizoram", label: "Mizoram" },
-                { value: "Nagaland", label: "Nagaland" },
-                { value: "Odisha", label: "Odisha" },
-                { value: "Punjab", label: "Punjab" },
-                { value: "Rajasthan", label: "Rajasthan" },
-                { value: "Sikkim", label: "Sikkim" },
-                { value: "Tamil Nadu", label: "Tamil Nadu" },
-                { value: "Telangana", label: "Telangana" },
-                { value: "Tripura", label: "Tripura" },
-                { value: "Uttar Pradesh", label: "Uttar Pradesh" },
-                { value: "Uttarakhand", label: "Uttarakhand" },
-                { value: "West Bengal", label: "West Bengal" },
-              ]}
-              placeholder="Select State"
-              isClearable={false}
-              className="text-sm"
-              styles={{
-                control: (base) => ({
-                  ...base,
-                  border: "1px solid #d1d5db",
-                  borderRadius: "0.5rem",
-                  padding: "0.125rem",
-                  fontSize: "0.875rem",
-                  backgroundColor: "white",
-                  "&:hover": {
-                    borderColor: "#e90914",
-                  },
-                  "&:focus-within": {
-                    borderColor: "#e90914",
-                    boxShadow: "0 0 0 1px #e90914",
-                  },
-                }),
-                placeholder: (base) => ({
-                  ...base,
-                  color: "#9ca3af",
-                }),
-                singleValue: (base) => ({
-                  ...base,
-                  color: "#111827",
-                  fontWeight: "500",
-                }),
-                valueContainer: (base) => ({
-                  ...base,
-                  padding: "0.25rem 0.5rem",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-                option: (base, state) => ({
-                  ...base,
-                  fontSize: "0.875rem",
-                  backgroundColor: state.isSelected
-                    ? "#e90914"
-                    : state.isFocused
-                    ? "#fef2f2"
-                    : "white",
-                  color: state.isSelected
-                    ? "white"
-                    : state.isFocused
-                    ? "#111827"
-                    : "#374151",
-                  cursor: "pointer",
-                  "&:hover": {
-                    backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
-                    color: state.isSelected ? "white" : "#111827",
-                  },
-                  "&:active": {
-                    backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
-                  },
-                }),
-              }}
-            />
+            <div className="touch-manipulation">
+              <Select
+                value={
+                  formData.state
+                    ? { value: formData.state, label: formData.state }
+                    : null
+                }
+                onChange={(selectedOption) => {
+                  updateFormData({ state: selectedOption?.value || "" });
+                }}
+                options={[
+                  { value: "", label: "Select State", isDisabled: true },
+                  { value: "Andhra Pradesh", label: "Andhra Pradesh" },
+                  { value: "Arunachal Pradesh", label: "Arunachal Pradesh" },
+                  { value: "Assam", label: "Assam" },
+                  { value: "Bihar", label: "Bihar" },
+                  { value: "Chhattisgarh", label: "Chhattisgarh" },
+                  { value: "Delhi", label: "Delhi" },
+                  { value: "Goa", label: "Goa" },
+                  { value: "Gujarat", label: "Gujarat" },
+                  { value: "Haryana", label: "Haryana" },
+                  { value: "Himachal Pradesh", label: "Himachal Pradesh" },
+                  { value: "Jharkhand", label: "Jharkhand" },
+                  { value: "Karnataka", label: "Karnataka" },
+                  { value: "Kerala", label: "Kerala" },
+                  { value: "Madhya Pradesh", label: "Madhya Pradesh" },
+                  { value: "Maharashtra", label: "Maharashtra" },
+                  { value: "Manipur", label: "Manipur" },
+                  { value: "Meghalaya", label: "Meghalaya" },
+                  { value: "Mizoram", label: "Mizoram" },
+                  { value: "Nagaland", label: "Nagaland" },
+                  { value: "Odisha", label: "Odisha" },
+                  { value: "Punjab", label: "Punjab" },
+                  { value: "Rajasthan", label: "Rajasthan" },
+                  { value: "Sikkim", label: "Sikkim" },
+                  { value: "Tamil Nadu", label: "Tamil Nadu" },
+                  { value: "Telangana", label: "Telangana" },
+                  { value: "Tripura", label: "Tripura" },
+                  { value: "Uttar Pradesh", label: "Uttar Pradesh" },
+                  { value: "Uttarakhand", label: "Uttarakhand" },
+                  { value: "West Bengal", label: "West Bengal" },
+                ]}
+                placeholder="Select State"
+                isClearable={false}
+                className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    border: errors.state
+                      ? "1px solid #ef4444"
+                      : "1px solid #d1d5db",
+                    borderRadius: "0.5rem",
+                    padding: "0.125rem",
+                    fontSize: "0.875rem",
+                    backgroundColor: "white",
+                    "&:hover": {
+                      borderColor: errors.state ? "#ef4444" : "#e90914",
+                    },
+                    "&:focus-within": {
+                      borderColor: errors.state ? "#ef4444" : "#e90914",
+                      boxShadow: errors.state
+                        ? "0 0 0 1px #ef4444"
+                        : "0 0 0 1px #e90914",
+                    },
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: "#9ca3af",
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: "#111827",
+                    fontWeight: "500",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0.25rem 0.5rem",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    fontSize: "0.875rem",
+                    backgroundColor: state.isSelected
+                      ? "#e90914"
+                      : state.isFocused
+                      ? "#fef2f2"
+                      : "white",
+                    color: state.isSelected
+                      ? "white"
+                      : state.isFocused
+                      ? "#111827"
+                      : "#374151",
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
+                      color: state.isSelected ? "white" : "#111827",
+                    },
+                    "&:active": {
+                      backgroundColor: state.isSelected ? "#d10711" : "#fecaca",
+                    },
+                  }),
+                }}
+              />
+            </div>
+            {errors.state && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.state}
+                </p>
+              </motion.div>
+            )}
           </div>
 
           {/* Pincode */}
@@ -843,24 +970,26 @@ export default function StepBasicInfo({
                 updateFormData({ pincode: value });
               }}
               placeholder="e.g., 400001"
-              className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
+                errors.pincode
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-red-500"
+              }`}
               maxLength={6}
             />
+            {errors.pincode && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">
+                  {errors.pincode}
+                </p>
+              </motion.div>
+            )}
           </div>
         </div>
-
-        {/* Validation Errors */}
-        {errors.location && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-3 bg-red-50 border border-red-200 rounded-lg"
-          >
-            <p className="text-red-600 text-sm font-medium">
-              {errors.location}
-            </p>
-          </motion.div>
-        )}
 
         {/* Google Maps Coordinates */}
         <motion.div
@@ -868,18 +997,18 @@ export default function StepBasicInfo({
           animate={{ opacity: 1, height: "auto" }}
           className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
             <label className="text-sm font-medium text-heading">
               Google Maps Coordinates *
             </label>
-            <span className="text-xs text-muted">
+            <span className="text-xs text-muted sm:text-right">
               Required for precise location
             </span>
           </div>
 
           {/* Coordinates Input Grid */}
           <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-4 sm:items-end">
               {/* Latitude */}
               <div>
                 <label className="block text-sm font-medium text-heading mb-2">
@@ -899,7 +1028,7 @@ export default function StepBasicInfo({
                     });
                   }}
                   placeholder="e.g., 19.0760"
-                  className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                  className="w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 touch-manipulation"
                   required
                 />
               </div>
@@ -923,18 +1052,18 @@ export default function StepBasicInfo({
                     });
                   }}
                   placeholder="e.g., 72.8777"
-                  className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                  className="w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 touch-manipulation"
                   required
                 />
               </div>
 
               {/* Use Current Location Button */}
               <motion.button
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={getCurrentLocation}
                 disabled={locationStatus === "loading"}
-                className={`px-4 py-3 rounded-lg font-medium transition-all border text-sm ${
+                className={`w-full sm:w-auto px-4 py-4 sm:py-3 rounded-lg font-medium transition-all border text-sm touch-manipulation ${
                   locationStatus === "loading"
                     ? "bg-blue-50 text-blue-600 border-blue-200 cursor-not-allowed"
                     : locationStatus === "success"
@@ -1008,10 +1137,7 @@ export default function StepBasicInfo({
             <FiFileText className="text-white" size={18} />
           </div>
           <label className="text-xl font-bold text-heading">
-            Description
-            <span className="ml-2 text-sm text-muted font-normal">
-              (Optional)
-            </span>
+            Description <span className="text-red-500">*</span>
           </label>
         </div>
 
@@ -1031,16 +1157,31 @@ export default function StepBasicInfo({
             <div className="text-sm text-muted">
               {formData.description?.length || 0}/1000 characters
             </div>
-            {formData.description && formData.description.length > 50 && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex items-center space-x-1 text-green-600 text-sm"
-              >
-                <FiCheck size={14} />
-                <span>Great description!</span>
-              </motion.div>
-            )}
+            <div className="flex items-center space-x-2">
+              {formData.description &&
+                formData.description.length > 50 &&
+                !errors.description && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="flex items-center space-x-1 text-green-600 text-sm"
+                  >
+                    <FiCheck size={14} />
+                    <span>Great description!</span>
+                  </motion.div>
+                )}
+              {errors.description && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                >
+                  <p className="text-red-600 text-sm font-medium">
+                    {errors.description}
+                  </p>
+                </motion.div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -128,7 +128,7 @@ export default function StepTypeSelection({
         <h2 className="text-xl font-semibold text-heading mb-6">
           What would you like to do?
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {propertyTypes.map((type) => {
             const Icon = type.icon;
             const isSelected = formData.propertyType === type.id;
@@ -137,8 +137,7 @@ export default function StepTypeSelection({
               <motion.button
                 key={type.id}
                 whileHover={{
-                  scale: 1.02,
-                  y: -2,
+                  scale: 1.01,
                   transition: { duration: 0.2 },
                 }}
                 whileTap={{ scale: 0.98 }}
@@ -154,9 +153,9 @@ export default function StepTypeSelection({
                   <motion.div
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    className="absolute top-4 right-4"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4"
                   >
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center">
                       <svg
                         className="w-4 h-4 text-white"
                         fill="currentColor"
@@ -179,15 +178,15 @@ export default function StepTypeSelection({
                     <Icon className="text-white" size={24} />
                   </div>
 
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3
-                      className={`text-xl font-bold mb-1 ${
+                      className={`text-lg sm:text-xl font-bold mb-1 ${
                         isSelected ? "text-primary" : "text-heading"
                       }`}
                     >
                       {type.label}
                     </h3>
-                    <p className="text-body mb-3 leading-relaxed">
+                    <p className="text-body text-sm sm:text-base mb-3 leading-relaxed">
                       {type.description}
                     </p>
                   </div>
@@ -221,7 +220,7 @@ export default function StepTypeSelection({
             What type of property are you listing?
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {categories.map((category, index) => {
               const Icon = category.icon;
               const isSelected = formData.category === category.id;
@@ -230,19 +229,19 @@ export default function StepTypeSelection({
                 <motion.button
                   key={category.id}
                   whileHover={{
-                    scale: 1.02,
+                    scale: 1.01,
                     transition: { duration: 0.2 },
                   }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.4,
-                    delay: index * 0.1,
+                    duration: 0.3,
+                    delay: index * 0.05,
                     ease: [0.25, 0.46, 0.45, 0.94],
                   }}
                   onClick={() => handleCategorySelect(category.id)}
-                  className={`group relative p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                  className={`group relative p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all duration-300 touch-manipulation ${
                     isSelected
                       ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
                       : "border-border bg-surface hover:border-primary/30 hover:shadow-lg hover:bg-background"
@@ -299,10 +298,10 @@ export default function StepTypeSelection({
                         Common examples:
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {category.examples.map((example, i) => (
+                        {category.examples.slice(0, 3).map((example, i) => (
                           <span
                             key={i}
-                            className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
                               isSelected
                                 ? "bg-primary/10 text-primary"
                                 : "bg-white/90 text-heading shadow-sm border border-border/50"
@@ -311,6 +310,11 @@ export default function StepTypeSelection({
                             {example}
                           </span>
                         ))}
+                        {category.examples.length > 3 && (
+                          <span className="px-2 py-1 text-xs text-muted bg-white/50 rounded-full border border-border/50">
+                            +{category.examples.length - 3} more
+                          </span>
+                        )}
                       </div>
                     </div>
 

@@ -100,6 +100,52 @@ export default function StepAmenities({
   errors,
   setErrors,
 }) {
+  // Development helper function to fill form with sample data
+  const fillSampleData = () => {
+    updateFormData({
+      societyAmenities: [
+        "24-7-security",
+        "cctv",
+        "parking",
+        "lift",
+        "power-backup",
+        "water-supply",
+      ],
+      nearbyPlaces: [
+        {
+          type: "school",
+          name: "City Public School",
+          distance: "1",
+          rating: 4.2,
+        },
+        {
+          type: "hospital",
+          name: "Apollo Hospital",
+          distance: "2",
+          rating: 4.5,
+        },
+        { type: "mall", name: "Phoenix Mall", distance: "2", rating: 4.0 },
+        {
+          type: "metro",
+          name: "MG Road Metro Station",
+          distance: "0.5",
+          rating: 4.3,
+        },
+        {
+          type: "restaurant",
+          name: "Domino's Pizza",
+          distance: "0.5",
+          rating: 3.8,
+        },
+      ],
+      highlights: [
+        "Prime Location",
+        "Modern Amenities",
+        "24/7 Security",
+        "Covered Parking",
+      ],
+    });
+  };
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -230,12 +276,24 @@ export default function StepAmenities({
       className="space-y-8"
       style={{ willChange: "transform" }}
     >
+      {/* Development Fill Data Button */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={fillSampleData}
+            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Fill Sample Data
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
-      <motion.div variants={itemVariants} className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-heading mb-2">
+      <motion.div variants={itemVariants} className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-heading mb-2">
           Amenities & Highlights
         </h1>
-        <p className="text-muted text-lg">
+        <p className="text-muted text-base sm:text-lg">
           Highlight your property's best features and nearby attractions
         </p>
       </motion.div>
@@ -255,6 +313,19 @@ export default function StepAmenities({
             </p>
           </div>
         </div>
+
+        {/* Error Display for Society Amenities */}
+        {errors.societyAmenities && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.societyAmenities}
+            </p>
+          </motion.div>
+        )}
 
         {/* Selected Amenities Tags */}
         {formData.societyAmenities && formData.societyAmenities.length > 0 && (
@@ -320,12 +391,25 @@ export default function StepAmenities({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={addNearbyPlace}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all"
+            className="flex items-center space-x-2 px-3 sm:px-4 py-2 sm:py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all min-h-[44px] sm:min-h-auto"
           >
             <FiPlus size={16} />
-            <span>Add Place</span>
+            <span className="text-sm sm:text-base">Add Place</span>
           </motion.button>
         </div>
+
+        {/* Error Display for Nearby Places */}
+        {errors.nearbyPlaces && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.nearbyPlaces}
+            </p>
+          </motion.div>
+        )}
 
         <div className="space-y-4">
           {(formData.nearbyPlaces || []).map((place, index) => (
@@ -379,6 +463,7 @@ export default function StepAmenities({
                         padding: "0.125rem",
                         fontSize: "0.875rem",
                         backgroundColor: "white",
+                        minHeight: "44px",
                         "&:hover": { borderColor: "#e90914" },
                         "&:focus-within": {
                           borderColor: "#e90914",
@@ -395,10 +480,17 @@ export default function StepAmenities({
                         ...base,
                         padding: "0.25rem 0.5rem",
                       }),
-                      menu: (base) => ({ ...base, zIndex: 9999 }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                        fontSize: "0.875rem",
+                      }),
                       option: (base, state) => ({
                         ...base,
                         fontSize: "0.875rem",
+                        minHeight: "44px",
+                        display: "flex",
+                        alignItems: "center",
                         backgroundColor: state.isSelected
                           ? "#e90914"
                           : state.isFocused
@@ -422,6 +514,10 @@ export default function StepAmenities({
                             : "#fecaca",
                         },
                       }),
+                      indicatorsContainer: (base) => ({
+                        ...base,
+                        padding: "0.25rem",
+                      }),
                     }}
                   />
                 </div>
@@ -438,7 +534,7 @@ export default function StepAmenities({
                       handleNearbyPlaceChange(index, "name", e.target.value)
                     }
                     placeholder="Place name"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] sm:min-h-auto"
                   />
                 </div>
 
@@ -473,6 +569,7 @@ export default function StepAmenities({
                         padding: "0.125rem",
                         fontSize: "0.875rem",
                         backgroundColor: "white",
+                        minHeight: "44px",
                         "&:hover": { borderColor: "#e90914" },
                         "&:focus-within": {
                           borderColor: "#e90914",
@@ -489,10 +586,17 @@ export default function StepAmenities({
                         ...base,
                         padding: "0.25rem 0.5rem",
                       }),
-                      menu: (base) => ({ ...base, zIndex: 9999 }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                        fontSize: "0.875rem",
+                      }),
                       option: (base, state) => ({
                         ...base,
                         fontSize: "0.875rem",
+                        minHeight: "44px",
+                        display: "flex",
+                        alignItems: "center",
                         backgroundColor: state.isSelected
                           ? "#e90914"
                           : state.isFocused
@@ -515,6 +619,10 @@ export default function StepAmenities({
                             ? "#d10711"
                             : "#fecaca",
                         },
+                      }),
+                      indicatorsContainer: (base) => ({
+                        ...base,
+                        padding: "0.25rem",
                       }),
                     }}
                   />
@@ -540,7 +648,7 @@ export default function StepAmenities({
                       min="1"
                       max="5"
                       step="0.1"
-                      className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] sm:min-h-auto"
                     />
                     <div className="flex items-center space-x-1">
                       <FiStar
@@ -573,6 +681,19 @@ export default function StepAmenities({
           </div>
         </div>
 
+        {/* Error Display for Key Highlights */}
+        {errors.highlights && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.highlights}
+            </p>
+          </motion.div>
+        )}
+
         {/* Current Highlights */}
         {formData.highlights && formData.highlights.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -603,12 +724,12 @@ export default function StepAmenities({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4"
+            className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-3 sm:p-4"
           >
-            <h4 className="font-semibold text-purple-800 mb-3">
+            <h4 className="font-semibold text-purple-800 mb-2 sm:mb-3 text-sm sm:text-base">
               Suggested Highlights
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 sm:gap-2">
               {suggestedHighlights
                 .filter(
                   (highlight) => !formData.highlights?.includes(highlight)
@@ -619,7 +740,7 @@ export default function StepAmenities({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleHighlightAdd(highlight)}
-                    className="px-3 py-1 bg-white border border-purple-300 text-purple-700 rounded-full text-sm hover:bg-purple-100 transition-colors"
+                    className="px-3 sm:px-3 py-2 sm:py-1 bg-white border border-purple-300 text-purple-700 rounded-full text-sm hover:bg-purple-100 transition-colors min-h-[44px] sm:min-h-auto flex items-center justify-center"
                   >
                     + {highlight}
                   </motion.button>
@@ -675,7 +796,7 @@ function AmenitySelector({
         onFocus={handleInputFocus}
         onBlur={handleContainerBlur}
         placeholder="Search and select amenities..."
-        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] sm:min-h-auto"
       />
 
       {/* Suggestions Dropdown */}
@@ -683,13 +804,13 @@ function AmenitySelector({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 sm:max-h-60 overflow-y-auto"
         >
           {filteredAmenities.map((amenity) => (
             <button
               key={amenity.id}
               onClick={() => handleAmenityClick(amenity.id)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+              className="w-full text-left px-3 sm:px-4 py-3 sm:py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors min-h-[44px] sm:min-h-auto flex items-center"
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">
@@ -709,7 +830,7 @@ function AmenitySelector({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 text-center"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 sm:p-4 text-center"
         >
           <p className="text-sm text-gray-500">
             No amenities found matching &ldquo;{searchTerm}&rdquo;
@@ -787,10 +908,12 @@ function SuggestedAmenities({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4"
+      className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-4"
     >
-      <h4 className="font-semibold text-blue-800 mb-3">Suggested Amenities</h4>
-      <div className="flex flex-wrap gap-2">
+      <h4 className="font-semibold text-blue-800 mb-2 sm:mb-3 text-sm sm:text-base">
+        Suggested Amenities
+      </h4>
+      <div className="flex flex-wrap gap-2 sm:gap-2">
         {suggestedAmenities.map((amenityId) => {
           const amenity = allAmenities.find((a) => a.id === amenityId);
           return (
@@ -799,7 +922,7 @@ function SuggestedAmenities({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onAmenityToggle(amenityId)}
-              className="px-3 py-1 bg-white border border-blue-300 text-blue-700 rounded-full text-sm hover:bg-blue-100 transition-colors"
+              className="px-3 sm:px-3 py-2 sm:py-1 bg-white border border-blue-300 text-blue-700 rounded-full text-sm hover:bg-blue-100 transition-colors min-h-[44px] sm:min-h-auto flex items-center justify-center"
             >
               + {amenity?.name}
             </motion.button>
@@ -823,20 +946,23 @@ function HighlightInput({ onAdd }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col sm:flex-row gap-2 sm:gap-2"
+    >
       <input
         type="text"
         value={newHighlight}
         onChange={(e) => setNewHighlight(e.target.value)}
         placeholder="Enter a key highlight (e.g., Prime Location, Modern Amenities)"
-        className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        className="flex-1 border border-gray-300 rounded-lg px-3 sm:px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] sm:min-h-auto"
       />
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         type="submit"
         disabled={!newHighlight.trim()}
-        className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 sm:px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-auto text-sm sm:text-base"
       >
         Add
       </motion.button>

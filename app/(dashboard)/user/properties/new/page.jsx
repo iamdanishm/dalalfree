@@ -176,6 +176,12 @@ export default function PropertyWizard({ params }) {
         if (!formData.price || formData.price <= 0) {
           stepErrors.price = "Please enter a valid price";
         }
+        if (!formData.marketRange?.trim()) {
+          stepErrors.marketRange = "Market range is required";
+        }
+        if (!formData.negotiable?.trim()) {
+          stepErrors.negotiable = "Negotiable status is required";
+        }
         if (!formData.location?.trim()) {
           stepErrors.location = "Area/Locality is required";
         }
@@ -190,11 +196,17 @@ export default function PropertyWizard({ params }) {
         } else if (formData.pincode.length !== 6) {
           stepErrors.pincode = "Pincode must be 6 digits";
         }
+        if (!formData.address?.trim()) {
+          stepErrors.address = "Full address is required";
+        }
         if (!formData.coordinates?.lat || isNaN(formData.coordinates.lat)) {
           stepErrors.coordinates = "Latitude is required";
         }
         if (!formData.coordinates?.lng || isNaN(formData.coordinates.lng)) {
           stepErrors.coordinates = "Longitude is required";
+        }
+        if (!formData.description?.trim()) {
+          stepErrors.description = "Description is required";
         }
         break;
 
@@ -214,21 +226,89 @@ export default function PropertyWizard({ params }) {
           }
         }
 
-        // Common required fields for all property types
+        // BHK required for Residential properties
+        if (formData.category === "Residential" && !formData.bhk) {
+          stepErrors.bhk = "BHK is required for residential properties";
+        }
+
+        // Bathroom required
+        if (!formData.bathrooms) {
+          stepErrors.bathrooms = "Number of bathrooms is required";
+        }
+
+        // Balcony required
+        if (!formData.balcony && formData.balcony !== 0) {
+          stepErrors.balcony = "Number of balconies is required";
+        }
+
+        // Furnishing status required
+        if (!formData.furnishing) {
+          stepErrors.furnishing = "Furnishing status is required";
+        }
+
+        // Built-up area required
+        if (!formData.builtUpArea) {
+          stepErrors.builtUpArea = "Built-up area is required";
+        }
+
+        // Carpet area required
+        if (!formData.carpetArea) {
+          stepErrors.carpetArea = "Carpet area is required";
+        }
+
+        // Floor required
         if (!formData.floor?.trim()) {
           stepErrors.floor = "Floor is required";
         }
+
+        // Total floors required
         if (!formData.totalFloors && formData.totalFloors !== 0) {
           stepErrors.totalFloors = "Total floors is required";
         }
+
+        // Property age required
         if (!formData.age && formData.age !== 0) {
           stepErrors.age = "Property age is required";
         }
+
+        // Parking required
         if (!formData.parking) {
           stepErrors.parking = "Parking information is required";
         }
+
+        // Property facing required
         if (!formData.facing) {
           stepErrors.facing = "Property facing is required";
+        }
+
+        // Possession status required
+        if (!formData.possessionStatus) {
+          stepErrors.possessionStatus = "Possession status is required";
+        }
+        break;
+
+      case 4: // Amenities & Highlights
+        // Society amenities validation (at least one amenity should be selected)
+        if (
+          !formData.societyAmenities ||
+          formData.societyAmenities.length === 0
+        ) {
+          stepErrors.societyAmenities =
+            "Please select at least one society amenity";
+        }
+
+        // Nearby places validation (at least 2 places required)
+        const validNearbyPlaces = (formData.nearbyPlaces || []).filter(
+          (place) => place.type && place.name && place.distance
+        );
+        if (validNearbyPlaces.length < 2) {
+          stepErrors.nearbyPlaces =
+            "Please add at least 2 nearby places with complete information";
+        }
+
+        // Key highlights validation (at least one highlight required)
+        if (!formData.highlights || formData.highlights.length === 0) {
+          stepErrors.highlights = "Please add at least one key highlight";
         }
         break;
 
@@ -428,31 +508,34 @@ export default function PropertyWizard({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div id="wizard-top" className="container mx-auto px-4 py-8 max-w-4xl">
+      <div
+        id="wizard-top"
+        className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl sm:max-w-full"
+      >
         {/* Enhanced Progress Bar */}
-        <div className="mb-16">
+        <div className="mb-12 sm:mb-16">
           {/* Progress Overview */}
           <div className="text-center mb-6">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100"
+              className="inline-flex items-center space-x-2 bg-white px-4 py-2.5 rounded-full shadow-sm border border-gray-100"
             >
-              <span className="text-sm font-medium text-heading">
+              <span className="text-sm font-semibold text-heading">
                 Step {currentStep} of {steps.length}
               </span>
               <div className="w-px h-4 bg-gray-300"></div>
-              <span className="text-sm text-muted">
+              <span className="text-sm font-medium text-primary">
                 {Math.round((currentStep / steps.length) * 100)}% Complete
               </span>
             </motion.div>
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-6">
+          <div className="mb-6 sm:mb-8">
             <div className="relative">
               {/* Background Track */}
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 sm:h-2 bg-gray-200 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
                   initial={{ width: 0 }}
@@ -460,14 +543,14 @@ export default function PropertyWizard({ params }) {
                     width: `${(currentStep / steps.length) * 100}%`,
                   }}
                   transition={{
-                    duration: 0.8,
+                    duration: 0.6,
                     ease: [0.25, 0.46, 0.45, 0.94],
                   }}
                 />
               </div>
 
               {/* Step Indicators */}
-              <div className="absolute -top-2 left-0 right-0 flex justify-between px-3">
+              <div className="absolute -top-2.5 sm:-top-2 left-0 right-0 flex justify-between px-1 sm:px-2 md:px-3">
                 {steps.map((step, index) => {
                   const Icon = step.icon;
                   const isCompleted = step.id < currentStep;
@@ -480,41 +563,41 @@ export default function PropertyWizard({ params }) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{
-                        delay: index * 0.1,
-                        duration: 0.5,
+                        delay: index * 0.05,
+                        duration: 0.3,
                         ease: [0.25, 0.46, 0.45, 0.94],
                       }}
                     >
-                      {/* Step Circle */}
+                      {/* Step Circle - Touch-friendly on mobile */}
                       <motion.div
-                        className={`relative w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md ${
+                        className={`relative w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all duration-200 ${
                           isCompleted
                             ? "bg-green-500 text-white"
                             : isCurrent
-                            ? "bg-primary text-white ring-4 ring-primary/30"
-                            : "bg-white text-gray-400 border-2 border-gray-300"
+                            ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4 ring-primary/30"
+                            : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
                         }`}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                       >
                         {isCompleted ? (
-                          <FiCheck size={10} />
+                          <FiCheck size={14} />
                         ) : isCurrent ? (
-                          <Icon size={10} />
+                          <Icon size={14} />
                         ) : (
-                          step.id
+                          <span className="text-xs sm:text-sm">{step.id}</span>
                         )}
 
-                        {/* Pulse Animation for Current Step */}
+                        {/* Pulse Animation for Current Step - Optimized for mobile */}
                         {isCurrent && (
                           <motion.div
-                            className="absolute inset-0 rounded-full bg-primary/30"
+                            className="absolute inset-0 rounded-full bg-primary/20 sm:bg-primary/30"
                             animate={{
-                              scale: [1, 1.5, 1],
-                              opacity: [0.5, 0, 0.5],
+                              scale: [1, 1.3, 1],
+                              opacity: [0.4, 0, 0.4],
                             }}
                             transition={{
-                              duration: 2,
+                              duration: 1.5,
                               repeat: Infinity,
                               ease: "easeInOut",
                             }}
@@ -522,23 +605,43 @@ export default function PropertyWizard({ params }) {
                         )}
                       </motion.div>
 
-                      {/* Step Label */}
+                      {/* Step Label - Enhanced for mobile */}
                       <motion.div
-                        className="mt-3 text-center"
+                        className="mt-2 sm:mt-3 text-center hidden sm:block"
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 + 0.2 }}
+                        transition={{ delay: index * 0.05 + 0.1 }}
                       >
                         <div
-                          className={`text-xs font-medium ${
+                          className={`text-xs sm:text-sm font-medium leading-tight ${
                             isCompleted
                               ? "text-green-600"
                               : isCurrent
-                              ? "text-primary"
+                              ? "text-primary font-semibold"
                               : "text-gray-500"
                           }`}
                         >
                           {step.title}
+                        </div>
+                      </motion.div>
+
+                      {/* Mobile-only abbreviated labels */}
+                      <motion.div
+                        className="mt-1 text-center sm:hidden"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 + 0.1 }}
+                      >
+                        <div
+                          className={`text-[10px] font-medium leading-tight whitespace-nowrap ${
+                            isCompleted
+                              ? "text-green-600"
+                              : isCurrent
+                              ? "text-primary font-semibold"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {step.title.split(" ")[0]}
                         </div>
                       </motion.div>
                     </motion.div>
@@ -557,9 +660,9 @@ export default function PropertyWizard({ params }) {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+          className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
         >
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             <CurrentComponent
               formData={formData}
               updateFormData={updateFormData}
@@ -575,10 +678,10 @@ export default function PropertyWizard({ params }) {
         </motion.div>
 
         {/* Responsive Navigation */}
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
           {/* Progress counter - always visible */}
-          <div className="text-center">
-            <div className="text-sm text-body font-medium">
+          <div className="text-center mb-2 sm:mb-0">
+            <div className="text-sm text-body font-medium px-4 py-2">
               Step {currentStep} of {steps.length}
             </div>
           </div>
