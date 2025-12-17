@@ -280,7 +280,7 @@ export default function StepMediaUpload({
 
         {/* Drag & Drop Zone */}
         <div
-          className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+          className={`relative border-2 border-dashed rounded-xl p-12 md:p-8 text-center transition-all duration-300 ${
             isDragOver
               ? "border-primary bg-primary/5 scale-[1.02]"
               : "border-gray-300 hover:border-primary/50"
@@ -317,10 +317,15 @@ export default function StepMediaUpload({
 
         {/* Error Display */}
         {errors.media && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in zoom-in duration-300">
-            <div className="flex items-center space-x-2">
-              <FiAlertCircle className="text-red-500" size={16} />
-              <p className="text-red-700 text-sm font-medium">{errors.media}</p>
+          <div className="p-4 md:p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in zoom-in duration-300">
+            <div className="flex items-start space-x-3">
+              <FiAlertCircle
+                className="text-red-500 mt-0.5 flex-shrink-0"
+                size={18}
+              />
+              <p className="text-red-700 text-sm md:text-sm font-medium leading-relaxed">
+                {errors.media}
+              </p>
             </div>
           </div>
         )}
@@ -340,7 +345,7 @@ export default function StepMediaUpload({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {localImages.map((image, index) => (
               /* FIX: Removed complex Framer Motion variants here to prevent "stuck" hidden state */
               <motion.div
@@ -350,7 +355,7 @@ export default function StepMediaUpload({
                 transition={{ duration: 0.3 }}
                 className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="aspect-square relative bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div className="aspect-square relative bg-gray-100 flex items-center justify-center overflow-hidden min-h-[120px] md:min-h-[80px]">
                   {image.url ? (
                     <img
                       src={image.url}
@@ -368,9 +373,9 @@ export default function StepMediaUpload({
                         e.stopPropagation();
                         removeMedia("image", index);
                       }}
-                      className="p-2 bg-red-500/90 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm shadow-sm"
+                      className="p-3 md:p-2 bg-red-500/90 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm shadow-sm"
                     >
-                      <FiTrash2 size={14} />
+                      <FiTrash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -409,7 +414,7 @@ export default function StepMediaUpload({
                       src={video.url}
                       controls
                       autoPlay
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain [&::-webkit-media-controls-panel]:bg-black/80 [&::-webkit-media-controls-play-button]:w-12 [&::-webkit-media-controls-play-button]:h-12 md:[&::-webkit-media-controls-play-button]:w-8 md:[&::-webkit-media-controls-play-button]:h-8"
                       onEnded={() => setPlayingVideo(null)}
                     />
                   ) : (
@@ -422,8 +427,8 @@ export default function StepMediaUpload({
                         onClick={() => setPlayingVideo(index)}
                         className="absolute inset-0 w-full h-full flex items-center justify-center group z-10"
                       >
-                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all transform group-hover:scale-110">
-                          <FiPlay className="text-white ml-1" size={24} />
+                        <div className="w-16 h-16 md:w-14 md:h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all transform group-hover:scale-110">
+                          <FiPlay className="text-white ml-1" size={28} />
                         </div>
                       </button>
                     </>
@@ -436,7 +441,7 @@ export default function StepMediaUpload({
                   </p>
                   <button
                     onClick={() => removeMedia("video", index)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                    className="p-3 md:p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                   >
                     <FiTrash2 size={16} />
                   </button>
