@@ -16,6 +16,7 @@ import {
   FiSave,
   FiChevronRight,
 } from "react-icons/fi";
+import Image from "next/image";
 
 const imageCategories = [
   { value: "exterior", label: "Exterior", icon: "🏠" },
@@ -37,9 +38,9 @@ export default function StepReviewPublish({
   onStepChange,
   onPublish,
   isPublishing = false,
+  acceptedTerms,
+  setAcceptedTerms,
 }) {
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -143,7 +144,8 @@ export default function StepReviewPublish({
         { label: "Title", value: formData.title },
         { label: "Description", value: formData.description },
         { label: "Price", value: formatPrice(formData.price) },
-        { label: "Address", value: formData.location },
+        { label: "Address", value: formData.address },
+        { label: "Area/Locality", value: formData.location },
         { label: "City", value: formData.city },
         { label: "State", value: formData.state },
         { label: "Pincode", value: formData.pincode },
@@ -238,18 +240,18 @@ export default function StepReviewPublish({
       {/* Enhanced Page Header */}
       <motion.div variants={itemVariants} className="text-center mb-10">
         <motion.div
-          className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary to-primary/80 rounded-full mb-4 shadow-lg"
+          className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-r from-primary to-primary/80 rounded-full mb-4 shadow-lg"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <FiEye className="text-white" size={24} />
         </motion.div>
-        <h1 className="text-4xl font-bold text-heading mb-3 bg-gradient-to-r from-heading to-heading/80 bg-clip-text">
+        <h1 className="text-4xl font-bold text-heading mb-3 bg-linear-to-r from-heading to-heading/80 bg-clip-text">
           Review & Publish
         </h1>
         <p className="text-muted text-lg max-w-2xl mx-auto">
           Your property is ready! Review all details below and publish when
-          you're satisfied
+          you&apos;re satisfied
         </p>
         <motion.div
           className="mt-4 inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
@@ -265,7 +267,7 @@ export default function StepReviewPublish({
       {/* Enhanced Property Overview Card */}
       <motion.div
         variants={itemVariants}
-        className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-blue-50 border border-primary/20 rounded-2xl p-8 shadow-xl"
+        className="relative overflow-hidden bg-linear-to-br from-primary/10 via-primary/5 to-blue-50 border border-primary/20 rounded-2xl p-8 shadow-xl"
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -378,7 +380,7 @@ export default function StepReviewPublish({
                     <div className="text-sm font-medium text-muted">
                       {item.label}:
                     </div>
-                    <div className="text-sm text-heading break-words">
+                    <div className="text-sm text-heading wrap-break-word">
                       {item.value || "Not specified"}
                     </div>
                   </div>
@@ -397,9 +399,11 @@ export default function StepReviewPublish({
                             key={index}
                             className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
                           >
-                            <img
+                            <Image
                               src={image.url || image.src}
                               alt={image.name || `Image ${index + 1}`}
+                              width={100}
+                              height={100}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -468,10 +472,11 @@ export default function StepReviewPublish({
               I agree to the Terms and Conditions
             </label>
             <p className="text-sm text-muted mt-1">
-              By publishing this property, you agree to our terms of service and
-              confirm that all information provided is accurate and up-to-date.
-              The property will be submitted for admin approval before becoming
-              visible to buyers.
+              By publishing this property on DalalFree, you certify that all
+              provided information is accurate, current, and complete. Your
+              listing will undergo our quality review process before becoming
+              visible to verified buyers and real estate professionals across
+              our platform.
             </p>
           </div>
         </div>

@@ -157,8 +157,8 @@ export default function StepAmenities({
     const nearbyPlaces = formData.nearbyPlaces || [];
     updateFormData({
       nearbyPlaces: [
-        ...nearbyPlaces,
         { type: "", name: "", distance: "", rating: 4.0 },
+        ...nearbyPlaces,
       ],
     });
   };
@@ -337,7 +337,7 @@ export default function StepAmenities({
             >
               <div className="flex items-start justify-between mb-4">
                 <h4 className="font-semibold text-heading">
-                  Place #{index + 1}
+                  Place #{(formData.nearbyPlaces || []).length - index}
                 </h4>
                 <button
                   onClick={() => removeNearbyPlace(index)}

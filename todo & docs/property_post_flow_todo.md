@@ -172,6 +172,22 @@ Create a comprehensive step-by-step property listing wizard that makes it easy f
 - ✅ **Image/video thumbnails in preview** - Visual preview of uploaded media
 - ✅ **Formatted data display** - Prices, areas, amenities properly formatted
 
+### 2B.8 **KYC Verification Step** ❌ **NOT STARTED**
+
+**Priority:** High | **Timeline:** Day 5
+
+- [ ] Modify Publish Property Button in New Property Page to add "Complete KYC" button
+- [ ] KYC step integration in property listing wizard
+- [ ] Upload Aadhaar, Pan card, agreement photos, and video verification
+- [ ] KYC document validation and storage
+- [ ] Video verification recording capability
+- [ ] Admin approval workflow before listing goes live
+- [ ] KYC status tracking and notifications
+- [ ] Integrate KYC flow into the review step before final publishing
+- [ ] Update publish workflow to require KYC approval from admin
+- [ ] Add KYC status indicators in property review step
+- [ ] Prevent property publishing without completed KYC verification
+
 ---
 
 ## 📊 **Phase 2C: Property Management Dashboard**

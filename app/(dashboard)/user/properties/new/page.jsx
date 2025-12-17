@@ -74,6 +74,7 @@ export default function PropertyWizard({ params }) {
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const formRef = useRef(null);
 
   // Load temporary session data for step navigation (cleared on refresh)
@@ -198,6 +199,13 @@ export default function PropertyWizard({ params }) {
       case 5: // Media Upload
         if (!formData.images?.length) {
           stepErrors.images = "At least one photo is required";
+        }
+        break;
+
+      case 6: // Review & Publish
+        if (!acceptedTerms) {
+          stepErrors.terms =
+            "You must accept the terms and conditions to publish";
         }
         break;
 
@@ -512,6 +520,8 @@ export default function PropertyWizard({ params }) {
               onStepChange={jumpToStep}
               onPublish={handleSubmit}
               isPublishing={isSubmitting}
+              acceptedTerms={acceptedTerms}
+              setAcceptedTerms={setAcceptedTerms}
             />
           </div>
         </motion.div>
