@@ -39,7 +39,7 @@ const categories = [
     icon: FiHome,
     features: ["Family-friendly", "Living spaces", "Modern homes"],
   },
-  {
+  /*  {
     id: "Commercial",
     label: "Commercial",
     description: "Offices, shops & business spaces",
@@ -47,7 +47,7 @@ const categories = [
     gradient: "from-purple-500 to-purple-600",
     icon: FiTrendingDown,
     features: ["Business spaces", "Investment", "Yield potential"],
-  },
+  }, */
   /* {
     id: "Industrial",
     label: "Industrial",

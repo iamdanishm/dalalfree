@@ -319,8 +319,26 @@ export default function PropertyWizard({ params }) {
         break;
 
       case 6: // KYC Verification
-        // For demo purposes, KYC step doesn't require validation
-        // In full implementation, this would check if KYC documents are uploaded
+        // Validate Aadhaar (1-2 images or 1 PDF)
+        const aadhaarFiles = formData.kycFiles?.aadhaar;
+        if (!aadhaarFiles || aadhaarFiles.length === 0) {
+          stepErrors.aadhaar = "Aadhaar card is required";
+        }
+
+        // Validate PAN Card (1 image or PDF)
+        if (!formData.kycFiles?.pan) {
+          stepErrors.pan = "PAN card is required";
+        }
+
+        // Validate Property Agreement (PDF only)
+        if (!formData.kycFiles?.agreement) {
+          stepErrors.agreement = "Property agreement document is required";
+        }
+
+        // Validate Video Verification
+        if (!formData.kycFiles?.video) {
+          stepErrors.video = "Video verification is required";
+        }
         break;
 
       case 7: // Review & Publish
