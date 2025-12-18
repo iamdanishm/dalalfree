@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -51,11 +53,9 @@ export default function StepMediaUpload({
       JSON.stringify(localVideoIds) !== JSON.stringify(formVideoIds);
 
     if (imagesDifferent) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setLocalImages(currentImages);
     }
     if (videosDifferent) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setLocalVideos(currentVideos);
     }
   }, [formData.images, formData.videos]); // Removed localImages, localVideos to break circular dependency
