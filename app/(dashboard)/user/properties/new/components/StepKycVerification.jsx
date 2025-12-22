@@ -395,7 +395,7 @@ export default function StepKycVerification({
       </motion.div>
 
       {/* Document Upload Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Aadhaar Card */}
         <motion.div
           variants={itemVariants}
@@ -468,7 +468,7 @@ export default function StepKycVerification({
                 if (files.length === 0 || canAddMore) {
                   return (
                     <div
-                      className={`relative border-2 border-dashed rounded-lg p-4 text-center transition-all duration-200 cursor-pointer ${
+                      className={`relative border-2 border-dashed rounded-lg p-6 md:p-4 text-center transition-all duration-200 cursor-pointer min-h-[120px] md:min-h-[80px] flex flex-col justify-center ${
                         isDragOver
                           ? "border-primary bg-primary/5"
                           : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
@@ -526,7 +526,7 @@ export default function StepKycVerification({
 
             {!localFiles.pan ? (
               <div
-                className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
+                className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/5"
                     : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
@@ -598,7 +598,7 @@ export default function StepKycVerification({
 
             {!localFiles.agreement ? (
               <div
-                className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
+                className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/5"
                     : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
@@ -675,14 +675,14 @@ export default function StepKycVerification({
               <div className="space-y-4">
                 {!isRecording && countdown === 0 ? (
                   <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-gray-50"
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 md:p-6 text-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-gray-50 min-h-[140px] flex flex-col justify-center"
                     onClick={() => setShowVideoGuide(true)}
                   >
-                    <FiCamera className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">
+                    <FiCamera className="mx-auto h-10 w-10 md:h-8 md:w-8 text-gray-400 mb-3 md:mb-2" />
+                    <p className="text-base md:text-sm text-gray-600 mb-2 font-medium">
                       Click to start recording
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm md:text-xs text-gray-500">
                       Introduce yourself and confirm property ownership
                     </p>
                   </div>
@@ -741,7 +741,7 @@ export default function StepKycVerification({
                         <div className="text-center">
                           <button
                             onClick={stopRecording}
-                            className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+                            className="px-8 py-3 md:px-6 md:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-lg md:text-base"
                           >
                             ⏹️ Stop Recording
                           </button>
@@ -786,15 +786,15 @@ export default function StepKycVerification({
       {/* Information Section */}
       <motion.div
         variants={itemVariants}
-        className="bg-blue-50 border border-blue-200 rounded-xl p-6"
+        className="bg-blue-50 border border-blue-200 rounded-xl p-6 md:p-6"
       >
-        <div className="flex items-start space-x-3">
-          <FiEye className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-blue-900 mb-2">
+        <div className="flex items-start space-x-4 md:space-x-3">
+          <FiEye className="w-6 h-6 md:w-5 md:h-5 text-blue-600 mt-1 md:mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h4 className="font-medium text-blue-900 mb-3 md:mb-2 text-lg md:text-base">
               Why KYC Verification?
             </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <ul className="text-base md:text-sm text-blue-800 space-y-2 md:space-y-1 leading-relaxed">
               <li>
                 • Ensures only genuine property owners can list properties
               </li>
@@ -813,11 +813,13 @@ export default function StepKycVerification({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-4 bg-red-50 border border-red-200 rounded-lg"
+          className="p-6 md:p-4 bg-red-50 border border-red-200 rounded-lg"
         >
           <div className="flex items-start space-x-3">
-            <FiAlertCircle className="text-red-500 mt-0.5 shrink-0" size={18} />
-            <p className="text-red-700 text-sm font-medium">{errors.kyc}</p>
+            <FiAlertCircle className="text-red-500 mt-0.5 shrink-0" size={20} />
+            <p className="text-red-700 text-base md:text-sm font-medium leading-relaxed">
+              {errors.kyc}
+            </p>
           </div>
         </motion.div>
       )}
@@ -828,9 +830,9 @@ export default function StepKycVerification({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl"
+            className="bg-white rounded-xl max-w-md w-full p-6 md:p-6 shadow-xl max-h-[90vh] overflow-y-auto"
           >
-            <div className="text-center mb-4">
+            <div className="text-center mb-6 md:mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <FiVideo className="w-6 h-6 text-red-600" />
               </div>
@@ -839,49 +841,49 @@ export default function StepKycVerification({
               </h3>
             </div>
 
-            <div className="space-y-4 text-sm text-gray-600">
-              <div className="bg-blue-50 rounded-lg p-3">
-                <p className="font-medium text-blue-900 mb-2">
+            <div className="space-y-4 md:space-y-4 text-sm text-gray-600">
+              <div className="bg-blue-50 rounded-lg p-4 md:p-3">
+                <p className="font-medium text-blue-900 mb-2 text-base md:text-sm">
                   📝 What to Say:
                 </p>
-                <ul className="space-y-1 text-blue-800">
+                <ul className="space-y-2 md:space-y-1 text-blue-800 text-base md:text-sm">
                   <li>• State your full name</li>
                   <li>• Confirm you are the owner of this property</li>
                   <li>• Mention the property address briefly</li>
                 </ul>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-3">
-                <p className="font-medium text-green-900 mb-2">
+              <div className="bg-green-50 rounded-lg p-4 md:p-3">
+                <p className="font-medium text-green-900 mb-2 text-base md:text-sm">
                   👔 Appearance:
                 </p>
-                <ul className="space-y-1 text-green-800">
+                <ul className="space-y-2 md:space-y-1 text-green-800 text-base md:text-sm">
                   <li>• Dress appropriately (formal/semi-formal)</li>
                   <li>• Face should be clearly visible</li>
                   <li>• Remove sunglasses or masks</li>
                 </ul>
               </div>
 
-              <div className="bg-yellow-50 rounded-lg p-3">
-                <p className="font-medium text-yellow-900 mb-2">
+              <div className="bg-yellow-50 rounded-lg p-4 md:p-3">
+                <p className="font-medium text-yellow-900 mb-2 text-base md:text-sm">
                   🏠 Surroundings:
                 </p>
-                <ul className="space-y-1 text-yellow-800">
+                <ul className="space-y-2 md:space-y-1 text-yellow-800 text-base md:text-sm">
                   <li>• Choose a quiet, well-lit area</li>
                   <li>• Ensure clean background</li>
                   <li>• Minimize background noise</li>
                 </ul>
               </div>
 
-              <p className="text-center text-gray-500 text-xs">
+              <p className="text-center text-gray-500 text-sm md:text-xs">
                 Recording will be 15 seconds maximum
               </p>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-8 md:mt-6">
               <button
                 onClick={() => setShowVideoGuide(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-6 py-3 md:px-4 md:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-base md:text-sm font-medium"
               >
                 Cancel
               </button>
@@ -923,7 +925,7 @@ export default function StepKycVerification({
                     });
                   }
                 }}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+                className="flex-1 px-6 py-3 md:px-4 md:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-base md:text-sm"
               >
                 🎬 Start Recording
               </button>

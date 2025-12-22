@@ -62,6 +62,196 @@ body {
   @apply mx-auto max-w-7xl px-4 md:px-8;
 }
 
+/* ===== MOBILE RESPONSIVE UTILITIES ===== */
+
+/* Touch-friendly button base styles */
+.btn-touch {
+  @apply min-h-[44px] touch-manipulation select-none;
+}
+
+/* Mobile-first spacing utilities */
+.space-mobile {
+  @apply space-y-4 md:space-y-6;
+}
+
+.space-mobile-x {
+  @apply space-x-3 md:space-x-4;
+}
+
+/* Mobile-optimized text sizes */
+.text-mobile-body {
+  @apply text-base md:text-sm leading-relaxed;
+}
+
+.text-mobile-heading {
+  @apply text-lg md:text-base font-medium;
+}
+
+.text-mobile-title {
+  @apply text-xl md:text-2xl font-bold;
+}
+
+/* Consistent mobile padding */
+.p-mobile {
+  @apply p-4 md:p-6;
+}
+
+.p-mobile-lg {
+  @apply p-6 md:p-8;
+}
+
+/* Mobile-friendly border radius */
+.rounded-mobile {
+  @apply rounded-xl md:rounded-lg;
+}
+
+.rounded-mobile-lg {
+  @apply rounded-2xl md:rounded-xl;
+}
+
+/* Mobile-optimized shadows */
+.shadow-mobile {
+  @apply shadow-sm md:shadow-md;
+}
+
+.shadow-mobile-lg {
+  @apply shadow-md md:shadow-lg;
+}
+
+/* Touch feedback utilities */
+.touch-feedback {
+  @apply active:scale-95 transition-transform duration-75;
+}
+
+/* Mobile-specific animations */
+.animate-mobile {
+  @apply transition-all duration-200 ease-out;
+}
+
+/* Reduce motion for mobile performance */
+@media (prefers-reduced-motion: reduce) {
+  .animate-mobile {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== MOBILE PERFORMANCE OPTIMIZATIONS ===== */
+
+/* Reduce animation complexity on mobile devices */
+@media (max-width: 768px) {
+  /* Disable complex animations on low-end mobile devices */
+  .motion-safe * {
+    animation-duration: 0.3s !important;
+    animation-delay: 0s !important;
+  }
+
+  /* Optimize Framer Motion for mobile */
+  [data-framer-appear-id] {
+    will-change: transform, opacity;
+  }
+
+  /* Reduce shadow complexity on mobile */
+  .shadow-mobile-lg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* Optimize backdrop blur for mobile */
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Optimize scrolling performance on mobile */
+@media (max-width: 640px) {
+  /* Enable hardware acceleration for scrolling elements */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto; /* Disable smooth scrolling on mobile for better performance */
+  }
+
+  /* Optimize transforms for mobile animations */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+}
+
+/* Memory optimization - limit expensive effects on low-memory devices */
+@media (max-width: 640px) and (max-height: 800px) {
+  /* Reduce blur effects on small screens */
+  .backdrop-blur-sm {
+    backdrop-filter: none;
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Simplify gradients on mobile */
+  .bg-gradient-to-r {
+    background: linear-gradient(to right, var(--tw-gradient-stops));
+  }
+}
+
+/* Mobile-first grid utilities */
+.grid-mobile {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+}
+
+.grid-mobile-sm {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3;
+}
+
+/* Consistent mobile breakpoints */
+@media (max-width: 640px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .mobile-only {
+    display: none !important;
+  }
+  .desktop-only {
+    display: block !important;
+  }
+}
+
+/* Mobile-optimized form elements */
+.form-mobile {
+  @apply w-full min-h-[44px] px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
+}
+
+/* Mobile-friendly card styles */
+.card-mobile {
+  @apply bg-white rounded-xl md:rounded-lg shadow-sm md:shadow-md border border-gray-100 p-4 md:p-6;
+}
+
+/* Consistent mobile color utilities */
+.text-mobile-primary {
+  @apply text-primary;
+}
+
+.text-mobile-muted {
+  @apply text-muted;
+}
+
+.text-mobile-heading {
+  @apply text-heading;
+}
+
+/* Mobile-optimized flex utilities */
+.flex-mobile {
+  @apply flex flex-col md:flex-row;
+}
+
+.flex-mobile-center {
+  @apply flex flex-col md:flex-row items-center md:justify-between;
+}
+
 /* React Masonry CSS */
 .my-masonry-grid {
   display: -webkit-box; /* Not needed if autoprefixing */

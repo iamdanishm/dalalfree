@@ -78,12 +78,12 @@ Create a comprehensive step-by-step property listing wizard that makes it easy f
 **Priority:** High | **Timeline:** Day 2
 
 - ✅ **Route Created**: `/user/properties/new` - Complete wizard page with navigation
-- ✅ **Progress Indicator**: 7-step visual progress bar with completion states
+- ✅ **Progress Indicator**: 6-step visual progress bar with completion states
 - ✅ **Multi-step Form**: Full component structure with step management
 - ✅ **Auto-save Functionality**: localStorage integration with auto-save every 30 seconds
 - ✅ **Client-side Validation**: Step-by-step validation with error handling
 - ✅ **Data Persistence**: Form data maintained across navigation and sessions
-- ✅ **Step Components**: All 7 components created (TypeSelection ✅✅ (FULLY IMPLEMENTED), BasicInfo ✅ (FULLY IMPLEMENTED), Specifications ✅ (FULLY IMPLEMENTED), Amenities ✅ (FULLY IMPLEMENTED), MediaUpload ✅ (FULLY IMPLEMENTED), KycVerification ❌ (NOT STARTED), ReviewPublish ✅ (FULLY IMPLEMENTED))
+- ✅ **Step Components**: All 6 components created and functional (TypeSelection ✅ (FULLY IMPLEMENTED), BasicInfo ✅ (FULLY IMPLEMENTED), Specifications ✅ (FULLY IMPLEMENTED), Amenities ✅ (FULLY IMPLEMENTED), MediaUpload ✅ (FULLY IMPLEMENTED), ReviewPublish ✅ (FULLY IMPLEMENTED))
 - ✅ **UI Fixes**: Removed duplicate navbar/footer, removed "Back to My Properties" button
 - ✅ **Property Types**: Updated to only "Sell" and "Rent" (lease removed)
 - ✅ **Step 1 UI Redesign**: Modern cards with animations, proper branding, better UX
@@ -156,20 +156,19 @@ Create a comprehensive step-by-step property listing wizard that makes it easy f
 - ✅ **Bulk upload with progress tracking** - Multiple file selection and individual progress bars
 - ✅ **File validation (size, format, count limits)** - 10MB limit, format validation, count limits (20 images, 5 videos)
 
-### 2B.7 **Step 6: KYC Verification** ❌ **NOT STARTED**
+### 2B.6 **Step 6: KYC Verification** ❌ **INTENTIONALLY REMOVED**
 
-**Priority:** High | **Timeline:** Day 5
+**Priority:** N/A | **Timeline:** N/A | **Decision:** Removed from flow
 
-- [ ] Update progress indicator to show 7 steps instead of 6
-- [ ] KYC step integration in property listing wizard as step 6
-- [ ] Upload Aadhaar, Pan card, agreement photos, and video verification
-- [ ] KYC document validation and storage
-- [ ] Video verification recording capability
-- [ ] Admin approval workflow before listing goes live
-- [ ] KYC status tracking and notifications
-- [ ] Prevent property publishing without completed KYC verification
+- ❌ **REMOVED**: KYC verification step intentionally removed from property posting wizard
+- ❌ **REMOVED**: Property publishing no longer requires KYC completion
+- ❌ **REMOVED**: Direct publish capability implemented instead
+- ✅ **UPDATED**: Wizard now has 6 steps (Media Upload → Review & Publish)
+- ✅ **UPDATED**: Progress indicator shows 6 steps instead of 7
+- ✅ **UPDATED**: Users can publish properties directly without KYC verification
+- ✅ **UPDATED**: KYC remains available as separate feature for verified listings
 
-### 2B.8 **Step 7: Review & Publish** ✅ **COMPLETED**
+### 2B.7 **Step 6: Review & Publish** ✅ **COMPLETED**
 
 **Priority:** High | **Timeline:** Day 6
 

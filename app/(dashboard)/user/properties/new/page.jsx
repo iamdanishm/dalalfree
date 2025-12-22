@@ -83,11 +83,10 @@ export default function PropertyWizard({ params }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [kycStatus, setKycStatus] = useState(null);
-  const [isLoadingKyc, setIsLoadingKyc] = useState(true);
   const formRef = useRef(null);
 
-  // Load temporary session data for step navigation (cleared on refresh)
+  // Only load temporary session data for step navigation (not persisted data)
+  // This ensures users get a fresh start when returning via "Post Property" button
   useEffect(() => {
     const tempData = sessionStorage.getItem("propertyWizardTempData");
     if (tempData) {
@@ -95,43 +94,30 @@ export default function PropertyWizard({ params }) {
       // Clear the temp data after loading
       sessionStorage.removeItem("propertyWizardTempData");
     }
+    // Note: We intentionally don't load localStorage data here
+    // to ensure fresh starts when users navigate away and come back
   }, []);
 
   // Clear any temp data when user leaves the page
   useEffect(() => {
     const handleBeforeUnload = () => {
       sessionStorage.removeItem("propertyWizardTempData");
+      sessionStorage.removeItem("propertyWizardFormData");
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  // Check KYC status on component mount
+  // Clear persisted wizard data when component unmounts (user navigates away)
+  // This ensures fresh start when they come back via "Post Property" button
   useEffect(() => {
-    const checkKycStatus = async () => {
-      if (session?.user?._id) {
-        try {
-          const response = await fetch("/api/kyc");
-          if (response.ok) {
-            const kycData = await response.json();
-            setKycStatus(kycData.status || "none");
-          } else {
-            setKycStatus("none");
-          }
-        } catch (error) {
-          console.error("Error checking KYC status:", error);
-          setKycStatus("none");
-        } finally {
-          setIsLoadingKyc(false);
-        }
-      }
+    return () => {
+      // Clear persisted data but keep temp data for step navigation
+      localStorage.removeItem("propertyWizardData");
+      sessionStorage.removeItem("propertyWizardFormData");
     };
-
-    if (status === "authenticated") {
-      checkKycStatus();
-    }
-  }, [session, status]);
+  }, []);
 
   // Smooth scroll to top when step changes
   useEffect(() => {
@@ -500,13 +486,6 @@ export default function PropertyWizard({ params }) {
     // Could add toast notification here
   };
 
-  const handleCompleteKyc = () => {
-    // Save current form data before redirecting
-    sessionStorage.setItem("propertyWizardTempData", JSON.stringify(formData));
-    // Redirect to KYC upload page
-    router.push("/kyc");
-  };
-
   // Show loading state while checking authentication
   if (status === "loading" || (status === "authenticated" && !session?.user)) {
     return (
@@ -718,32 +697,21 @@ export default function PropertyWizard({ params }) {
               )}
 
               {currentStep === steps.length ? (
-                // Show KYC button or Publish button based on KYC status
-                kycStatus === "approved" ? (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                      isSubmitting
-                        ? "bg-muted text-muted cursor-not-allowed"
-                        : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                    ) : null}
-                    <FiCheck size={16} />
-                    Publish Property
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleCompleteKyc}
-                    className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg font-medium transition-all hover:scale-105 shadow-sm"
-                  >
-                    <FiCheck size={16} />
-                    Complete KYC First
-                  </button>
-                )
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                    isSubmitting
+                      ? "bg-muted text-muted cursor-not-allowed"
+                      : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  ) : null}
+                  <FiCheck size={16} />
+                  Publish Property
+                </button>
               ) : (
                 <button
                   onClick={handleNext}
@@ -757,53 +725,45 @@ export default function PropertyWizard({ params }) {
           </div>
 
           {/* Mobile: Vertical layout */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden space-mobile">
             <div className="flex gap-3">
               {currentStep > 1 && (
                 <button
                   onClick={handlePrevious}
-                  className="flex items-center justify-center gap-2 flex-1 px-4 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg font-medium transition-all active:scale-95"
+                  className="btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-mobile-lg font-medium animate-mobile touch-feedback"
                 >
-                  <FiArrowLeft size={16} />
+                  <FiArrowLeft size={18} />
                   Previous
                 </button>
               )}
 
               {currentStep === steps.length ? (
-                // Show KYC button or Publish button based on KYC status
-                kycStatus === "approved" ? (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className={`flex items-center justify-center gap-2 flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                      isSubmitting
-                        ? "bg-muted text-muted cursor-not-allowed"
-                        : "bg-primary text-primary-foreground active:scale-95 shadow-sm"
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
-                    ) : null}
-                    <FiCheck size={16} />
-                    Publish
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleCompleteKyc}
-                    className="flex items-center justify-center gap-2 flex-1 px-4 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg font-medium transition-all active:scale-95 shadow-sm"
-                  >
-                    <FiCheck size={16} />
-                    Complete KYC
-                  </button>
-                )
+                <motion.button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  whileTap={{ scale: 0.98 }}
+                  className={`btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 rounded-mobile-lg font-bold text-lg animate-mobile touch-feedback ${
+                    isSubmitting
+                      ? "bg-muted text-muted cursor-not-allowed"
+                      : "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2"></div>
+                  ) : (
+                    <FiCheck size={20} />
+                  )}
+                  {isSubmitting ? "Publishing..." : "Publish Property"}
+                </motion.button>
               ) : (
-                <button
+                <motion.button
                   onClick={handleNext}
-                  className="flex items-center justify-center gap-2 flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium transition-all active:scale-95 shadow-sm"
+                  whileTap={{ scale: 0.98 }}
+                  className="btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 bg-gradient-to-r from-primary to-primary/90 text-white rounded-mobile-lg font-bold text-lg animate-mobile shadow-mobile-lg touch-feedback"
                 >
                   Next
-                  <FiArrowRight size={16} />
-                </button>
+                  <FiArrowRight size={18} />
+                </motion.button>
               )}
             </div>
           </div>
@@ -811,16 +771,27 @@ export default function PropertyWizard({ params }) {
 
         {/* Error Display */}
         {Object.keys(errors).length > 0 && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h3 className="text-sm font-medium text-red-800 mb-2">
-              Please fix the following errors:
-            </h3>
-            <ul className="text-sm text-red-700 space-y-1">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-6 md:mt-4 p-6 md:p-4 bg-red-50 border border-red-200 rounded-xl md:rounded-lg shadow-sm"
+          >
+            <div className="flex items-start space-x-3 mb-3 md:mb-2">
+              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-red-600 text-sm font-bold">!</span>
+              </div>
+              <h3 className="text-base md:text-sm font-semibold text-red-800 leading-relaxed">
+                Please fix the following errors:
+              </h3>
+            </div>
+            <ul className="text-base md:text-sm text-red-700 space-y-2 md:space-y-1 ml-9 md:ml-9">
               {Object.values(errors).map((error, index) => (
-                <li key={index}>• {error}</li>
+                <li key={index} className="leading-relaxed">
+                  • {error}
+                </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

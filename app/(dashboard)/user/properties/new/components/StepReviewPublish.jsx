@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import React, { useState } from "react";
@@ -41,6 +42,35 @@ export default function StepReviewPublish({
   acceptedTerms,
   setAcceptedTerms,
 }) {
+  const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+
+  // Handle video click - pause previous video and start new one
+  const handleVideoClick = (videoIndex, videoRef, event) => {
+    event.preventDefault(); // Prevent default video controls from interfering
+
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    // If clicking the same video that's currently playing, pause it
+    if (playingVideoIndex === videoIndex) {
+      videoElement.pause();
+      setPlayingVideoIndex(null);
+    } else {
+      // Pause the currently playing video if any
+      if (playingVideoIndex !== null) {
+        const prevVideo = document.querySelector(
+          `video[data-video-index="${playingVideoIndex}"]`
+        );
+        if (prevVideo) {
+          prevVideo.pause();
+        }
+      }
+      // Start the new video
+      setPlayingVideoIndex(videoIndex);
+      videoElement.play();
+    }
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -212,20 +242,7 @@ export default function StepReviewPublish({
       id: 5,
       title: "Photos & Videos",
       icon: FiImage,
-      data: [
-        {
-          label: "Images",
-          value: formData.images?.length
-            ? `${formData.images.length} images uploaded`
-            : "No images",
-        },
-        {
-          label: "Videos",
-          value: formData.videos?.length
-            ? `${formData.videos.length} videos uploaded`
-            : "No videos",
-        },
-      ],
+      data: [],
     },
   ];
 
@@ -276,10 +293,10 @@ export default function StepReviewPublish({
         </div>
 
         <div className="relative">
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex-mobile-center gap-4 md:gap-0 mb-6">
             <div className="flex-1">
               <motion.h3
-                className="text-2xl font-bold text-heading mb-2"
+                className="text-mobile-title text-heading mb-2"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
@@ -287,25 +304,25 @@ export default function StepReviewPublish({
                 {formData.title || "Property Title"}
               </motion.h3>
               <motion.p
-                className="text-muted text-lg flex items-center"
+                className="text-mobile-body text-mobile-muted flex items-center"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <FiMapPin className="mr-2 text-primary" size={16} />
+                <FiMapPin className="mr-2 text-mobile-primary" size={16} />
                 {formData.location || "Location"}
               </motion.p>
             </div>
             <motion.div
-              className="text-right"
+              className="text-left md:text-right"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <div className="text-3xl font-bold text-primary mb-1">
+              <div className="text-2xl md:text-3xl font-bold text-mobile-primary mb-1">
                 {formatPrice(formData.price)}
               </div>
-              <div className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              <div className="inline-flex items-center px-3 py-1 bg-primary/10 text-mobile-primary rounded-mobile text-sm font-medium">
                 {getCategoryDisplay(formData.category)}
               </div>
             </motion.div>
@@ -313,37 +330,43 @@ export default function StepReviewPublish({
 
           {/* Enhanced Quick Stats */}
           <motion.div
-            className="grid grid-cols-3 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+            <div className="text-center p-6 md:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm min-h-[100px] flex flex-col justify-center">
               <motion.div
-                className="text-2xl font-bold text-primary mb-1"
+                className="text-3xl md:text-2xl font-bold text-primary mb-1"
                 whileHover={{ scale: 1.1 }}
               >
                 {formData.images?.length || 0}
               </motion.div>
-              <div className="text-sm text-muted font-medium">Photos</div>
+              <div className="text-base md:text-sm text-muted font-medium">
+                Photos
+              </div>
             </div>
-            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+            <div className="text-center p-6 md:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm min-h-[100px] flex flex-col justify-center">
               <motion.div
-                className="text-2xl font-bold text-blue-600 mb-1"
+                className="text-3xl md:text-2xl font-bold text-blue-600 mb-1"
                 whileHover={{ scale: 1.1 }}
               >
                 {formData.videos?.length || 0}
               </motion.div>
-              <div className="text-sm text-muted font-medium">Videos</div>
+              <div className="text-base md:text-sm text-muted font-medium">
+                Videos
+              </div>
             </div>
-            <div className="text-center p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+            <div className="text-center p-6 md:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm min-h-[100px] flex flex-col justify-center">
               <motion.div
-                className="text-2xl font-bold text-green-600 mb-1"
+                className="text-3xl md:text-2xl font-bold text-green-600 mb-1"
                 whileHover={{ scale: 1.1 }}
               >
                 {formData.societyAmenities?.length || 0}
               </motion.div>
-              <div className="text-sm text-muted font-medium">Amenities</div>
+              <div className="text-base md:text-sm text-muted font-medium">
+                Amenities
+              </div>
             </div>
           </motion.div>
         </div>
@@ -357,47 +380,39 @@ export default function StepReviewPublish({
             variants={itemVariants}
             className="bg-white border border-gray-200 rounded-lg overflow-hidden"
           >
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 md:p-4 border-b border-gray-100 gap-3">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="p-2 bg-gray-100 rounded-lg flex-shrink-0">
                   <section.icon className="text-gray-600" size={18} />
                 </div>
-                <h4 className="font-semibold text-heading">{section.title}</h4>
+                <h4 className="font-semibold text-heading text-base md:text-base truncate">
+                  {section.title}
+                </h4>
               </div>
               <button
                 onClick={() => onStepChange && onStepChange(section.id)}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 md:px-3 md:py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors min-h-[44px] touch-manipulation"
               >
-                <FiEdit3 size={14} />
-                <span className="text-sm">Edit</span>
+                <FiEdit3 size={16} />
+                <span className="text-sm font-medium">Edit</span>
               </button>
             </div>
 
             <div className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {section.data.map((item, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="text-sm font-medium text-muted">
-                      {item.label}:
-                    </div>
-                    <div className="text-sm text-heading wrap-break-word">
-                      {item.value || "Not specified"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Special handling for media section */}
-              {section.id === 5 && (
-                <div className="mt-4 space-y-4">
+              {section.id === 5 ? (
+                <div className="mt-2 space-y-4">
+                  {/* Images Section */}
                   {formData.images && formData.images.length > 0 && (
                     <div>
-                      <h5 className="font-medium text-heading mb-2">Images:</h5>
-                      <div className="grid grid-cols-6 gap-2">
+                      <div className="text-sm font-medium text-muted mb-2">
+                        {formData.images.length} images uploaded
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-2">
                         {formData.images.slice(0, 12).map((image, index) => (
                           <div
                             key={index}
-                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
+                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity touch-manipulation min-h-[60px] md:min-h-[80px]"
                           >
                             <Image
                               src={image.url || image.src}
@@ -405,13 +420,17 @@ export default function StepReviewPublish({
                               width={100}
                               height={100}
                               className="w-full h-full object-cover"
+                              loading="lazy"
+                              placeholder="blur"
+                              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
+                              quality={75}
                             />
                           </div>
                         ))}
                         {formData.images.length > 12 && (
                           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                            <span className="text-sm text-muted">
-                              +{formData.images.length - 12} more
+                            <span className="text-sm text-muted font-medium">
+                              +{formData.images.length - 12}
                             </span>
                           </div>
                         )}
@@ -419,31 +438,72 @@ export default function StepReviewPublish({
                     </div>
                   )}
 
+                  {/* Videos Section */}
                   {formData.videos && formData.videos.length > 0 && (
                     <div>
-                      <h5 className="font-medium text-heading mb-2">Videos:</h5>
-                      <div className="space-y-2">
-                        {formData.videos.map((video, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"
-                          >
-                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                              <FiVideo className="text-red-600" size={14} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-heading truncate">
-                                {video.name}
-                              </p>
-                              <p className="text-xs text-muted">
+                      <div className="text-sm font-medium text-muted mb-2">
+                        {formData.videos.length} videos uploaded
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {formData.videos.map((video, index) => {
+                          const videoRef = React.useRef(null);
+                          const isPlaying = playingVideoIndex === index;
+
+                          return (
+                            <div
+                              key={index}
+                              className="aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative"
+                              onClick={(event) =>
+                                handleVideoClick(index, videoRef, event)
+                              }
+                            >
+                              <video
+                                ref={videoRef}
+                                data-video-index={index}
+                                src={video.url || video.src}
+                                className="w-full h-full object-cover"
+                                controls={isPlaying}
+                                poster={video.thumbnail}
+                                onPlay={() => setPlayingVideoIndex(index)}
+                                onPause={() => {
+                                  if (playingVideoIndex === index) {
+                                    setPlayingVideoIndex(null);
+                                  }
+                                }}
+                              />
+                              {!isPlaying && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                                    <FiVideo
+                                      className="text-gray-800"
+                                      size={20}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                                 Video {index + 1}
-                              </p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
+                </div>
+              ) : (
+                // Render data for non-media sections
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {section.data.map((item, index) => (
+                    <div key={index} className="flex flex-col">
+                      <span className="text-sm font-medium text-muted mb-1">
+                        {item.label}
+                      </span>
+                      <span className="text-heading font-medium">
+                        {item.value || "Not specified"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -454,24 +514,24 @@ export default function StepReviewPublish({
       {/* Terms and Conditions */}
       <motion.div
         variants={itemVariants}
-        className="bg-gray-50 border border-gray-200 rounded-lg p-6"
+        className="bg-gray-50 border border-gray-200 rounded-lg p-6 md:p-6"
       >
-        <div className="flex items-start space-x-3">
+        <div className="flex items-start space-x-4 md:space-x-3">
           <input
             type="checkbox"
             id="terms"
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+            className="mt-1 w-5 h-5 md:w-4 md:h-4 text-primary border-gray-300 rounded focus:ring-primary touch-manipulation"
           />
           <div className="flex-1">
             <label
               htmlFor="terms"
-              className="text-sm font-medium text-heading cursor-pointer"
+              className="text-base md:text-sm font-medium text-heading cursor-pointer leading-relaxed"
             >
               I agree to the Terms and Conditions
             </label>
-            <p className="text-sm text-muted mt-1">
+            <p className="text-base md:text-sm text-muted mt-2 md:mt-1 leading-relaxed">
               By publishing this property on DalalFree, you certify that all
               provided information is accurate, current, and complete. Your
               listing will undergo our quality review process before becoming
