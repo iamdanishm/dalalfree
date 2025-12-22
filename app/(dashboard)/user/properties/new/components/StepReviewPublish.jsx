@@ -382,7 +382,7 @@ export default function StepReviewPublish({
           >
             <div className="flex items-center justify-between p-4 md:p-4 border-b border-gray-100 gap-3">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <div className="p-2 bg-gray-100 rounded-lg flex-shrink-0">
+                <div className="p-2 bg-gray-100 rounded-lg shrink-0">
                   <section.icon className="text-gray-600" size={18} />
                 </div>
                 <h4 className="font-semibold text-heading text-base md:text-base truncate">
@@ -391,7 +391,7 @@ export default function StepReviewPublish({
               </div>
               <button
                 onClick={() => onStepChange && onStepChange(section.id)}
-                className="flex items-center space-x-2 px-4 py-2 md:px-3 md:py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors min-h-[44px] touch-manipulation"
+                className="flex items-center space-x-2 px-4 py-2 md:px-3 md:py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors min-h-11 touch-manipulation"
               >
                 <FiEdit3 size={16} />
                 <span className="text-sm font-medium">Edit</span>
@@ -412,7 +412,7 @@ export default function StepReviewPublish({
                         {formData.images.slice(0, 12).map((image, index) => (
                           <div
                             key={index}
-                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity touch-manipulation min-h-[60px] md:min-h-[80px]"
+                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity touch-manipulation min-h-[60px] md:min-h-20"
                           >
                             <Image
                               src={image.url || image.src}

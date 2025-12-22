@@ -542,7 +542,7 @@ export default function PropertyWizard({ params }) {
               {/* Background Track */}
               <div className="w-full h-1.5 sm:h-2 bg-gray-200 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+                  className="h-full bg-linear-to-r from-primary to-primary/80 rounded-full"
                   initial={{ width: 0 }}
                   animate={{
                     width: `${(currentStep / steps.length) * 100}%`,
@@ -579,7 +579,7 @@ export default function PropertyWizard({ params }) {
                           isCompleted
                             ? "bg-green-500 text-white"
                             : isCurrent
-                            ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4 ring-primary/30"
+                            ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4"
                             : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
                         }`}
                         whileHover={{ scale: 1.1 }}
@@ -753,7 +753,7 @@ export default function PropertyWizard({ params }) {
                   className={`btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 rounded-mobile-lg font-bold text-lg animate-mobile touch-feedback ${
                     isSubmitting
                       ? "bg-muted text-muted cursor-not-allowed"
-                      : "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
+                      : "bg-linear-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
                   }`}
                 >
                   {isSubmitting ? (
@@ -767,7 +767,7 @@ export default function PropertyWizard({ params }) {
                 <motion.button
                   onClick={handleNext}
                   whileTap={{ scale: 0.98 }}
-                  className="btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 bg-gradient-to-r from-primary to-primary/90 text-white rounded-mobile-lg font-bold text-lg animate-mobile shadow-mobile-lg touch-feedback"
+                  className="btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 bg-linear-to-r from-primary to-primary/90 text-white rounded-mobile-lg font-bold text-lg animate-mobile shadow-mobile-lg touch-feedback"
                 >
                   Next
                   <FiArrowRight size={18} />
@@ -785,7 +785,7 @@ export default function PropertyWizard({ params }) {
             className="mt-6 md:mt-4 p-6 md:p-4 bg-red-50 border border-red-200 rounded-xl md:rounded-lg shadow-sm"
           >
             <div className="flex items-start space-x-3 mb-3 md:mb-2">
-              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-red-600 text-sm font-bold">!</span>
               </div>
               <h3 className="text-base md:text-sm font-semibold text-red-800 leading-relaxed">
