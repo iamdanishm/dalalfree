@@ -85,17 +85,25 @@ export default function PropertyWizard({ params }) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const formRef = useRef(null);
 
-  // Only load temporary session data for step navigation (not persisted data)
-  // This ensures users get a fresh start when returning via "Post Property" button
+  // Clear ALL stored data on component mount for fresh start
+  // This ensures users get a completely fresh form every time they visit the page
   useEffect(() => {
+    // Clear any existing form data
+    setFormData({});
+
+    // Clear all stored wizard data
+    localStorage.removeItem("propertyWizardData");
+    sessionStorage.removeItem("propertyWizardTempData");
+    sessionStorage.removeItem("propertyWizardFormData");
+
+    // Only load temporary session data for step navigation if it exists
+    // This allows navigation between steps without losing current progress
     const tempData = sessionStorage.getItem("propertyWizardTempData");
     if (tempData) {
       setFormData(JSON.parse(tempData));
       // Clear the temp data after loading
       sessionStorage.removeItem("propertyWizardTempData");
     }
-    // Note: We intentionally don't load localStorage data here
-    // to ensure fresh starts when users navigate away and come back
   }, []);
 
   // Clear any temp data when user leaves the page

@@ -66,7 +66,7 @@ body {
 
 /* Touch-friendly button base styles */
 .btn-touch {
-  @apply min-h-[44px] touch-manipulation select-none;
+  @apply min-h-11 touch-manipulation select-none;
 }
 
 /* Mobile-first spacing utilities */
@@ -222,7 +222,7 @@ body {
 
 /* Mobile-optimized form elements */
 .form-mobile {
-  @apply w-full min-h-[44px] px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
+  @apply w-full min-h-11 px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all;
 }
 
 /* Mobile-friendly card styles */
