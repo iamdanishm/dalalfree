@@ -15,6 +15,7 @@ const propertySchema = new mongoose.Schema(
     description: String,
     subtitle: String, // "Premium 2BHK Apartment"
     price: Number,
+    marketRange: String, // Price range category like "₹30-60 Lakhs"
     negotiable: {
       type: String,
       enum: ["Yes", "No"],
@@ -48,6 +49,7 @@ const propertySchema = new mongoose.Schema(
     builtUpArea: Number,
     carpetArea: Number,
     floor: String,
+    totalFloors: Number, // Total floors in building
     age: Number,
     ageUnit: String, // "years old"
     parking: String, // "1 Covered Parking", "Open Parking"
@@ -88,32 +90,46 @@ const propertySchema = new mongoose.Schema(
 
     // Key selling points (for PropertyHighlights component)
     highlights: [String],
+    societyAmenities: [String], // Array of amenity IDs selected by user
+    nearbyPlaces: [
+      {
+        type: String, // "school", "hospital", "mall", etc.
+        name: String, // Place name
+        distance: String, // "1 km", "0.5 km", etc.
+        rating: Number, // 1-5 rating
+      },
+    ], // Nearby places added by user
 
     // Rich media structure (for ImageGallery component)
     images: [
       {
-        url: String,
-        src: String,
-        type: String,
-        thumbnail: String,
-        category: String,
-        alt: String,
-        order: Number,
+        id: String, // Unique identifier
+        name: String, // Original filename
+        size: Number, // File size in bytes
+        type: String, // MIME type
+        url: String, // File URL/path
+        category: { type: String, default: "other" }, // Image category
+        order: Number, // Display order
+        uploadedAt: { type: Date, default: Date.now },
       },
     ],
     videos: [
       {
-        url: String,
-        src: String,
-        thumbnail: String,
-        title: String,
-        duration: Number,
+        id: String, // Unique identifier
+        name: String, // Original filename
+        size: Number, // File size in bytes
+        type: String, // MIME type
+        url: String, // File URL/path
+        order: Number, // Display order
+        uploadedAt: { type: Date, default: Date.now },
       },
     ],
     companionPhotos: [String], // Additional property images
     imageCategories: [String], // ["Exterior", "Living Room", etc.]
 
     // Amenities structure (for AmenitiesComponent)
+    // Note: society array should be populated based on societyAmenities IDs during save
+    // nearby array should be populated based on nearbyPlaces during save
     amenities: {
       society: [
         {
@@ -159,6 +175,41 @@ const propertySchema = new mongoose.Schema(
         bg: String, // "bg-green-100"
       },
     ],
+
+    // KYC Documents (for KycVerification component)
+    kycFiles: {
+      aadhaar: [
+        {
+          url: String, // File URL/path
+          name: String, // Original filename
+          size: Number, // File size in bytes
+          type: String, // MIME type
+          uploadedAt: { type: Date, default: Date.now },
+        },
+      ], // Array for Aadhaar images/PDF
+      pan: {
+        url: String,
+        name: String,
+        size: Number,
+        type: String,
+        uploadedAt: { type: Date, default: Date.now },
+      }, // Single PAN document
+      agreement: {
+        url: String,
+        name: String,
+        size: Number,
+        type: String,
+        uploadedAt: { type: Date, default: Date.now },
+      }, // Property agreement PDF
+      video: {
+        url: String,
+        name: String,
+        size: Number,
+        type: String,
+        duration: Number, // Video duration in seconds
+        uploadedAt: { type: Date, default: Date.now },
+      }, // Verification video
+    },
 
     // Analytics fields
     viewsCount: { type: Number, default: 0 },
