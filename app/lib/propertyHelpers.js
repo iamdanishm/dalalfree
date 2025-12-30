@@ -68,51 +68,51 @@ export function transformPropertyDataForAPI(formData) {
 }
 
 /**
- * Adds files to the FormData object
+ * Adds files to the FormData object with proper field structure for the API
  * @param {FormData} formData - The FormData object to add files to
  * @param {Object} files - File objects from the UI
  */
 export function addFilesToFormData(formData, files) {
-  // Add images
+  // Add property images
   if (files.images && Array.isArray(files.images)) {
-    files.images.forEach((file, index) => {
-      if (file.file) {
-        formData.append("images", file.file);
+    files.images.forEach((fileObj, index) => {
+      if (fileObj.file) {
+        formData.append("images", fileObj.file);
       }
     });
   }
 
-  // Add videos
+  // Add property videos
   if (files.videos && Array.isArray(files.videos)) {
-    files.videos.forEach((file, index) => {
-      if (file.file) {
-        formData.append("videos", file.file);
+    files.videos.forEach((fileObj, index) => {
+      if (fileObj.file) {
+        formData.append("videos", fileObj.file);
       }
     });
   }
 
-  // Add KYC files
+  // Add KYC files with specific field names
   if (files.kycFiles) {
-    // Aadhaar files
+    // Aadhaar files (can be multiple)
     if (files.kycFiles.aadhaar && Array.isArray(files.kycFiles.aadhaar)) {
-      files.kycFiles.aadhaar.forEach((file) => {
-        if (file.file) {
-          formData.append("kycFiles", file.file);
+      files.kycFiles.aadhaar.forEach((fileObj) => {
+        if (fileObj.file) {
+          formData.append("kycFiles", fileObj.file);
         }
       });
     }
 
-    // PAN file
+    // PAN file (single)
     if (files.kycFiles.pan && files.kycFiles.pan.file) {
       formData.append("kycFiles", files.kycFiles.pan.file);
     }
 
-    // Agreement file
+    // Agreement file (single)
     if (files.kycFiles.agreement && files.kycFiles.agreement.file) {
       formData.append("kycFiles", files.kycFiles.agreement.file);
     }
 
-    // Video file
+    // KYC verification video (single)
     if (files.kycFiles.video && files.kycFiles.video.file) {
       formData.append("kycFiles", files.kycFiles.video.file);
     }
@@ -246,6 +246,161 @@ export function createPropertySummary(formData) {
       video: formData.kycFiles?.video ? 1 : 0,
     },
   };
+}
+
+/**
+ * Creates complete FormData for direct API submission
+ * @param {Object} formData - Raw form data from the wizard
+ * @param {Object} files - File objects from the UI
+ * @returns {FormData} - Complete FormData object ready for API submission
+ */
+export function createPropertyFormData(formData, files = {}) {
+  // Start with basic property data
+  const apiData = transformPropertyDataForAPI(formData);
+
+  // Add files to the FormData
+  return addFilesToFormData(apiData, files);
+}
+
+/**
+ * Retry mechanism for failed file uploads
+ * @param {Array} failedFiles - Array of failed file objects with retry info
+ * @param {number} maxRetries - Maximum number of retry attempts
+ * @returns {Promise<Object>} - Results of retry attempts
+ */
+export async function retryFailedUploads(failedFiles, maxRetries = 2) {
+  const results = {
+    successful: [],
+    stillFailed: [],
+    totalRetries: 0,
+  };
+
+  for (const failedFile of failedFiles) {
+    if (failedFile.retries >= maxRetries) {
+      results.stillFailed.push(failedFile);
+      continue;
+    }
+
+    try {
+      // Implement retry logic based on file type
+      // This would call the appropriate API endpoint with the failed file
+      const retryResult = await retrySingleFile(failedFile);
+      if (retryResult.success) {
+        results.successful.push(retryResult);
+      } else {
+        failedFile.retries = (failedFile.retries || 0) + 1;
+        results.stillFailed.push(failedFile);
+      }
+      results.totalRetries++;
+    } catch (error) {
+      failedFile.retries = (failedFile.retries || 0) + 1;
+      results.stillFailed.push(failedFile);
+      results.totalRetries++;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Retry a single failed file upload
+ * @param {Object} failedFile - Failed file object
+ * @returns {Promise<Object>} - Retry result
+ */
+async function retrySingleFile(failedFile) {
+  // This would implement the actual retry logic
+  // For now, return a mock success/failure
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simulate random success/failure for demo
+      const success = Math.random() > 0.5;
+      resolve({
+        success,
+        file: failedFile,
+        ...(success && { newUrl: `/uploads/retry/${failedFile.name}` }),
+      });
+    }, 1000);
+  });
+}
+
+/**
+ * Validates file in real-time as user selects
+ * @param {File} file - File to validate
+ * @param {string} type - File type category ('image', 'video', 'document')
+ * @returns {Object} - Validation result with errors and warnings
+ */
+export function validateFileRealTime(file, type) {
+  const result = {
+    isValid: true,
+    errors: [],
+    warnings: [],
+  };
+
+  // Basic file checks
+  if (!file) {
+    result.isValid = false;
+    result.errors.push("No file selected");
+    return result;
+  }
+
+  // File size validation
+  const maxSizes = {
+    image: 10 * 1024 * 1024, // 10MB
+    video: 100 * 1024 * 1024, // 100MB
+    document: 10 * 1024 * 1024, // 10MB
+  };
+
+  const maxSize = maxSizes[type] || maxSizes.document;
+  if (file.size > maxSize) {
+    result.isValid = false;
+    result.errors.push(
+      `File size exceeds ${Math.round(maxSize / (1024 * 1024))}MB limit`
+    );
+  }
+
+  // File type validation
+  const allowedTypes = {
+    image: [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/bmp",
+      "image/webp",
+      "image/tiff",
+      "image/tif",
+    ],
+    video: [
+      "video/mp4",
+      "video/avi",
+      "video/mov",
+      "video/wmv",
+      "video/mkv",
+      "video/flv",
+      "video/webm",
+    ],
+    document: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+  };
+
+  const validTypes = allowedTypes[type] || allowedTypes.document;
+  if (!validTypes.includes(file.type)) {
+    result.isValid = false;
+    result.errors.push(`Invalid file type. Allowed: ${validTypes.join(", ")}`);
+  }
+
+  // Warnings for large files
+  if (file.size > maxSize * 0.8) {
+    result.warnings.push("Large file detected - upload may take longer");
+  }
+
+  // Warnings for certain file types
+  if (file.type === "image/tiff" || file.type === "image/tif") {
+    result.warnings.push(
+      "TIFF files may not display correctly in all browsers"
+    );
+  }
+
+  return result;
 }
 
 /**

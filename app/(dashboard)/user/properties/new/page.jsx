@@ -81,6 +81,8 @@ export default function PropertyWizard({ params }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState(""); // "preparing", "uploading", "processing", "complete"
   const [errors, setErrors] = useState({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const formRef = useRef(null);
@@ -385,58 +387,170 @@ export default function PropertyWizard({ params }) {
     if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
+    setUploadProgress(0);
+    setUploadStatus("preparing");
+
     try {
-      // Combine floor and totalFloors for storage
-      const combinedFloor =
-        formData.floor && formData.totalFloors
-          ? `${formData.floor} of ${formData.totalFloors}`
-          : formData.floor || "";
+      // Import the helper function
+      const { createPropertyFormData } = await import(
+        "@/app/lib/propertyHelpers"
+      );
 
-      // Upload media files first if any
-      let uploadedImages = [];
-      let uploadedVideos = [];
+      console.log("=== FRONTEND SUBMIT START ===");
+      console.log("Form data:", formData);
 
-      if (formData.images && formData.images.length > 0) {
-        uploadedImages = await uploadMediaFiles(formData.images, "images");
-      }
+      // Update progress: Preparing data
+      setUploadProgress(10);
+      setUploadStatus("preparing");
 
-      if (formData.videos && formData.videos.length > 0) {
-        uploadedVideos = await uploadMediaFiles(formData.videos, "videos");
-      }
+      // Prepare property data for API
+      const propertyData = {
+        ...formData,
+        // Combine floor and totalFloors for storage
+        floor:
+          formData.floor && formData.totalFloors
+            ? `${formData.floor} of ${formData.totalFloors}`
+            : formData.floor || "",
+      };
 
-      const response = await fetch("/api/properties", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          images: uploadedImages,
-          videos: uploadedVideos,
-          floor: combinedFloor,
-          ownerId: session?.user?._id,
-          status: "pending", // All new properties start as pending
-        }),
+      console.log("Property data prepared:", propertyData);
+
+      // Calculate total file size for progress tracking
+      const calculateTotalSize = (files) => {
+        return files.reduce((total, file) => total + (file.size || 0), 0);
+      };
+
+      const imageSize = calculateTotalSize(formData.images || []);
+      const videoSize = calculateTotalSize(formData.videos || []);
+      const kycSize = calculateTotalSize(
+        [
+          ...(formData.kycFiles?.aadhaar || []),
+          formData.kycFiles?.pan,
+          formData.kycFiles?.agreement,
+          formData.kycFiles?.video,
+        ].filter(Boolean)
+      );
+
+      const totalSize = imageSize + videoSize + kycSize;
+      console.log(
+        "File sizes - Images:",
+        imageSize,
+        "Videos:",
+        videoSize,
+        "KYC:",
+        kycSize,
+        "Total:",
+        totalSize
+      );
+
+      // Update progress: Creating FormData
+      setUploadProgress(20);
+      setUploadStatus("preparing");
+
+      // Create complete FormData with files
+      const formDataToSubmit = createPropertyFormData(propertyData, {
+        images: formData.images || [],
+        videos: formData.videos || [],
+        kycFiles: formData.kycFiles || {},
       });
+
+      console.log(
+        "FormData created with keys:",
+        Array.from(formDataToSubmit.keys())
+      );
+
+      // Log each form field for debugging
+      for (const [key, value] of formDataToSubmit.entries()) {
+        if (value instanceof File) {
+          console.log(
+            `File field "${key}":`,
+            value.name,
+            `(${value.size} bytes, ${value.type})`
+          );
+        } else {
+          console.log(`Text field "${key}":`, value);
+        }
+      }
+
+      // Update progress: Starting upload
+      setUploadProgress(30);
+      setUploadStatus("uploading");
+
+      // Simulate upload progress (since we can't track FormData upload progress)
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newProgress = prev + Math.random() * 10;
+          if (newProgress >= 70) {
+            clearInterval(progressInterval);
+            setUploadStatus("processing");
+            return 70;
+          }
+          return newProgress;
+        });
+      }, 200);
+
+      console.log("Submitting to /api/properties/create");
+
+      // Submit to new API endpoint
+      const response = await fetch("/api/properties/create", {
+        method: "POST",
+        body: formDataToSubmit, // No Content-Type header needed for FormData
+      });
+
+      clearInterval(progressInterval);
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create property");
+        console.log("Error response:", errorData);
+        throw new Error(
+          errorData.error || errorData.message || "Failed to create property"
+        );
       }
 
-      const property = await response.json();
+      // Update progress: Processing response
+      setUploadProgress(80);
+      setUploadStatus("processing");
+
+      const result = await response.json();
+      console.log("Success response:", result);
+
+      if (!result.success) {
+        throw new Error(
+          result.error || result.message || "Failed to create property"
+        );
+      }
+
+      // Update progress: Finalizing
+      setUploadProgress(90);
+      setUploadStatus("complete");
+
+      // Small delay for better UX
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Clear all saved data
       localStorage.removeItem("propertyWizardData");
       sessionStorage.removeItem("propertyWizardTempData");
 
+      // Final progress update
+      setUploadProgress(100);
+
       // Redirect to success page or property management
-      router.push(`/user/properties?success=true&propertyId=${property._id}`);
+      router.push(
+        `/user/properties?success=true&propertyId=${result.property.id}`
+      );
     } catch (error) {
       console.error("Property creation failed:", error);
+      console.error("Error details:", error.message);
       setErrors({ submit: error.message });
+      setUploadStatus("error");
     } finally {
       setIsSubmitting(false);
+      // Reset progress after a delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadStatus("");
+      }, 3000);
     }
   };
 
@@ -718,7 +832,7 @@ export default function PropertyWizard({ params }) {
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                   ) : null}
                   <FiCheck size={16} />
-                  Publish Property
+                  {isSubmitting ? "Publishing..." : "Publish Property"}
                 </button>
               ) : (
                 <button
@@ -776,6 +890,54 @@ export default function PropertyWizard({ params }) {
             </div>
           </div>
         </div>
+
+        {/* Upload Progress Display */}
+        {isSubmitting && uploadProgress > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-6 md:mt-4 p-6 md:p-4 bg-blue-50 border border-blue-200 rounded-xl md:rounded-lg shadow-sm"
+          >
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <div>
+                <h3 className="text-lg font-semibold text-blue-800">
+                  {uploadStatus === "preparing" && "Preparing your property..."}
+                  {uploadStatus === "uploading" && "Uploading files..."}
+                  {uploadStatus === "processing" && "Processing property..."}
+                  {uploadStatus === "complete" && "Almost done..."}
+                  {uploadStatus === "error" && "Upload failed"}
+                </h3>
+                <p className="text-sm text-blue-600">
+                  {uploadStatus === "preparing" &&
+                    "Validating data and preparing files"}
+                  {uploadStatus === "uploading" &&
+                    "Sending images, videos, and documents"}
+                  {uploadStatus === "processing" &&
+                    "Creating property listing and verifying documents"}
+                  {uploadStatus === "complete" &&
+                    "Property created successfully!"}
+                  {uploadStatus === "error" && "Please check the errors below"}
+                </p>
+              </div>
+            </div>
+
+            <div className="w-full bg-blue-200 rounded-full h-2">
+              <motion.div
+                className="bg-blue-600 h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${uploadProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+
+            <div className="mt-2 text-right">
+              <span className="text-sm font-medium text-blue-700">
+                {Math.round(uploadProgress)}%
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Error Display */}
         {Object.keys(errors).length > 0 && (

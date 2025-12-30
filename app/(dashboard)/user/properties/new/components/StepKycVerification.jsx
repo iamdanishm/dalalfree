@@ -14,16 +14,25 @@ import {
   FiShield,
 } from "react-icons/fi";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (matches API)
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]; // Matches API
 const ALLOWED_DOCUMENT_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "application/pdf",
-];
+]; // Matches API
 const ALLOWED_PDF_ONLY = ["application/pdf"];
 const ALLOWED_PAN_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/avi",
+  "video/mov",
+  "video/wmv",
+  "video/mkv",
+  "video/flv",
+  "video/webm",
+]; // Matches API
 
 export default function StepKycVerification({
   formData,

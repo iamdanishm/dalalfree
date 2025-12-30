@@ -13,12 +13,31 @@ import {
   FiTrash2,
   FiPlay,
 } from "react-icons/fi";
+import { validateFileRealTime } from "@/app/lib/propertyHelpers";
 
 const MAX_IMAGES = 20;
 const MAX_VIDEOS = 5;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/avi", "video/mov"];
+const MAX_FILE_SIZE_IMAGES = 10 * 1024 * 1024; // 10MB for images
+const MAX_FILE_SIZE_VIDEOS = 100 * 1024 * 1024; // 100MB for videos (matches API)
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/bmp",
+  "image/webp",
+  "image/tiff",
+  "image/tif",
+];
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/avi",
+  "video/mov",
+  "video/wmv",
+  "video/mkv",
+  "video/flv",
+  "video/webm",
+];
 
 export default function StepMediaUpload({
   formData,
@@ -29,6 +48,8 @@ export default function StepMediaUpload({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(new Set());
   const [playingVideo, setPlayingVideo] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [totalUploadSize, setTotalUploadSize] = useState(0);
 
   // Initialize state once from props.
   const [localImages, setLocalImages] = useState([]);
@@ -100,32 +121,29 @@ export default function StepMediaUpload({
     };
   }, []);
 
-  // Validation
-  const validateFile = useCallback(
+  // Real-time validation with warnings
+  const validateFileLocally = useCallback(
     (file) => {
-      if (file.size > MAX_FILE_SIZE) {
-        setErrors({ media: `File ${file.name} is too large. Max size: 10MB` });
-        return false;
-      }
-      if (
-        file.type.startsWith("image/") &&
-        !ALLOWED_IMAGE_TYPES.includes(file.type)
-      ) {
+      const fileType = file.type.startsWith("video/") ? "video" : "image";
+      const validation = validateFileRealTime(file, fileType);
+
+      // Show errors immediately
+      if (!validation.isValid) {
         setErrors({
-          media: `File ${file.name} is not a supported image format`,
+          media: validation.errors.join(", "),
         });
-        return false;
       }
-      if (
-        file.type.startsWith("video/") &&
-        !ALLOWED_VIDEO_TYPES.includes(file.type)
-      ) {
-        setErrors({
-          media: `File ${file.name} is not a supported video format`,
-        });
-        return false;
+
+      // Show warnings (non-blocking)
+      if (validation.warnings.length > 0) {
+        // Could show toast notifications or inline warnings here
+        console.warn(
+          `File warning for ${file.name}:`,
+          validation.warnings.join(", ")
+        );
       }
-      return true;
+
+      return validation.isValid;
     },
     [setErrors]
   );
@@ -145,7 +163,7 @@ export default function StepMediaUpload({
       let vidCount = 0;
 
       for (const file of files) {
-        if (!validateFile(file)) continue;
+        if (!validateFileLocally(file)) continue;
 
         // Create object URL immediately
         const objectUrl = URL.createObjectURL(file);
@@ -200,7 +218,13 @@ export default function StepMediaUpload({
         setLocalVideos((prev) => [...prev, ...newVideos]);
       }
     },
-    [localImages.length, localVideos.length, errors, setErrors, validateFile]
+    [
+      localImages.length,
+      localVideos.length,
+      errors,
+      setErrors,
+      validateFileLocally,
+    ]
   );
 
   // Drag & Drop Handlers

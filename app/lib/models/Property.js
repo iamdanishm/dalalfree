@@ -1,44 +1,77 @@
 import mongoose from "mongoose";
 
+// --- Sub-Schemas (Defined Explicitly) ---
+const imageSchema = new mongoose.Schema(
+  {
+    id: String,
+    name: String,
+    size: Number,
+    type: String,
+    url: String,
+    category: { type: String, default: "other" },
+    order: Number,
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+); // _id: false prevents creating extra IDs for images
+
+const videoSchema = new mongoose.Schema(
+  {
+    id: String,
+    name: String,
+    size: Number,
+    type: String,
+    url: String,
+    order: Number,
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const nearbyPlaceSchema = new mongoose.Schema(
+  {
+    type: { type: String, required: true },
+    name: { type: String, required: true },
+    distance: { type: String, required: true },
+    rating: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const trustBadgeSchema = new mongoose.Schema(
+  {
+    label: String,
+    icon: String,
+    color: String,
+    bg: String,
+  },
+  { _id: false }
+);
+
 const propertySchema = new mongoose.Schema(
   {
-    // Ownership
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-
-    // Basic fields (enhanced)
     title: { type: String, required: true },
-    slug: { type: String, unique: true, index: true }, // SEO-friendly URL slug
+    slug: { type: String, unique: true, index: true },
     description: String,
-    subtitle: String, // "Premium 2BHK Apartment"
+    subtitle: String,
     price: Number,
-    marketRange: String, // Price range category like "₹30-60 Lakhs"
-    negotiable: {
-      type: String,
-      enum: ["Yes", "No"],
-      default: "No",
-    },
+    marketRange: String,
+    negotiable: { type: String, enum: ["Yes", "No"], default: "No" },
     originalPrice: Number,
     discount: String,
-
-    // Property classification
-    propertyType: {
-      type: String,
-      enum: ["sell", "rent"],
-      required: true,
-    },
+    propertyType: { type: String, enum: ["sell", "rent"], required: true },
     category: {
       type: String,
       enum: ["Residential", "Commercial", "Industrial", "Land"],
       required: true,
     },
-    score: String, // A+, B, etc.
-
-    // Detailed specifications (for QuickOverview component)
-    bhk: String, // "2BHK", "3BHK", etc.
+    score: String,
+    bhk: String,
     bathrooms: Number,
     balcony: Number,
     furnishing: {
@@ -49,10 +82,10 @@ const propertySchema = new mongoose.Schema(
     builtUpArea: Number,
     carpetArea: Number,
     floor: String,
-    totalFloors: Number, // Total floors in building
+    totalFloors: Number,
     age: Number,
-    ageUnit: String, // "years old"
-    parking: String, // "1 Covered Parking", "Open Parking"
+    ageUnit: String,
+    parking: String,
     facing: {
       type: String,
       enum: [
@@ -75,61 +108,23 @@ const propertySchema = new mongoose.Schema(
         "possession-in-6-months",
       ],
     },
-    maintenance: String, // "₹2,500/month"
-
-    // Location and maps
+    maintenance: String,
     location: String,
     address: String,
     city: String,
     state: String,
     pincode: String,
-    coordinates: {
-      lat: Number,
-      lng: Number,
-    },
-
-    // Key selling points (for PropertyHighlights component)
+    coordinates: { lat: Number, lng: Number },
     highlights: [String],
-    societyAmenities: [String], // Array of amenity IDs selected by user
-    nearbyPlaces: [
-      {
-        type: String, // "school", "hospital", "mall", etc.
-        name: String, // Place name
-        distance: String, // "1 km", "0.5 km", etc.
-        rating: Number, // 1-5 rating
-      },
-    ], // Nearby places added by user
+    societyAmenities: [String],
 
-    // Rich media structure (for ImageGallery component)
-    images: [
-      {
-        id: String, // Unique identifier
-        name: String, // Original filename
-        size: Number, // File size in bytes
-        type: String, // MIME type
-        url: String, // File URL/path
-        category: { type: String, default: "other" }, // Image category
-        order: Number, // Display order
-        uploadedAt: { type: Date, default: Date.now },
-      },
-    ],
-    videos: [
-      {
-        id: String, // Unique identifier
-        name: String, // Original filename
-        size: Number, // File size in bytes
-        type: String, // MIME type
-        url: String, // File URL/path
-        order: Number, // Display order
-        uploadedAt: { type: Date, default: Date.now },
-      },
-    ],
-    companionPhotos: [String], // Additional property images
-    imageCategories: [String], // ["Exterior", "Living Room", etc.]
+    // Use explicit sub-schemas
+    nearbyPlaces: [nearbyPlaceSchema],
+    images: [imageSchema],
+    videos: [videoSchema],
 
-    // Amenities structure (for AmenitiesComponent)
-    // Note: society array should be populated based on societyAmenities IDs during save
-    // nearby array should be populated based on nearbyPlaces during save
+    companionPhotos: [String],
+    imageCategories: [String],
     amenities: {
       society: [
         {
@@ -148,89 +143,29 @@ const propertySchema = new mongoose.Schema(
         },
       ],
     },
-
-    // Neighborhood information (for LocationNeighborhood component)
     neighborhood: {
-      walkScore: Number, // 0-100
+      walkScore: Number,
       livability: {
         type: String,
         enum: ["excellent", "good", "average", "poor"],
       },
-      commute: [
-        {
-          destination: String,
-          time: String,
-          distance: String,
-        },
-      ],
-      demographics: String, // "Family-friendly area with good schools and healthcare"
+      commute: [{ destination: String, time: String, distance: String }],
+      demographics: String,
     },
-
-    // Trust verification (for TrustBadges component)
-    trustBadges: [
-      {
-        label: String, // "Verified Listing", "No Brokerage", "Ready to Move"
-        icon: String, // component name reference
-        color: String, // "text-green-800"
-        bg: String, // "bg-green-100"
-      },
-    ],
-
-    // KYC Documents (for KycVerification component)
-    kycFiles: {
-      aadhaar: [
-        {
-          url: String, // File URL/path
-          name: String, // Original filename
-          size: Number, // File size in bytes
-          type: String, // MIME type
-          uploadedAt: { type: Date, default: Date.now },
-        },
-      ], // Array for Aadhaar images/PDF
-      pan: {
-        url: String,
-        name: String,
-        size: Number,
-        type: String,
-        uploadedAt: { type: Date, default: Date.now },
-      }, // Single PAN document
-      agreement: {
-        url: String,
-        name: String,
-        size: Number,
-        type: String,
-        uploadedAt: { type: Date, default: Date.now },
-      }, // Property agreement PDF
-      video: {
-        url: String,
-        name: String,
-        size: Number,
-        type: String,
-        duration: Number, // Video duration in seconds
-        uploadedAt: { type: Date, default: Date.now },
-      }, // Verification video
-    },
-
-    // Analytics fields
+    trustBadges: [{ label: String, icon: String, color: String, bg: String }],
+    kycFiles: mongoose.Schema.Types.Mixed, // Temporarily use Mixed type to bypass caching issues
     viewsCount: { type: Number, default: 0 },
     likesCount: { type: Number, default: 0 },
     inquiriesCount: { type: Number, default: 0 },
     lastViewed: Date,
     lastUpdatedByUser: Date,
-
-    // Archive system
     isArchived: { type: Boolean, default: false },
     archivedReason: String,
     archivedAt: Date,
-
-    // Admin fields
-    verified: { type: Boolean, default: false }, // Keep for backward compatibility
-    featured: { type: Boolean, default: false }, // Paid featured listings
-    boosted: { type: Boolean, default: false }, // Temporary promotion
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    verified: { type: Boolean, default: false },
+    featured: { type: Boolean, default: false },
+    boosted: { type: Boolean, default: false },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     approvalDate: Date,
     rejectionReason: String,
     status: {
@@ -238,8 +173,6 @@ const propertySchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "featured"],
       default: "pending",
     },
-
-    // Additional UI fields
     verificationStatus: { type: Boolean, default: false },
     featuredStatus: { type: Boolean, default: false },
   },
@@ -280,5 +213,20 @@ propertySchema.index({
 propertySchema.index({ ownerId: 1, lastViewed: -1 });
 propertySchema.index({ ownerId: 1, inquiriesCount: -1 });
 
-export default mongoose.models.Property ||
-  mongoose.model("Property", propertySchema);
+// Aggressive model cache clearing for development
+if (mongoose.models && mongoose.models.Property) {
+  delete mongoose.models.Property;
+}
+
+// Clear connection models cache
+if (mongoose.connection && mongoose.connection.models) {
+  delete mongoose.connection.models.Property;
+}
+
+// Clear any compiled schemas
+if (mongoose.modelSchemas && mongoose.modelSchemas.Property) {
+  delete mongoose.modelSchemas.Property;
+}
+
+const Property = mongoose.model("Property", propertySchema);
+export default Property;
