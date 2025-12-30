@@ -107,6 +107,24 @@ export const uploadPropertyVideos = multer({
   },
 });
 
+export const uploadAmenityImages = multer({
+  storage: createStorage("amenities/images"),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit for amenity images
+  },
+  fileFilter: (req, file, cb) => {
+    if (validateFileType.image(file.originalname)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Only image files are allowed (jpeg, jpg, png, gif, bmp, webp, tiff, tif)"
+        )
+      );
+    }
+  },
+});
+
 // Utility functions for file management
 export const deleteFile = (filePath) => {
   try {

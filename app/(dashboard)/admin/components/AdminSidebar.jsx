@@ -21,6 +21,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: FiHome },
   { name: "Users", href: "/admin/users", icon: FiUsers },
   { name: "Properties", href: "/admin/properties", icon: FiMapPin },
+  { name: "Amenities", href: "/admin/amenities", icon: FiAward },
   { name: "KYC", href: "/admin/kyc", icon: FiCheckCircle },
   { name: "Analytics", href: "/admin/analytics", icon: FiBarChart },
   { name: "Reports", href: "/admin/reports", icon: FiFileText },
