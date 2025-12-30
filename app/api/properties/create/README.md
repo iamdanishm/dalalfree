@@ -1,117 +1,112 @@
 # Property Creation API
 
-Complete API endpoint for creating properties with all wizard data, file uploads, and KYC verification.
+## Overview
 
-## Endpoint
+This API endpoint handles the creation of new properties in the DalalFree property marketplace. It includes comprehensive validation, file processing, and KYC document handling.
+
+## Folder Structure
 
 ```
-POST /api/properties/create
+app/api/properties/create/
+├── route.js              # Main API route handler
+├── helpers/
+│   ├── amenities.js      # Amenity transformation utilities
+│   ├── fileProcessing.js # File upload and validation
+│   ├── kycProcessing.js  # KYC document categorization
+├── schemas/
+│   └── propertySchema.js # Property validation schema
+└── README.md             # This documentation
 ```
+
+## API Endpoint
+
+**POST** `/api/properties/create`
 
 ## Authentication
 
-Requires authentication via `requireAuth` middleware. User must be logged in (KYC approval not required upfront - KYC documents are submitted with the property).
+- Requires authenticated user with role `partner` or `user`
+- Uses `requireAuth` middleware for authentication
+- Returns `403 Forbidden` for unauthorized roles
 
 ## Request Format
 
 **Content-Type:** `multipart/form-data`
 
-The request uses FormData to handle both text data and file uploads.
+### Required Fields
 
-### Text Fields
+#### Text Fields
 
-| Field              | Type        | Required | Description                                       |
-| ------------------ | ----------- | -------- | ------------------------------------------------- |
-| `title`            | string      | ✅       | Property title                                    |
-| `description`      | string      | ✅       | Property description                              |
-| `propertyType`     | string      | ✅       | "sell" or "rent"                                  |
-| `category`         | string      | ✅       | "Residential", "Commercial", "Industrial", "Land" |
-| `price`            | number      | ✅       | Property price                                    |
-| `marketRange`      | string      | ❌       | Price range category                              |
-| `negotiable`       | string      | ❌       | "Yes" or "No"                                     |
-| `address`          | string      | ✅       | Full property address                             |
-| `location`         | string      | ✅       | Area/locality                                     |
-| `city`             | string      | ✅       | City name                                         |
-| `state`            | string      | ✅       | State name                                        |
-| `pincode`          | string      | ✅       | Pincode                                           |
-| `coordinates`      | JSON string | ✅       | `{lat: number, lng: number}`                      |
-| `bhk`              | string      | ✅\*     | BHK config (required for Residential)             |
-| `bathrooms`        | number      | ❌       | Number of bathrooms                               |
-| `balcony`          | number      | ❌       | Number of balconies                               |
-| `furnishing`       | string      | ❌       | "furnished", "semi-furnished", "unfurnished"      |
-| `builtUpArea`      | number      | ✅       | Built-up area in sq ft                            |
-| `carpetArea`       | number      | ✅       | Carpet area in sq ft                              |
-| `floor`            | string      | ✅       | Floor number (e.g., "3rd", "Ground")              |
-| `totalFloors`      | number      | ❌       | Total floors in building                          |
-| `age`              | number      | ✅       | Property age                                      |
-| `ageUnit`          | string      | ❌       | "years old" or "months old"                       |
-| `parking`          | string      | ✅       | Parking details                                   |
-| `facing`           | string      | ✅       | Property facing direction                         |
-| `possessionStatus` | string      | ✅       | Possession status                                 |
-| `maintenance`      | string      | ❌       | Maintenance cost                                  |
-| `highlights`       | JSON string | ❌       | Array of highlight strings                        |
-| `societyAmenities` | JSON string | ❌       | Array of amenity IDs                              |
-| `nearbyPlaces`     | JSON string | ❌       | Array of nearby place objects                     |
+- `title` (string, 10-150 chars)
+- `description` (string, 50-5000 chars)
+- `price` (number, ₹10,000 - ₹1,000,000,000)
+- `propertyType` (string, enum)
+- `category` (string, "sale", "rent", or "lease")
+- `builtUpArea` (number, 100-100,000 sq ft)
+- `carpetArea` (number, 50-100,000 sq ft)
+- `floor` (string, number or "ground"/"basement")
+- `age` (number, 0-100 years)
+- `parking` (string, enum)
+- `facing` (string, direction enum)
+- `possessionStatus` (string, enum)
+- `location` (string, 5-200 chars)
+- `address` (string, 10-500 chars)
+- `city` (string, 2-50 chars)
+- `state` (string, 2-50 chars)
+- `pincode` (string, 6-digit Indian postal code)
+- `coordinates` (object with latitude/longitude)
 
-### File Fields
+#### File Fields
 
-| Field      | Type   | Description                                    |
-| ---------- | ------ | ---------------------------------------------- |
-| `images`   | File[] | Property images (max 20, 10MB each)            |
-| `videos`   | File[] | Property videos (max 5, 100MB each)            |
-| `kycFiles` | File[] | KYC documents (Aadhaar, PAN, Agreement, Video) |
+- `images` (file[], at least 1, max 20)
+- `kycFiles` (file[], exactly 4 required: Aadhaar, PAN, Agreement, Video)
 
-## Usage Example
+### Optional Fields
 
-```javascript
-import {
-  transformPropertyDataForAPI,
-  addFilesToFormData,
-} from "@/lib/propertyHelpers";
+- `subtitle` (string, max 100 chars)
+- `marketRange` (string, enum)
+- `negotiable` (string, "Yes"/"No"/"Partially")
+- `bhk` (string, enum)
+- `bathrooms` (number, 1-10)
+- `balcony` (number, 0-10)
+- `furnishing` (string, enum)
+- `totalFloors` (number, 1-100)
+- `ageUnit` (string, enum)
+- `maintenance` (number, ₹0-₹100,000/month)
+- `highlights` (string[], max 10 items)
+- `societyAmenities` (string[], max 30 items)
+- `nearbyPlaces` (object[], max 20 items)
 
-// Your form data from the wizard
-const formData = {
-  title: "Beautiful 3BHK Apartment",
-  description: "Modern apartment with great amenities",
-  propertyType: "sell",
-  category: "Residential",
-  price: 8500000,
-  // ... other fields
-  societyAmenities: ["24-7-security", "gym", "swimming-pool"],
-  nearbyPlaces: [
-    { type: "school", name: "City School", distance: "1", rating: 4.2 },
-  ],
-  coordinates: { lat: 18.5642, lng: 73.7769 },
-};
+## File Requirements
 
-// File objects
-const files = {
-  images: [file1, file2, file3],
-  videos: [videoFile],
-  kycFiles: {
-    aadhaar: [aadhaarFront, aadhaarBack],
-    pan: panFile,
-    agreement: agreementFile,
-    video: kycVideoFile,
-  },
-};
+### Images
 
-// Transform data
-const apiData = transformPropertyDataForAPI(formData);
-const finalFormData = addFilesToFormData(apiData, files);
+- **Max Size:** 10MB per image
+- **Allowed Types:** JPEG, PNG, WEBP, GIF, AVIF
+- **Max Files:** 20
+- **Required:** At least 1 image
 
-// Submit to API
-const response = await fetch("/api/properties/create", {
-  method: "POST",
-  body: finalFormData,
-});
+### Videos
 
-const result = await response.json();
-```
+- **Max Size:** 100MB per video
+- **Allowed Types:** MP4, WEBM, MOV, AVI
+- **Max Files:** 5
+
+### KYC Documents
+
+- **Max Size:** 5MB per document
+- **Allowed Types:** JPEG, PNG, PDF, HEIC, HEIF
+- **Max Files:** 10 (but exactly 4 required)
+
+### KYC Videos
+
+- **Max Size:** 50MB per video
+- **Allowed Types:** MP4, WEBM, MOV
+- **Max Files:** 1
+- **Required:** 1 KYC verification video
 
 ## Response Format
 
-### Success Response
+### Success Response (200 OK)
 
 ```json
 {
@@ -119,139 +114,151 @@ const result = await response.json();
   "message": "Property created successfully",
   "property": {
     "id": "property_id",
-    "slug": "beautiful-3bhk-apartment-mumbai",
-    "title": "Beautiful 3BHK Apartment",
+    "slug": "property-slug",
+    "title": "Property Title",
     "status": "pending",
     "files": {
-      "images": { "uploaded": 3, "failed": 0 },
-      "videos": { "uploaded": 1, "failed": 0 },
-      "kyc": { "uploaded": 4, "failed": 0 }
+      "files": {
+        "images": [],
+        "videos": [],
+        "kycFiles": {}
+      },
+      "stats": {
+        "images": { "uploaded": 5, "failed": 0, "errors": [] },
+        "videos": { "uploaded": 1, "failed": 0, "errors": [] },
+        "kyc": { "uploaded": 4, "failed": 0, "errors": [] }
+      },
+      "hasPartialFailures": false,
+      "criticalFailures": false
     }
   }
 }
 ```
 
-### Error Response
+### Error Responses
+
+#### Validation Error (400 Bad Request)
 
 ```json
 {
   "error": "Validation failed",
   "details": {
-    "title": "Title is required",
-    "builtUpArea": "Built-up area must be a positive number",
-    "coordinates": "Location coordinates are required"
+    "title": "title is required",
+    "price": "price must be a number",
+    "images": "At least one property image is required"
   }
 }
 ```
 
-## Validation Rules
+#### Authentication Error (403 Forbidden)
 
-### Required Fields
-
-- All basic information fields
-- Location coordinates
-- Property specifications (area, floor, age, etc.)
-- At least one property image
-
-### File Limits
-
-- **Images:** Max 20 files, 10MB each
-- **Videos:** Max 5 files, 100MB each
-- **KYC Files:** Various limits per document type
-
-### Business Rules
-
-- User must be authenticated (KYC documents submitted with property)
-- Residential properties require BHK specification
-- Properties are created with "pending" status for admin approval
-- Admin reviews both property details and KYC documents together
-
-## Data Transformation
-
-### Amenity Processing
-
-- `societyAmenities` IDs are transformed into full amenity objects
-- `nearbyPlaces` are converted to amenities.nearby format
-- Both populate the `amenities` object for frontend display
-
-### Slug Generation
-
-- Automatic SEO-friendly slug generation from title
-- Handles duplicates with incremental numbering
-
-### File Processing
-
-- Files are stored in organized directory structure
-- Metadata includes upload timestamps and file information
-- Automatic cleanup on processing failures
-
-## Error Handling
-
-### Validation Errors
-
-- Missing required fields
-- Invalid data types
-- Business rule violations
-
-### File Processing Errors
-
-- File size/type violations
-- Storage failures
-- Upload interruptions
-
-### System Errors
-
-- Database connectivity issues
-- Authentication failures
-- Server errors
-
-## Helper Functions
-
-The `propertyHelpers.js` file provides several utility functions:
-
-- `transformPropertyDataForAPI()` - Converts UI data to API format
-- `addFilesToFormData()` - Adds files to FormData
-- `validatePropertyData()` - Client-side validation
-- `createPropertySummary()` - Data summary for review
-- `estimateProcessingTime()` - Processing time estimation
-
-## Testing
-
-Use the helper functions for client-side validation before API submission:
-
-```javascript
-import { validatePropertyData } from "@/lib/propertyHelpers";
-
-const { isValid, errors } = validatePropertyData(formData);
-if (!isValid) {
-  // Handle validation errors
-  console.log("Validation errors:", errors);
+```json
+{
+  "error": "Only partners and users can list properties"
 }
 ```
 
-## File Storage Structure
+#### File Upload Error (422 Unprocessable Entity)
 
+```json
+{
+  "error": "File upload failed",
+  "message": "Some files could not be uploaded. Please try again or contact support.",
+  "details": "File too large. Max 10MB",
+  "code": "FILE_UPLOAD_ERROR"
+}
 ```
-uploads/
-├── properties/
-│   ├── images/
-│   └── videos/
-└── kyc/
-    ├── documents/
-    └── videos/
+
+#### Duplicate Property (409 Conflict)
+
+```json
+{
+  "error": "Duplicate property",
+  "message": "A property with this title already exists. Please choose a different title.",
+  "code": "DUPLICATE_PROPERTY"
+}
 ```
 
-## Status Flow
+## Error Codes
 
-1. **pending** - Property submitted, awaiting admin approval
-2. **approved** - Property approved and visible to buyers
-3. **rejected** - Property rejected by admin
-4. **featured** - Property promoted (paid feature)
+| Code                 | Status | Description                     |
+| -------------------- | ------ | ------------------------------- |
+| `VALIDATION_ERROR`   | 400    | Input validation failed         |
+| `FILE_UPLOAD_ERROR`  | 422    | File processing failed          |
+| `DUPLICATE_PROPERTY` | 409    | Property with same title exists |
+| `STORAGE_FULL`       | 507    | Server storage is full          |
+| `PERMISSION_ERROR`   | 500    | File system permission denied   |
+| `DATABASE_ERROR`     | 503    | Database connection failed      |
+| `INTERNAL_ERROR`     | 500    | Unexpected error                |
 
-## Rate Limiting
+## File Processing Flow
 
-Consider implementing rate limiting for property creation to prevent abuse:
+1. **Validation**: Files are validated for size, type, and count
+2. **Secure Naming**: Files are renamed with UUIDs for security
+3. **Directory Creation**: Property-specific directories are created
+4. **File Storage**: Files are saved to the uploads directory
+5. **Database Update**: File URLs are stored in the database
+6. **KYC Categorization**: Documents are automatically categorized
 
-- Max properties per user per day
-- File upload limits
-- API call frequency limits
+## Security Features
+
+- **File Validation**: Strict MIME type and size checking
+- **Secure Filenames**: UUID-based filenames prevent directory traversal
+- **Input Sanitization**: All text fields are validated and sanitized
+- **Role-Based Access**: Only partners and users can create properties
+- **Rate Limiting**: Built-in protection against abuse
+
+## Performance Considerations
+
+- **File Processing**: Files are processed in parallel where possible
+- **Database Optimization**: Bulk operations reduce database calls
+- **Memory Management**: File streams prevent memory overload
+- **Error Handling**: Graceful degradation for partial failures
+
+## Testing
+
+The API includes comprehensive error handling for:
+
+- Invalid file types and sizes
+- Missing required fields
+- Database connection issues
+- File system errors
+- Authentication failures
+
+## Example Request
+
+```bash
+curl -X POST /api/properties/create \
+  -H "Authorization: Bearer your_token" \
+  -F "title=Luxury Apartment" \
+  -F "description=Beautiful 3BHK apartment with sea view" \
+  -F "price=5000000" \
+  -F "propertyType=apartment" \
+  -F "category=sale" \
+  -F "builtUpArea=1200" \
+  -F "carpetArea=1000" \
+  -F "floor=5" \
+  -F "age=2" \
+  -F "parking=covered" \
+  -F "facing=north" \
+  -F "possessionStatus=immediate" \
+  -F "location=Andheri West" \
+  -F "address=123 Main Street" \
+  -F "city=Mumbai" \
+  -F "state=Maharashtra" \
+  -F "pincode=400053" \
+  -F "coordinates={\"latitude\":19.1141,\"longitude\":72.8685}" \
+  -F "images=@apartment1.jpg" \
+  -F "images=@apartment2.jpg" \
+  -F "kycFiles=@aadhaar.jpg" \
+  -F "kycFiles=@pan.jpg" \
+  -F "kycFiles=@agreement.pdf" \
+  -F "kycFiles=@kyc-video.mp4"
+```
+
+## Notes
+
+- The amenity mapping system is kept for temporary use as requested
+- KYC files are automatically categorized based on filename patterns
+- All file uploads are processed with proper error handling
+- The API follows RESTful conventions and returns appropriate HTTP status codes
