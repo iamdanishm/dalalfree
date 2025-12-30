@@ -44,3 +44,4 @@ next-env.d.ts
 
 # agent instructions (user-specific, should not be committed)
 agent.md
+/uploads/
