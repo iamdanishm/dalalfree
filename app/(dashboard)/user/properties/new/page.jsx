@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiArrowLeft, FiArrowRight, FiCheck, FiSave } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { FiArrowLeft, FiArrowRight, FiCheck } from "react-icons/fi";
 import {
   FiHome,
   FiInfo,
@@ -75,7 +75,7 @@ const steps = [
   },
 ];
 
-export default function PropertyWizard({ params }) {
+export default function PropertyWizard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,34 +87,39 @@ export default function PropertyWizard({ params }) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const formRef = useRef(null);
 
+  // Helper functions for storage operations
+  const saveTempData = (data) => {
+    sessionStorage.setItem("propertyWizardTempData", JSON.stringify(data));
+  };
+
+  const clearTempData = () => {
+    sessionStorage.removeItem("propertyWizardTempData");
+    sessionStorage.removeItem("propertyWizardFormData");
+  };
+
+  const clearAllWizardData = () => {
+    localStorage.removeItem("propertyWizardData");
+    clearTempData();
+  };
+
   // Clear ALL stored data on component mount for fresh start
   // This ensures users get a completely fresh form every time they visit the page
   useEffect(() => {
-    // Clear any existing form data
     setFormData({});
-
-    // Clear all stored wizard data
-    localStorage.removeItem("propertyWizardData");
-    sessionStorage.removeItem("propertyWizardTempData");
-    sessionStorage.removeItem("propertyWizardFormData");
+    clearAllWizardData();
 
     // Only load temporary session data for step navigation if it exists
     // This allows navigation between steps without losing current progress
     const tempData = sessionStorage.getItem("propertyWizardTempData");
     if (tempData) {
       setFormData(JSON.parse(tempData));
-      // Clear the temp data after loading
       sessionStorage.removeItem("propertyWizardTempData");
     }
   }, []);
 
   // Clear any temp data when user leaves the page
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      sessionStorage.removeItem("propertyWizardTempData");
-      sessionStorage.removeItem("propertyWizardFormData");
-    };
-
+    const handleBeforeUnload = () => clearTempData();
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
@@ -123,7 +128,6 @@ export default function PropertyWizard({ params }) {
   // This ensures fresh start when they come back via "Post Property" button
   useEffect(() => {
     return () => {
-      // Clear persisted data but keep temp data for step navigation
       localStorage.removeItem("propertyWizardData");
       sessionStorage.removeItem("propertyWizardFormData");
     };
@@ -207,21 +211,6 @@ export default function PropertyWizard({ params }) {
         break;
 
       case 3: // Specifications
-        // BHK and Area required for Residential properties
-        if (formData.category === "Residential") {
-          if (!formData.bhk) {
-            stepErrors.bhk = "BHK is required for residential properties";
-          }
-          if (!formData.builtUpArea) {
-            stepErrors.builtUpArea = "Built-up area is required";
-          }
-        } else {
-          // Area required for all other property types
-          if (!formData.area) {
-            stepErrors.area = "Area is required";
-          }
-        }
-
         // BHK required for Residential properties
         if (formData.category === "Residential" && !formData.bhk) {
           stepErrors.bhk = "BHK is required for residential properties";
@@ -242,7 +231,7 @@ export default function PropertyWizard({ params }) {
           stepErrors.furnishing = "Furnishing status is required";
         }
 
-        // Built-up area required
+        // Built-up area required for all property types
         if (!formData.builtUpArea) {
           stepErrors.builtUpArea = "Built-up area is required";
         }
@@ -355,11 +344,7 @@ export default function PropertyWizard({ params }) {
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < steps.length) {
-        // Save current form data temporarily for step navigation
-        sessionStorage.setItem(
-          "propertyWizardTempData",
-          JSON.stringify(formData)
-        );
+        saveTempData(formData);
         setCurrentStep(currentStep + 1);
       }
     }
@@ -367,19 +352,13 @@ export default function PropertyWizard({ params }) {
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      // Save current form data temporarily for step navigation
-      sessionStorage.setItem(
-        "propertyWizardTempData",
-        JSON.stringify(formData)
-      );
+      saveTempData(formData);
       setCurrentStep(currentStep - 1);
     }
   };
 
   const jumpToStep = (stepId) => {
-    // Save current form data temporarily for step navigation
-    sessionStorage.setItem("propertyWizardTempData", JSON.stringify(formData));
-    // Allow jumping to any step that's valid, but validate completed steps
+    saveTempData(formData);
     setCurrentStep(stepId);
   };
 
@@ -396,9 +375,6 @@ export default function PropertyWizard({ params }) {
         "@/app/lib/propertyHelpers"
       );
 
-      console.log("=== FRONTEND SUBMIT START ===");
-      console.log("Form data:", formData);
-
       // Update progress: Preparing data
       setUploadProgress(10);
       setUploadStatus("preparing");
@@ -412,8 +388,6 @@ export default function PropertyWizard({ params }) {
             ? `${formData.floor} of ${formData.totalFloors}`
             : formData.floor || "",
       };
-
-      console.log("Property data prepared:", propertyData);
 
       // Calculate total file size for progress tracking
       const calculateTotalSize = (files) => {
@@ -431,18 +405,6 @@ export default function PropertyWizard({ params }) {
         ].filter(Boolean)
       );
 
-      const totalSize = imageSize + videoSize + kycSize;
-      console.log(
-        "File sizes - Images:",
-        imageSize,
-        "Videos:",
-        videoSize,
-        "KYC:",
-        kycSize,
-        "Total:",
-        totalSize
-      );
-
       // Update progress: Creating FormData
       setUploadProgress(20);
       setUploadStatus("preparing");
@@ -454,42 +416,9 @@ export default function PropertyWizard({ params }) {
         kycFiles: formData.kycFiles || {},
       });
 
-      console.log(
-        "FormData created with keys:",
-        Array.from(formDataToSubmit.keys())
-      );
-
-      // Log each form field for debugging
-      for (const [key, value] of formDataToSubmit.entries()) {
-        if (value instanceof File) {
-          console.log(
-            `File field "${key}":`,
-            value.name,
-            `(${value.size} bytes, ${value.type})`
-          );
-        } else {
-          console.log(`Text field "${key}":`, value);
-        }
-      }
-
       // Update progress: Starting upload
-      setUploadProgress(30);
+      setUploadProgress(50);
       setUploadStatus("uploading");
-
-      // Simulate upload progress (since we can't track FormData upload progress)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          const newProgress = prev + Math.random() * 10;
-          if (newProgress >= 70) {
-            clearInterval(progressInterval);
-            setUploadStatus("processing");
-            return 70;
-          }
-          return newProgress;
-        });
-      }, 200);
-
-      console.log("Submitting to /api/properties/create");
 
       // Submit to new API endpoint
       const response = await fetch("/api/properties/create", {
@@ -497,12 +426,8 @@ export default function PropertyWizard({ params }) {
         body: formDataToSubmit, // No Content-Type header needed for FormData
       });
 
-      clearInterval(progressInterval);
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.log("Error response:", errorData);
         throw new Error(
           errorData.error || errorData.message || "Failed to create property"
         );
@@ -513,7 +438,6 @@ export default function PropertyWizard({ params }) {
       setUploadStatus("processing");
 
       const result = await response.json();
-      console.log("Success response:", result);
 
       if (!result.success) {
         throw new Error(
@@ -529,8 +453,7 @@ export default function PropertyWizard({ params }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Clear all saved data
-      localStorage.removeItem("propertyWizardData");
-      sessionStorage.removeItem("propertyWizardTempData");
+      clearAllWizardData();
 
       // Final progress update
       setUploadProgress(100);
@@ -554,62 +477,13 @@ export default function PropertyWizard({ params }) {
     }
   };
 
-  // Upload media files function
-  const uploadMediaFiles = async (mediaFiles, type) => {
-    const uploadedFiles = [];
-
-    for (const mediaFile of mediaFiles) {
-      if (!mediaFile.file) continue; // Skip if no actual file object
-
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", mediaFile.file);
-      formDataUpload.append("type", type);
-      formDataUpload.append("category", mediaFile.category || "other");
-      formDataUpload.append("alt", mediaFile.alt || mediaFile.name);
-
-      try {
-        const response = await fetch("/api/properties/upload", {
-          method: "POST",
-          body: formDataUpload,
-        });
-
-        if (!response.ok) {
-          console.error(`Failed to upload ${mediaFile.name}`);
-          continue; // Skip failed uploads
-        }
-
-        const result = await response.json();
-
-        // Add uploaded file info
-        uploadedFiles.push({
-          url: result.url,
-          src: result.url,
-          type: type === "images" ? "image" : "video",
-          category: mediaFile.category,
-          alt: mediaFile.alt,
-          order: mediaFile.order,
-          ...(type === "videos" && {
-            thumbnail: result.thumbnail,
-            title: mediaFile.name,
-            duration: result.duration || 0,
-          }),
-        });
-      } catch (error) {
-        console.error(`Error uploading ${mediaFile.name}:`, error);
-        // Continue with other files
-      }
-    }
-
-    return uploadedFiles;
-  };
-
   const handleSaveDraft = () => {
     localStorage.setItem("propertyWizardData", JSON.stringify(formData));
     // Could add toast notification here
   };
 
   // Show loading state while checking authentication
-  if (status === "loading" || (status === "authenticated" && !session?.user)) {
+  if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -798,13 +672,6 @@ export default function PropertyWizard({ params }) {
 
         {/* Responsive Navigation */}
         <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
-          {/* Progress counter - always visible */}
-          <div className="text-center mb-2 sm:mb-0">
-            <div className="text-sm text-body font-medium px-4 py-2">
-              Step {currentStep} of {steps.length}
-            </div>
-          </div>
-
           {/* Desktop: Horizontal layout */}
           <div className="hidden md:flex justify-end items-center">
             <div className="flex gap-3">

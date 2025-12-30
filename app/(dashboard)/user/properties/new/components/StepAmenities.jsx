@@ -543,89 +543,18 @@ export default function StepAmenities({
                   <label className="text-sm font-medium text-heading mb-2 block">
                     Distance
                   </label>
-                  <Select
-                    value={
-                      place.distance
-                        ? distanceOptions.find(
-                            (opt) => opt.value === place.distance
-                          )
-                        : null
+                  <input
+                    type="text"
+                    value={place.distance || ""}
+                    onChange={(e) =>
+                      handleNearbyPlaceChange(index, "distance", e.target.value)
                     }
-                    onChange={(selectedOption) =>
-                      handleNearbyPlaceChange(
-                        index,
-                        "distance",
-                        selectedOption?.value || ""
-                      )
-                    }
-                    options={distanceOptions}
-                    placeholder="Select distance"
-                    className="text-sm"
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        border: "1px solid #d1d5db",
-                        borderRadius: "0.5rem",
-                        padding: "0.125rem",
-                        fontSize: "0.875rem",
-                        backgroundColor: "white",
-                        minHeight: "44px",
-                        "&:hover": { borderColor: "#e90914" },
-                        "&:focus-within": {
-                          borderColor: "#e90914",
-                          boxShadow: "0 0 0 1px #e90914",
-                        },
-                      }),
-                      placeholder: (base) => ({ ...base, color: "#9ca3af" }),
-                      singleValue: (base) => ({
-                        ...base,
-                        color: "#111827",
-                        fontWeight: "500",
-                      }),
-                      valueContainer: (base) => ({
-                        ...base,
-                        padding: "0.25rem 0.5rem",
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                        fontSize: "0.875rem",
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        fontSize: "0.875rem",
-                        minHeight: "44px",
-                        display: "flex",
-                        alignItems: "center",
-                        backgroundColor: state.isSelected
-                          ? "#e90914"
-                          : state.isFocused
-                          ? "#fef2f2"
-                          : "white",
-                        color: state.isSelected
-                          ? "white"
-                          : state.isFocused
-                          ? "#111827"
-                          : "#374151",
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: state.isSelected
-                            ? "#e90914"
-                            : "#fef2f2",
-                          color: state.isSelected ? "white" : "#111827",
-                        },
-                        "&:active": {
-                          backgroundColor: state.isSelected
-                            ? "#d10711"
-                            : "#fecaca",
-                        },
-                      }),
-                      indicatorsContainer: (base) => ({
-                        ...base,
-                        padding: "0.25rem",
-                      }),
-                    }}
+                    placeholder="e.g., 100m, 1.5km, 2km"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] sm:min-h-auto"
                   />
+                  <div className="text-xs text-muted mt-1">
+                    Enter distance (e.g., 100m, 1.5km, 2km)
+                  </div>
                 </div>
 
                 {/* Rating */}

@@ -38,12 +38,14 @@ const nearbyPlaceSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const trustBadgeSchema = new mongoose.Schema(
+const kycFileSchema = new mongoose.Schema(
   {
-    label: String,
-    icon: String,
-    color: String,
-    bg: String,
+    url: { type: String, required: true },
+    name: { type: String, required: true },
+    size: { type: Number, required: true },
+    type: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now },
+    duration: Number, // For video files
   },
   { _id: false }
 );
@@ -78,7 +80,6 @@ const propertySchema = new mongoose.Schema(
       type: String,
       enum: ["furnished", "semi-furnished", "unfurnished"],
     },
-    area: Number,
     builtUpArea: Number,
     carpetArea: Number,
     floor: String,
@@ -143,17 +144,12 @@ const propertySchema = new mongoose.Schema(
         },
       ],
     },
-    neighborhood: {
-      walkScore: Number,
-      livability: {
-        type: String,
-        enum: ["excellent", "good", "average", "poor"],
-      },
-      commute: [{ destination: String, time: String, distance: String }],
-      demographics: String,
+    kycFiles: {
+      aadhaar: [kycFileSchema], // Array for 1-2 Aadhaar files
+      pan: kycFileSchema, // Single PAN file
+      agreement: kycFileSchema, // Single agreement file
+      video: kycFileSchema, // Single video file
     },
-    trustBadges: [{ label: String, icon: String, color: String, bg: String }],
-    kycFiles: mongoose.Schema.Types.Mixed, // Temporarily use Mixed type to bypass caching issues
     viewsCount: { type: Number, default: 0 },
     likesCount: { type: Number, default: 0 },
     inquiriesCount: { type: Number, default: 0 },
@@ -173,8 +169,6 @@ const propertySchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "featured"],
       default: "pending",
     },
-    verificationStatus: { type: Boolean, default: false },
-    featuredStatus: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

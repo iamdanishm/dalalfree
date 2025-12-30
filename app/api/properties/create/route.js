@@ -3,6 +3,10 @@ import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import { requireAuth } from "@/app/lib/auth";
 import { generateUniquePropertySlug } from "@/app/lib/slug";
+import {
+  validatePropertyData,
+  createPropertyFormData,
+} from "@/app/lib/propertyHelpers";
 import fs from "fs";
 import path from "path";
 
@@ -147,142 +151,21 @@ function getNearbyPlaceIcon(type) {
   return iconMap[type] || "FiMapPin";
 }
 
-// Validation helper
-function validatePropertyData(data, fileFields = {}) {
-  const errors = {};
-
-  // Required fields validation
-  const requiredFields = [
-    "title",
-    "propertyType",
-    "category",
-    "address",
-    "location",
-    "city",
-    "state",
-    "pincode",
-    "description",
-    "builtUpArea",
-    "carpetArea",
-    "floor",
-    "age",
-    "parking",
-    "facing",
-    "possessionStatus",
-    "coordinates",
-  ];
-
-  requiredFields.forEach((field) => {
-    if (
-      !data[field] ||
-      (typeof data[field] === "string" && data[field].trim() === "")
-    ) {
-      errors[field] = {
-        message: `${field} is required`,
-        type: "string",
-      };
-    }
-  });
-
-  // Numeric field validations
-  const numericFields = ["builtUpArea", "carpetArea", "age"];
-  numericFields.forEach((field) => {
-    if (data[field] && (isNaN(data[field]) || data[field] <= 0)) {
-      errors[field] = {
-        message: `${field} must be a positive number`,
-        type: "number",
-      };
-    }
-  });
-
-  // Coordinates validation
-  if (!data.coordinates || !data.coordinates.lat || !data.coordinates.lng) {
-    errors.coordinates = {
-      message: "Coordinates are required",
-      type: "object",
-    };
-  }
-
-  // BHK validation for residential
-  if (data.category === "Residential" && !data.bhk) {
-    errors.bhk = {
-      message: "BHK is required for residential properties",
-      type: "string",
-    };
-  }
-
-  // Price validation
-  if (!data.price || isNaN(data.price) || data.price <= 0) {
-    errors.price = {
-      message: "Price is required and must be a positive number",
-      type: "number",
-    };
-  }
-
-  // File field validations
-  if (!fileFields.images || fileFields.images.length === 0) {
-    errors.images = {
-      message: "At least one property image is required",
-      type: "file[]",
-    };
-  }
-
-  // Video field validation (optional - commented out to allow property creation without videos)
-  // Users can choose to upload videos or rely on images only
-  // if (!fileFields.videos || fileFields.videos.length === 0) {
-  //   errors.videos = {
-  //     message: "At least one property video is required",
-  //     type: "file[]",
-  //   };
-  // }
-
-  // KYC files validation - all files are in kycFiles array
-  if (!fileFields.kycFiles || fileFields.kycFiles.length === 0) {
-    errors.kycFiles = {
-      message: "KYC documents are required for property verification",
-      type: "array",
-      requiredCount: 4,
-      details:
-        "At least 4 KYC documents are required (Aadhaar, PAN, Agreement, Video)",
-    };
-  } else if (fileFields.kycFiles.length < 4) {
-    errors.kycFiles = {
-      message: `KYC documents incomplete. Found ${fileFields.kycFiles.length}, need 4`,
-      type: "array",
-      requiredCount: 4,
-      currentCount: fileFields.kycFiles.length,
-      details:
-        "Required: Aadhaar document(s), PAN card, Property agreement, and KYC video",
-    };
-  }
-
-  return errors;
-}
-
 // Main property creation handler
 export const POST = requireAuth(async function (req) {
-  console.log("=== PROPERTY CREATION API START ===");
-  console.log("Request method:", req.method);
-  console.log("Content-Type:", req.headers.get("content-type"));
-  console.log("User ID:", req.user._id);
-  console.log("User role:", req.user.role);
-
   try {
     await connectDB();
-    console.log("✓ Database connected");
 
     const userId = req.user._id;
     const role = req.user.role;
 
     // Check user permissions
     if (role !== "partner" && role !== "user") {
-      console.log("✗ Permission denied - invalid role:", role);
       return NextResponse.json(
         { error: "Only partners and users can list properties" },
         { status: 403 }
       );
     }
-    console.log("✓ User permissions validated");
 
     // Parse multipart form data
     let formData;
@@ -309,10 +192,6 @@ export const POST = requireAuth(async function (req) {
         // Add file field validation errors for empty requests
         validationErrors.images = {
           message: "At least one property image is required",
-          type: "file[]",
-        };
-        validationErrors.videos = {
-          message: "At least one property video is required",
           type: "file[]",
         };
         validationErrors.kycFiles = {
@@ -352,7 +231,6 @@ export const POST = requireAuth(async function (req) {
               "coordinates",
               "price",
               "images",
-              "videos",
               "kycFiles",
             ],
           },
@@ -393,16 +271,28 @@ export const POST = requireAuth(async function (req) {
       }
     }
 
-    console.log("=== VALIDATION PHASE ===");
-    console.log("Text data received:", Object.keys(textData));
-    console.log("File fields received:", Object.keys(fileFields));
+    // Validate required data (text fields only, file validation separate)
+    const validation = validatePropertyData(textData);
+    const validationErrors = validation.errors;
 
-    // Validate required data
-    const validationErrors = validatePropertyData(textData, fileFields);
-    console.log("Validation errors:", validationErrors);
+    // Add file field validation (override the propertyHelpers validation for files)
+    if (!fileFields.images || fileFields.images.length === 0) {
+      validationErrors.images = "At least one property image is required";
+    } else {
+      // Remove the images error from propertyHelpers since we have files
+      delete validationErrors.images;
+    }
+
+    if (!fileFields.kycFiles || fileFields.kycFiles.length < 4) {
+      validationErrors.kycFiles = `KYC documents incomplete. Found ${
+        fileFields.kycFiles?.length || 0
+      }, need 4 (Aadhaar, PAN, Agreement, Video)`;
+    } else {
+      // Remove the kycFiles error from propertyHelpers since we have files
+      delete validationErrors.kycFiles;
+    }
 
     if (Object.keys(validationErrors).length > 0) {
-      console.log("✗ Validation failed, returning errors");
       return NextResponse.json(
         {
           error: "Validation failed",
@@ -411,7 +301,6 @@ export const POST = requireAuth(async function (req) {
         { status: 400 }
       );
     }
-    console.log("✓ Validation passed");
 
     // Generate unique slug
     console.log("=== SLUG GENERATION ===");
@@ -592,20 +481,45 @@ export const POST = requireAuth(async function (req) {
         }
       }
 
-      // Assign to database structure
+      // Assign to database structure matching kycFileSchema
       if (categorizedDocs.aadhaar.length > 0) {
-        kycFilesForDB.aadhaar = categorizedDocs.aadhaar;
+        kycFilesForDB.aadhaar = categorizedDocs.aadhaar.map((file) => ({
+          url: file.url,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadedAt: file.uploadedAt,
+        }));
       }
       if (categorizedDocs.pan) {
-        kycFilesForDB.pan = categorizedDocs.pan;
+        kycFilesForDB.pan = {
+          url: categorizedDocs.pan.url,
+          name: categorizedDocs.pan.name,
+          size: categorizedDocs.pan.size,
+          type: categorizedDocs.pan.type,
+          uploadedAt: categorizedDocs.pan.uploadedAt,
+        };
       }
       if (categorizedDocs.agreement) {
-        kycFilesForDB.agreement = categorizedDocs.agreement;
+        kycFilesForDB.agreement = {
+          url: categorizedDocs.agreement.url,
+          name: categorizedDocs.agreement.name,
+          size: categorizedDocs.agreement.size,
+          type: categorizedDocs.agreement.type,
+          uploadedAt: categorizedDocs.agreement.uploadedAt,
+        };
       }
 
       // Video is always the first video file
       if (videos.length >= 1) {
-        kycFilesForDB.video = videos[0];
+        kycFilesForDB.video = {
+          url: videos[0].url,
+          name: videos[0].name,
+          size: videos[0].size,
+          type: videos[0].type,
+          uploadedAt: videos[0].uploadedAt,
+          duration: videos[0].duration || 15,
+        };
       }
 
       await Property.findByIdAndUpdate(propertyId, {

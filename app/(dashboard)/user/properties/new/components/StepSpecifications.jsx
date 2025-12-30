@@ -189,13 +189,7 @@ export default function StepSpecifications({
   // Format area display
   const formatArea = (area) => {
     if (!area) return "";
-    if (area >= 100000) {
-      return `${(area / 100000).toFixed(2)} acres`;
-    } else if (area >= 1000) {
-      return `${(area / 1000).toFixed(2)} sq.yd`;
-    } else {
-      return `${area} sq.ft`;
-    }
+    return `${area} sq.ft`;
   };
 
   // Get default suggestions based on category and BHK
@@ -638,14 +632,14 @@ export default function StepSpecifications({
         </div>
 
         {/* Validation Errors */}
-        {(errors.area || errors.builtUpArea || errors.carpetArea) && (
+        {(errors.builtUpArea || errors.carpetArea) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="p-3 bg-red-50 border border-red-200 rounded-lg"
           >
             <p className="text-red-600 text-sm font-medium">
-              {errors.area || errors.builtUpArea || errors.carpetArea}
+              {errors.builtUpArea || errors.carpetArea}
             </p>
           </motion.div>
         )}

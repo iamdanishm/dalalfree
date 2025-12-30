@@ -336,7 +336,7 @@ export default function StepMediaUpload({
                 <span className="text-primary font-medium">browse files</span>
               </p>
               <p className="text-xs text-muted mt-2">
-                JPG, PNG, WebP & MP4, AVI, MOV (Max 10MB)
+                JPG, PNG, WebP (Max 10MB) & MP4, AVI, MOV (Max 100MB)
               </p>
             </div>
           </div>
