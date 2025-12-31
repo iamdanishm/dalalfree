@@ -317,7 +317,7 @@ async function retrySingleFile(failedFile) {
       resolve({
         success,
         file: failedFile,
-        ...(success && { newUrl: `/uploads/retry/${failedFile.name}` }),
+        ...(success && { newUrl: `/api/files/retry/${failedFile.name}` }),
       });
     }, 1000);
   });

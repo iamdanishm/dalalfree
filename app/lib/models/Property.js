@@ -57,6 +57,11 @@ const propertySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    fileHash: {
+      type: String,
+      index: true, // For fast hash lookups
+      sparse: true, // Only create index for non-null values
+    },
     title: { type: String, required: true },
     slug: { type: String, unique: true, index: true },
     description: String,

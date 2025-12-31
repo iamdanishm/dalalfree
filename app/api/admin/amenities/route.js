@@ -3,8 +3,21 @@ import { connectDB } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Amenity from "@/app/lib/models/Amenity";
+import { UploadBridge } from "@/app/lib/upload-bridge.js";
 import path from "path";
 import fs from "fs";
+
+// Wrapper for multer middleware in App Router
+const runMiddleware = (req, middleware) => {
+  return new Promise((resolve, reject) => {
+    middleware(req, {}, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
 
 // GET /api/admin/amenities - Get paginated list of amenities
 export async function GET(req) {
@@ -71,11 +84,12 @@ export async function POST(req) {
     const imageFile = formData.get("image");
 
     // Validate required fields
-    if (!title || !imageFile) {
-      return NextResponse.json(
-        { error: "Title and image are required" },
-        { status: 400 }
-      );
+    if (!title) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    if (!imageFile) {
+      return NextResponse.json({ error: "Image is required" }, { status: 400 });
     }
 
     if (title.length > 100) {
@@ -85,9 +99,9 @@ export async function POST(req) {
       );
     }
 
-    // Validate file type (same as upload.js)
+    // Validate file type
     const allowedImageTypes = /jpeg|jpg|png|gif|bmp|webp|tiff|tif/i;
-    if (!allowedImageTypes.test(path.extname(imageFile.name).toLowerCase())) {
+    if (!allowedImageTypes.test(imageFile.name.toLowerCase())) {
       return NextResponse.json(
         {
           error:
@@ -105,29 +119,20 @@ export async function POST(req) {
       );
     }
 
-    // Generate unique filename (same as upload.js)
+    // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.round(Math.random() * 1e9);
-    const extension = path.extname(imageFile.name);
-    const filename = `${timestamp}-${randomId}${extension}`;
+    const extension = imageFile.name.split(".").pop();
+    const filename = `${timestamp}-${randomId}.${extension}`;
 
-    // Save file to disk (same destination as upload.js)
-    const uploadDir = path.join(
-      process.cwd(),
-      "uploads",
-      "amenities",
-      "images"
-    );
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filePath = path.join(uploadDir, filename);
+    // Save file to external directory
+    const dirPath = UploadBridge.getStoragePath(null, "amenities");
+    const fullPath = path.join(dirPath, filename);
     const buffer = Buffer.from(await imageFile.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    fs.writeFileSync(fullPath, buffer);
 
     // Create amenity in database
-    const imageUrl = `/uploads/amenities/images/${filename}`;
+    const imageUrl = UploadBridge.getFileUrl(null, "amenities", filename);
 
     const amenity = await Amenity.create({
       title: title.trim(),

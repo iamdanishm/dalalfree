@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { UploadBridge } from "@/app/lib/upload-bridge.js";
 
 // File validation constants
 const FILE_VALIDATION = {
@@ -138,28 +139,28 @@ export async function processImages(imageFiles, propertyId) {
 
     try {
       const secureFilename = generateSecureFilename(file, "img");
-      const filePath = path.join(
-        process.cwd(),
-        "uploads",
-        "properties",
-        propertyId,
-        "images",
-        secureFilename
-      );
 
-      // Ensure directory exists
-      ensureDirectoryExists(path.dirname(filePath));
+      // Use UploadBridge for external storage
+      const dirPath = UploadBridge.getStoragePath(propertyId, "propertyImages");
+      const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(fullPath, buffer);
+
+      // Get secure URL using UploadBridge (with hash instead of ID)
+      const fileUrl = UploadBridge.getSecureFileUrl(
+        propertyId,
+        "propertyImages",
+        secureFilename
+      );
 
       files.push({
         id: `img-${Date.now()}-${i}`,
         name: file.name,
         size: file.size,
         type: file.type,
-        url: `/uploads/properties/${propertyId}/images/${secureFilename}`,
+        url: fileUrl,
         category: "image",
         order: i,
         uploadedAt: new Date(),
@@ -213,28 +214,28 @@ export async function processVideos(videoFiles, propertyId) {
 
     try {
       const secureFilename = generateSecureFilename(file, "vid");
-      const filePath = path.join(
-        process.cwd(),
-        "uploads",
-        "properties",
-        propertyId,
-        "videos",
-        secureFilename
-      );
 
-      // Ensure directory exists
-      ensureDirectoryExists(path.dirname(filePath));
+      // Use UploadBridge for external storage
+      const dirPath = UploadBridge.getStoragePath(propertyId, "propertyVideos");
+      const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(fullPath, buffer);
+
+      // Get secure URL using UploadBridge (with hash instead of ID)
+      const fileUrl = UploadBridge.getSecureFileUrl(
+        propertyId,
+        "propertyVideos",
+        secureFilename
+      );
 
       files.push({
         id: `vid-${Date.now()}-${i}`,
         name: file.name,
         size: file.size,
         type: file.type,
-        url: `/uploads/properties/${propertyId}/videos/${secureFilename}`,
+        url: fileUrl,
         order: i,
         uploadedAt: new Date(),
       });
@@ -307,25 +308,26 @@ export async function processKycFiles(kycFilesArray, propertyId) {
         prefix
       );
       const folder = isVideo ? "videos" : "documents";
-      const filePath = path.join(
-        process.cwd(),
-        "uploads",
-        "properties",
-        propertyId,
-        "kyc",
-        folder,
-        secureFilename
-      );
 
-      // Ensure directory exists
-      ensureDirectoryExists(path.dirname(filePath));
+      // Use UploadBridge for external storage
+      const subType = isVideo ? "videos" : "documents";
+      const dirPath = UploadBridge.getStoragePath(propertyId, "kyc", subType);
+      const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(fullPath, buffer);
+
+      // Get secure URL using UploadBridge (with hash instead of ID)
+      const fileUrl = UploadBridge.getSecureFileUrl(
+        propertyId,
+        "kyc",
+        secureFilename,
+        subType
+      );
 
       const fileData = {
-        url: `/uploads/properties/${propertyId}/kyc/${folder}/${secureFilename}`,
+        url: fileUrl,
         name: file.name,
         size: file.size,
         type: file.type,

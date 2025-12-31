@@ -1,15 +1,37 @@
+import path from "path";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable Turbopack to prevent fdprocessedid attributes
-  // You can re-enable this later when the issue is resolved
-  experimental: {
-    // turbo: {
-    //   rules: {},
-    // },
-  },
   poweredByHeader: false,
-  // Add reactStrictMode to help with hydration issues
   reactStrictMode: true,
+
+  // Allow access to external uploads directory
+  webpack: (config, { isServer }) => {
+    config.resolve.alias["@uploads"] = path.join(
+      process.cwd(),
+      "..",
+      "dalalfree-uploads"
+    );
+    return config;
+  },
+
+  // Turbopack configuration (empty to silence warnings)
+  turbopack: {},
+
+  // Better caching for files
+  async headers() {
+    return [
+      {
+        source: "/api/files/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

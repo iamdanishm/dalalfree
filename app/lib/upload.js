@@ -1,25 +1,14 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { UPLOAD_CONFIG } from "./upload-config.js";
+import { UploadBridge as UploadBridgeClass } from "./upload-bridge.js";
 
-// Configure storage for different file types
-const createStorage = (destination) => {
-  return multer.diskStorage({
-    destination: (req, file, cb) => {
-      const fullPath = path.join(process.cwd(), "uploads", destination);
-      // Ensure directory exists
-      if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath, { recursive: true });
-      }
-      cb(null, fullPath);
-    },
-    filename: (req, file, cb) => {
-      // Generate unique filename with timestamp
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const extension = path.extname(file.originalname);
-      cb(null, uniqueSuffix + extension);
-    },
-  });
+// Generate unique filename with timestamp
+const generateUniqueFilename = (req, file, cb) => {
+  const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+  const extension = path.extname(file.originalname);
+  cb(null, uniqueSuffix + extension);
 };
 
 // File type validation functions
@@ -36,81 +25,121 @@ const validateFileType = {
     allowedDocumentTypes.test(path.extname(filename).toLowerCase()),
 };
 
-// Multer upload configurations for different file types
-export const uploadKycVideo = multer({
-  storage: createStorage("kyc/videos"),
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit for videos
-  },
-  fileFilter: (req, file, cb) => {
-    if (validateFileType.video(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Only video files are allowed (mp4, avi, mov, wmv, mkv, flv, webm)"
-        )
-      );
-    }
-  },
-});
+// KYC Uploads (per property)
+export const uploadKycVideo = (propertyId) =>
+  multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, UploadBridgeClass.getStoragePath(propertyId, "kyc", "videos"));
+      },
+      filename: generateUniqueFilename,
+    }),
+    limits: {
+      fileSize: UPLOAD_CONFIG.maxFileSize.video,
+    },
+    fileFilter: (req, file, cb) => {
+      if (validateFileType.video(file.originalname)) {
+        cb(null, true);
+      } else {
+        cb(
+          new Error(
+            "Only video files are allowed (mp4, avi, mov, wmv, mkv, flv, webm)"
+          )
+        );
+      }
+    },
+  });
 
-export const uploadKycDocuments = multer({
-  storage: createStorage("kyc/documents"),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for documents
-  },
-  fileFilter: (req, file, cb) => {
-    if (validateFileType.document(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error("Only document files are allowed (pdf, doc, docx, txt, rtf)")
-      );
-    }
-  },
-});
+export const uploadKycDocuments = (propertyId) =>
+  multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(
+          null,
+          UploadBridgeClass.getStoragePath(propertyId, "kyc", "documents")
+        );
+      },
+      filename: generateUniqueFilename,
+    }),
+    limits: {
+      fileSize: UPLOAD_CONFIG.maxFileSize.document,
+    },
+    fileFilter: (req, file, cb) => {
+      if (validateFileType.document(file.originalname)) {
+        cb(null, true);
+      } else {
+        cb(
+          new Error(
+            "Only document files are allowed (pdf, doc, docx, txt, rtf)"
+          )
+        );
+      }
+    },
+  });
 
-export const uploadPropertyImages = multer({
-  storage: createStorage("properties/images"),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for images
-  },
-  fileFilter: (req, file, cb) => {
-    if (validateFileType.image(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Only image files are allowed (jpeg, jpg, png, gif, bmp, webp, tiff, tif)"
-        )
-      );
-    }
-  },
-});
+export const uploadPropertyImages = (propertyId) =>
+  multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(
+          null,
+          UploadBridgeClass.getStoragePath(propertyId, "propertyImages")
+        );
+      },
+      filename: generateUniqueFilename,
+    }),
+    limits: {
+      fileSize: UPLOAD_CONFIG.maxFileSize.image,
+    },
+    fileFilter: (req, file, cb) => {
+      if (validateFileType.image(file.originalname)) {
+        cb(null, true);
+      } else {
+        cb(
+          new Error(
+            "Only image files are allowed (jpeg, jpg, png, gif, bmp, webp, tiff, tif)"
+          )
+        );
+      }
+    },
+  });
 
-export const uploadPropertyVideos = multer({
-  storage: createStorage("properties/videos"),
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit for property videos
-  },
-  fileFilter: (req, file, cb) => {
-    if (validateFileType.video(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Only video files are allowed (mp4, avi, mov, wmv, mkv, flv, webm)"
-        )
-      );
-    }
-  },
-});
+export const uploadPropertyVideos = (propertyId) =>
+  multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(
+          null,
+          UploadBridgeClass.getStoragePath(propertyId, "propertyVideos")
+        );
+      },
+      filename: generateUniqueFilename,
+    }),
+    limits: {
+      fileSize: UPLOAD_CONFIG.maxFileSize.video,
+    },
+    fileFilter: (req, file, cb) => {
+      if (validateFileType.video(file.originalname)) {
+        cb(null, true);
+      } else {
+        cb(
+          new Error(
+            "Only video files are allowed (mp4, avi, mov, wmv, mkv, flv, webm)"
+          )
+        );
+      }
+    },
+  });
 
 export const uploadAmenityImages = multer({
-  storage: createStorage("amenities/images"),
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, UploadBridgeClass.getStoragePath(null, "amenities"));
+    },
+    filename: generateUniqueFilename,
+  }),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit for amenity images
+    fileSize: UPLOAD_CONFIG.maxFileSize.image,
   },
   fileFilter: (req, file, cb) => {
     if (validateFileType.image(file.originalname)) {
@@ -160,7 +189,7 @@ export const getFileStats = (filePath) => {
 // Storage monitoring function
 export const getStorageStats = () => {
   try {
-    const basePath = path.join(process.cwd(), "uploads");
+    const basePath = UPLOAD_CONFIG.baseDir;
     let totalSize = 0;
     let fileCount = 0;
 
@@ -196,7 +225,7 @@ export const getStorageStats = () => {
 // Cleanup old temp files (older than 24 hours)
 export const cleanupTempFiles = (maxAgeHours = 24) => {
   try {
-    const tempDir = path.join(process.cwd(), "uploads", "temp");
+    const tempDir = path.join(UPLOAD_CONFIG.baseDir, "temp");
     if (!fs.existsSync(tempDir)) return;
 
     const files = fs.readdirSync(tempDir);

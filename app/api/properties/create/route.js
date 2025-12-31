@@ -253,7 +253,19 @@ export const POST = requireAuth(async function (req) {
     console.log("=== PROPERTY CREATION ===");
     const property = await Property.create(propertyData);
     const propertyId = property._id.toString();
-    console.log("✓ Property created with ID:", propertyId);
+
+    // Generate and store secure hash for file URLs
+    const { UploadBridge } = await import("@/app/lib/upload-bridge.js");
+    const fileHash = UploadBridge.generatePropertyHash(propertyId);
+
+    // Update property with hash
+    await Property.findByIdAndUpdate(propertyId, { fileHash });
+    console.log(
+      "✓ Property created with ID:",
+      propertyId,
+      "and hash:",
+      fileHash
+    );
 
     // Process file uploads with propertyId
     console.log("=== FILE PROCESSING ===");

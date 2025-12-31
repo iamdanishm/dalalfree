@@ -3,8 +3,23 @@ import { connectDB } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Amenity from "@/app/lib/models/Amenity";
+import { uploadAmenityImages } from "@/app/lib/upload.js";
+import { UploadBridge } from "@/app/lib/upload-bridge.js";
+import { UPLOAD_CONFIG } from "@/app/lib/upload-config.js";
 import path from "path";
 import fs from "fs";
+
+// Wrapper for multer middleware in App Router
+const runMiddleware = (req, middleware) => {
+  return new Promise((resolve, reject) => {
+    middleware(req, {}, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
 
 // PUT /api/admin/amenities/[id] - Update amenity
 export async function PUT(req, { params }) {
@@ -44,9 +59,9 @@ export async function PUT(req, { params }) {
 
     // Handle image upload if provided
     if (imageFile) {
-      // Validate file type (same as upload.js)
+      // Validate file type
       const allowedImageTypes = /jpeg|jpg|png|gif|bmp|webp|tiff|tif/i;
-      if (!allowedImageTypes.test(path.extname(imageFile.name).toLowerCase())) {
+      if (!allowedImageTypes.test(imageFile.name.toLowerCase())) {
         return NextResponse.json(
           {
             error:
@@ -66,38 +81,31 @@ export async function PUT(req, { params }) {
 
       // Delete old image if it exists
       if (existingAmenity.image) {
+        const filename = path.basename(existingAmenity.image);
         const oldImagePath = path.join(
-          process.cwd(),
-          "uploads",
-          existingAmenity.image
+          UPLOAD_CONFIG.baseDir,
+          "amenities",
+          "images",
+          filename
         );
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }
 
-      // Generate unique filename (same as upload.js)
+      // Generate unique filename
       const timestamp = Date.now();
       const randomId = Math.round(Math.random() * 1e9);
-      const extension = path.extname(imageFile.name);
-      const filename = `${timestamp}-${randomId}${extension}`;
+      const extension = imageFile.name.split(".").pop();
+      const filename = `${timestamp}-${randomId}.${extension}`;
 
-      // Save new file to disk (same destination as upload.js)
-      const uploadDir = path.join(
-        process.cwd(),
-        "uploads",
-        "amenities",
-        "images"
-      );
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      const filePath = path.join(uploadDir, filename);
+      // Save new file to external directory
+      const dirPath = UploadBridge.getStoragePath(null, "amenities");
+      const fullPath = path.join(dirPath, filename);
       const buffer = Buffer.from(await imageFile.arrayBuffer());
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(fullPath, buffer);
 
-      imageUrl = `/uploads/amenities/images/${filename}`;
+      imageUrl = UploadBridge.getFileUrl(null, "amenities", filename);
     }
 
     // Update amenity in database
@@ -170,9 +178,15 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Amenity not found" }, { status: 404 });
     }
 
-    // Delete associated image file
+    // Delete associated image file from external directory
     if (amenity.image) {
-      const imagePath = path.join(process.cwd(), "uploads", amenity.image);
+      const filename = path.basename(amenity.image);
+      const imagePath = path.join(
+        UPLOAD_CONFIG.baseDir,
+        "amenities",
+        "images",
+        filename
+      );
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }

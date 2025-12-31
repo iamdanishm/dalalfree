@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/app/lib/db";
+import { UPLOAD_CONFIG } from "@/app/lib/upload-config";
+import { UploadBridge } from "@/app/lib/upload-bridge.js";
 import Kyc from "@/app/lib/models/Kyc";
 import Property from "@/app/lib/models/Property";
 import path from "path";
@@ -17,14 +19,59 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const filePath = params.path.join("/");
-    const fullPath = path.join(process.cwd(), "uploads", filePath);
+    const resolvedParams = await params;
+    const filePath = resolvedParams.path.join("/");
+
+    // Parse secure path: properties/{hash}/{type}/{filename}
+    const pathParts = filePath.split("/");
+    let propertyId = null;
+    let hasAccess = false;
+    let actualFilePath = filePath; // Default to original path
+
+    if (pathParts[0] === "amenities") {
+      // Amenities are master data - public access
+      hasAccess = true;
+      actualFilePath = filePath; // Use original path for amenities
+    } else if (pathParts[0] === "properties") {
+      // Extract hash from URL
+      const hash = pathParts[1];
+
+      // Lookup property ID from hash
+      propertyId = await UploadBridge.getPropertyIdFromHash(hash);
+
+      if (!propertyId) {
+        return NextResponse.json(
+          { error: "Invalid file path" },
+          { status: 404 }
+        );
+      }
+
+      // Reconstruct actual file path with real propertyId
+      const remainingParts = pathParts.slice(2); // Remove "properties" and hash
+      actualFilePath = path.join("properties", propertyId, ...remainingParts);
+
+      // Check access permissions
+      if (remainingParts[0] === "kyc") {
+        // KYC files - strict access control per property
+        const property = await Property.findById(propertyId);
+
+        hasAccess =
+          property &&
+          (property.ownerId.toString() === session.user.id ||
+            session.user.role === "admin" ||
+            session.user.role === "sub-admin");
+      } else {
+        // Property images/videos - allow public access for now
+        // You can add more restrictions later if needed
+        hasAccess = true;
+      }
+    }
+
+    // Use external directory with actual file path
+    const fullPath = path.join(UPLOAD_CONFIG.baseDir, actualFilePath);
 
     // Security check: Prevent directory traversal attacks
-    if (
-      fullPath !== path.resolve(process.cwd(), "uploads", filePath) ||
-      !fullPath.startsWith(path.join(process.cwd(), "uploads"))
-    ) {
+    if (!fullPath.startsWith(UPLOAD_CONFIG.baseDir)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -33,73 +80,13 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    // Get file info
-    const stat = fs.statSync(fullPath);
-    const fileSize = stat.size;
-
-    // Parse file type from path
-    const fileType = filePath.split("/")[0]; // kyc or properties
-    const subType = filePath.split("/")[1]; // videos, documents, images
-
-    let hasAccess = false;
-
-    if (
-      fileType === "kyc" &&
-      (session.user.role === "admin" || session.user.role === "sub-admin")
-    ) {
-      // Admin access to all KYC files
-      hasAccess = true;
-    } else if (fileType === "kyc") {
-      // User access to their own KYC files
-      const userKyc = await Kyc.findOne({ userId: session.user.id });
-      if (userKyc) {
-        // Check if file URL matches user's KYC files
-        const videoUrl =
-          subType === "videos"
-            ? `/uploads/kyc/videos/${path.basename(filePath)}`
-            : null;
-        const docUrl =
-          subType === "documents"
-            ? `/uploads/kyc/documents/${path.basename(filePath)}`
-            : null;
-
-        if (
-          (videoUrl && userKyc.videoUrl === videoUrl) ||
-          (docUrl &&
-            userKyc.documentUrls &&
-            userKyc.documentUrls.includes(docUrl))
-        ) {
-          hasAccess = true;
-        }
-      }
-    } else if (fileType === "properties") {
-      // Property file access - check property ownership
-      const propertyId = filePath.split("/")[2]; // Assuming future path structure: properties/images/PROPERTY_ID/filename
-      if (propertyId) {
-        const property = await Property.findOne({
-          _id: propertyId,
-          $or: [
-            { ownerId: session.user.id }, // Owner can access
-            // Admin can access all
-          ],
-        });
-
-        if (
-          property ||
-          session.user.role === "admin" ||
-          session.user.role === "sub-admin"
-        ) {
-          hasAccess = true;
-        }
-      } else {
-        // For now, allow access if file exists in property directory (simplified)
-        hasAccess = true;
-      }
-    }
-
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
+
+    // Get file info
+    const stat = fs.statSync(fullPath);
+    const fileSize = stat.size;
 
     // Read file
     const fileBuffer = fs.readFileSync(fullPath);
@@ -129,8 +116,8 @@ export async function GET(req, { params }) {
         "Content-Type": contentType,
         "Content-Length": fileSize.toString(),
         "Cache-Control":
-          fileType === "properties"
-            ? "public, max-age=31536000"
+          pathParts[0] === "properties"
+            ? "public, max-age=31536000, immutable"
             : "private, no-cache",
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
