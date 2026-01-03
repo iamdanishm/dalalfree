@@ -14,11 +14,6 @@ export async function GET(req, { params }) {
   await connectDB();
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const resolvedParams = await params;
     const filePath = resolvedParams.path.join("/");
 
@@ -27,6 +22,7 @@ export async function GET(req, { params }) {
     let propertyId = null;
     let hasAccess = false;
     let actualFilePath = filePath; // Default to original path
+    let requiresAuth = false;
 
     if (pathParts[0] === "amenities") {
       // Amenities are master data - public access
@@ -52,17 +48,21 @@ export async function GET(req, { params }) {
 
       // Check access permissions
       if (remainingParts[0] === "kyc") {
-        // KYC files - strict access control per property
-        const property = await Property.findById(propertyId);
+        // KYC files require authentication
+        requiresAuth = true;
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
+        const property = await Property.findById(propertyId);
         hasAccess =
           property &&
           (property.ownerId.toString() === session.user.id ||
             session.user.role === "admin" ||
             session.user.role === "sub-admin");
       } else {
-        // Property images/videos - allow public access for now
-        // You can add more restrictions later if needed
+        // Property images/videos - public access
         hasAccess = true;
       }
     }

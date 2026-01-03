@@ -13,9 +13,11 @@ import {
   FiHeart,
   FiSearch,
   FiPlus,
+  FiList,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut, signIn } from "next-auth/react";
+import { useUserProperties } from "@/app/lib/hooks/useUserProperties";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -25,6 +27,7 @@ export default function Navbar() {
   const mobileMenuRef = useRef(null);
   const { data: session } = useSession();
   const router = useRouter();
+  const { hasProperties } = useUserProperties();
 
   // Get user initials for avatar
   const getInitials = (name) => {
@@ -80,6 +83,15 @@ export default function Navbar() {
         roles: ["user"],
       },
     ];
+
+    // Add "Your Listings" button if user has properties
+    if (hasProperties) {
+      baseActions.push({
+        href: "/user/properties",
+        label: "Your Listings",
+        icon: FiList,
+      });
+    }
 
     if (session.user.role === "partner") {
       baseActions.push(
@@ -151,7 +163,8 @@ export default function Navbar() {
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-6">
             <nav className="flex items-center gap-6">
-              {["Buy", "Rent", "Sell", "Commercial"].map((item) => (
+              {/* Commercial navigation commented out per requirements */}
+              {["Buy", "Rent", "Sell" /*, "Commercial"*/].map((item) => (
                 <Link
                   key={item}
                   href={
@@ -353,7 +366,8 @@ export default function Navbar() {
 
               {/* Main navigation */}
               <nav className="space-y-1" aria-label="Main navigation">
-                {["Buy", "Rent", "Sell", "Commercial"].map((item) => (
+                {/* Commercial navigation commented out per requirements */}
+                {["Buy", "Rent", "Sell" /*, "Commercial"*/].map((item) => (
                   <Link
                     key={item}
                     href={
@@ -371,6 +385,7 @@ export default function Navbar() {
                     {item === "Buy" && <FiSearch className="mr-3" size={20} />}
                     {item === "Rent" && <FiSearch className="mr-3" size={20} />}
                     {item === "Sell" && <FiPlus className="mr-3" size={20} />}
+                    {/* Commercial icon commented out per requirements */}
                     {item === "Commercial" && (
                       <FiSettings className="mr-3" size={20} />
                     )}

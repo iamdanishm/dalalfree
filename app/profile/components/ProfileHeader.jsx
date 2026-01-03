@@ -73,7 +73,7 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
 
   return (
     <motion.div
-      className="relative bg-gradient-to-r from-primary via-primary to-primary/80 rounded-xl shadow-lg overflow-hidden"
+      className="relative bg-linear-to-r from-primary via-primary to-primary/80 rounded-xl shadow-lg overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -88,7 +88,7 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           {/* Avatar */}
           <motion.div
-            className="flex-shrink-0"
+            className="shrink-0"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
@@ -109,11 +109,11 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
               </h1>
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 text-white/90">
                 <div className="flex items-center gap-2">
-                  <FiMail size={14} className="flex-shrink-0" />
+                  <FiMail size={14} className="shrink-0" />
                   <span className="text-sm truncate">{user?.email}</span>
                   {user?.isVerified && (
                     <motion.div
-                      className="flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-medium flex-shrink-0"
+                      className="flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-medium shrink-0"
                       whileHover={{ scale: 1.05 }}
                     >
                       <FiCheck size={10} />
@@ -122,7 +122,7 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <FiShield size={14} className="flex-shrink-0" />
+                  <FiShield size={14} className="shrink-0" />
                   <span className="text-sm">
                     KYC {user?.isVerified ? "Verified" : "Pending"}
                   </span>

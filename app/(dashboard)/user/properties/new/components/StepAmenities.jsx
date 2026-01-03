@@ -1,76 +1,9 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Select from "react-select";
-import {
-  FiHeart,
-  FiMapPin,
-  FiStar,
-  FiPlus,
-  FiX,
-  FiCheck,
-} from "react-icons/fi";
-import {
-  FaSwimmingPool,
-  FaDumbbell,
-  FaShieldAlt,
-  FaParking,
-  FaElevator,
-  FaTree,
-  FaWifi,
-  FaFire,
-  FaCamera,
-  FaConciergeBell,
-} from "react-icons/fa";
-
-const societyAmenities = [
-  // Safety & Security
-  { id: "24-7-security", name: "24/7 Security", category: "safety" },
-  { id: "cctv", name: "CCTV Surveillance", category: "safety" },
-  { id: "intercom", name: "Intercom", category: "safety" },
-  { id: "fire-safety", name: "Fire Safety", category: "safety" },
-  { id: "gated-community", name: "Gated Community", category: "safety" },
-
-  // Convenience & Utilities
-  { id: "power-backup", name: "Power Backup", category: "utilities" },
-  { id: "water-supply", name: "24/7 Water Supply", category: "utilities" },
-  { id: "lift", name: "Lift/Elevator", category: "convenience" },
-  { id: "parking", name: "Parking Space", category: "convenience" },
-  { id: "waste-management", name: "Waste Management", category: "utilities" },
-
-  // Recreational & Lifestyle
-  { id: "swimming-pool", name: "Swimming Pool", category: "recreational" },
-  { id: "gym", name: "Gym/Fitness Center", category: "fitness" },
-  {
-    id: "children-play-area",
-    name: "Children's Play Area",
-    category: "family",
-  },
-  { id: "garden", name: "Garden/Landscaped Area", category: "recreational" },
-  { id: "club-house", name: "Club House", category: "recreational" },
-  { id: "jogging-track", name: "Jogging Track", category: "fitness" },
-
-  // Additional Amenities
-  { id: "visitor-parking", name: "Visitor Parking", category: "convenience" },
-  { id: "maintenance-staff", name: "Maintenance Staff", category: "services" },
-  { id: "laundry", name: "Laundry Service", category: "services" },
-  { id: "housekeeping", name: "Housekeeping", category: "services" },
-  { id: "wifi", name: "Wi-Fi Connectivity", category: "technology" },
-  { id: "ro-water", name: "RO Water System", category: "utilities" },
-  { id: "solar-panels", name: "Solar Panels", category: "eco" },
-  {
-    id: "rain-water-harvesting",
-    name: "Rain Water Harvesting",
-    category: "eco",
-  },
-  {
-    id: "senior-citizen-area",
-    name: "Senior Citizen Area",
-    category: "family",
-  },
-  { id: "meditation-area", name: "Meditation/Yoga Area", category: "wellness" },
-];
+import { FiHeart, FiMapPin, FiStar, FiPlus, FiX } from "react-icons/fi";
 
 const nearbyPlaceTypes = [
   { value: "school", label: "School", icon: "🎓" },
@@ -100,17 +33,33 @@ export default function StepAmenities({
   errors,
   setErrors,
 }) {
+  const [amenities, setAmenities] = useState([]);
+
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const res = await fetch("/api/amenities");
+        if (res.ok) {
+          const data = await res.json();
+          setAmenities(
+            data.amenities.map((item) => ({
+              id: item._id,
+              name: item.title,
+              createdAt: item.createdAt,
+            }))
+          );
+        } else {
+          console.error("Failed to fetch amenities");
+        }
+      } catch (error) {
+        console.error("Error fetching amenities:", error);
+      }
+    };
+    fetchAmenities();
+  }, []);
   // Development helper function to fill form with sample data
   const fillSampleData = () => {
     updateFormData({
-      societyAmenities: [
-        "24-7-security",
-        "cctv",
-        "parking",
-        "lift",
-        "power-backup",
-        "water-supply",
-      ],
       nearbyPlaces: [
         {
           type: "school",
@@ -331,7 +280,7 @@ export default function StepAmenities({
         {formData.societyAmenities && formData.societyAmenities.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {formData.societyAmenities.map((amenityId) => {
-              const amenity = societyAmenities.find((a) => a.id === amenityId);
+              const amenity = amenities.find((a) => a.id === amenityId);
               return (
                 <motion.div
                   key={amenityId}
@@ -354,14 +303,14 @@ export default function StepAmenities({
 
         {/* Amenities Multi-Select Input */}
         <AmenitySelector
-          availableAmenities={societyAmenities}
+          availableAmenities={amenities}
           selectedAmenities={formData.societyAmenities || []}
           onAmenityToggle={handleAmenityToggle}
         />
 
         {/* Suggested Amenities */}
         <SuggestedAmenities
-          allAmenities={societyAmenities}
+          allAmenities={amenities}
           selectedAmenities={formData.societyAmenities || []}
           onAmenityToggle={handleAmenityToggle}
           propertyCategory={formData.category}
@@ -741,14 +690,9 @@ function AmenitySelector({
               onClick={() => handleAmenityClick(amenity.id)}
               className="w-full text-left px-3 sm:px-4 py-3 sm:py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors min-h-[44px] sm:min-h-auto flex items-center"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">
-                  {amenity.name}
-                </span>
-                <span className="text-xs text-gray-500 capitalize">
-                  {amenity.category}
-                </span>
-              </div>
+              <span className="text-sm font-medium text-gray-900">
+                {amenity.name}
+              </span>
             </button>
           ))}
         </motion.div>
@@ -777,57 +721,14 @@ function SuggestedAmenities({
   onAmenityToggle,
   propertyCategory,
 }) {
-  // Get suggested amenities based on category and common selections
+  // Get suggested amenities - latest 6 not selected
   const suggestedAmenities = useMemo(() => {
-    const suggestions = [];
-
-    // Category-based suggestions
-    if (propertyCategory === "Residential") {
-      // Essential residential amenities
-      suggestions.push(
-        "24-7-security",
-        "lift",
-        "parking",
-        "power-backup",
-        "water-supply",
-        "children-play-area",
-        "gym"
-      );
-    } else if (propertyCategory === "Commercial") {
-      // Essential commercial amenities
-      suggestions.push(
-        "lift",
-        "parking",
-        "power-backup",
-        "24-7-security",
-        "wifi",
-        "maintenance-staff"
-      );
-    }
-
-    // Always suggest popular amenities if not selected
-    const popularAmenities = [
-      "swimming-pool",
-      "cctv",
-      "gated-community",
-      "garden",
-    ];
-
-    popularAmenities.forEach((amenityId) => {
-      if (
-        !suggestions.includes(amenityId) &&
-        !selectedAmenities.includes(amenityId)
-      ) {
-        suggestions.push(amenityId);
-      }
-    });
-
-    // Return only amenities that exist and aren't selected
-    return suggestions
-      .filter((amenityId) => allAmenities.find((a) => a.id === amenityId))
-      .filter((amenityId) => !selectedAmenities.includes(amenityId))
-      .slice(0, 8); // Limit to 8 suggestions
-  }, [allAmenities, selectedAmenities, propertyCategory]);
+    return allAmenities
+      .filter((amenity) => !selectedAmenities.includes(amenity.id))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 6)
+      .map((amenity) => amenity.id);
+  }, [allAmenities, selectedAmenities]);
 
   if (suggestedAmenities.length === 0) {
     return null;

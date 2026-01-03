@@ -15,6 +15,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
+import Image from "next/image";
 
 export default function AmenitiesManagementTable() {
   const { success, error: toastError, promise } = useToast();
@@ -330,11 +331,23 @@ export default function AmenitiesManagementTable() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  className="w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                   initial={{ scale: 0.98 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      fetchAmenities(1, "");
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-heading transition-colors"
+                    title="Clear search"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               <motion.button
                 onClick={handleSearch}
@@ -402,10 +415,13 @@ export default function AmenitiesManagementTable() {
                   >
                     <td className="px-6 py-4">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
-                        <img
+                        <Image
                           src={amenity.image}
                           alt={amenity.title}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
+                          unoptimized
                           onError={(e) => {
                             e.target.src =
                               "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHBhdGggZD0iTTE2IDIwaDE2djhoLTE2di04em04LTQwMS4xIDAgMiAuOSAyIDItLjkgMi0yIDItMi0uOS0yIDIuOS0yIDItLjkgMnptMCAxMmMyLjc2IDAgNS0yLjI0IDUtNXMtMi4yNC01LTUtNS01IDIuMjQtNSA1IDIuMjQgNSA1IDV6IiBmaWxsPSIjOWNhM2FmIi8+Cjwvc3ZnPg==";
@@ -544,18 +560,35 @@ export default function AmenitiesManagementTable() {
                 </label>
                 <div className="space-y-2">
                   <input
+                    id="add-image-upload"
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full"
+                    className="hidden"
                     required
                   />
+                  <label
+                    htmlFor="add-image-upload"
+                    className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 transition-colors"
+                  >
+                    <FiUpload className="w-5 h-5 mr-2 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {formData.image ? formData.image.name : "Choose an image"}
+                    </span>
+                  </label>
                   {imagePreview && (
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-                      <img
+                      <Image
                         src={imagePreview}
                         alt="Preview"
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover"
+                        unoptimized
+                        onError={(e) => {
+                          e.target.src =
+                            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSI4IiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHBhdGggZD0iTTI2IDMwSDU0djE2SDI2di0xNnpNNTQgNTguOXYwIDIgLTkgMi0yIC45LTIgMiAuOS0yIDItLjkgMi0yIC45LTJWNTguOXptMCAyNGM0LjQgMCA4LTMuNiA4LThzLTMuNi04LTgtOC04IDMuNi04IDggMy42IDggOCA4IDh6IiBmaWxsPSIjOWNhM2FmIi8+Cjwvc3ZnPg==";
+                        }}
                       />
                     </div>
                   )}
@@ -641,17 +674,34 @@ export default function AmenitiesManagementTable() {
                 </label>
                 <div className="space-y-2">
                   <input
+                    id="edit-image-upload"
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full"
+                    className="hidden"
                   />
+                  <label
+                    htmlFor="edit-image-upload"
+                    className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 transition-colors"
+                  >
+                    <FiUpload className="w-5 h-5 mr-2 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {formData.image ? formData.image.name : "Choose an image"}
+                    </span>
+                  </label>
                   {imagePreview && (
                     <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-                      <img
+                      <Image
                         src={imagePreview}
                         alt="Preview"
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover"
+                        unoptimized
+                        onError={(e) => {
+                          e.target.src =
+                            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSI4IiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHBhdGggZD0iTTI2IDMwSDU0djE2SDI2di0xNnpNNTQgNTguOXYwIDIgLTkgMi0yIC45LTIgMiAuOS0yIDItLjkgMi0yIC45LTJWNTguOXptMCAyNGM0LjQgMCA4LTMuNiA4LThzLTMuNi04LTgtOC04IDMuNi04IDggMy42IDggOCA4IDh6IiBmaWxsPSIjOWNhM2FmIi8+Cjwvc3ZnPg==";
+                        }}
                       />
                     </div>
                   )}

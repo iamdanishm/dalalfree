@@ -10,6 +10,7 @@ import { FaCheck } from "react-icons/fa";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PropertyCard from "../components/PropertyCard";
 
 function SearchPageContent() {
   const router = useRouter();
@@ -25,8 +26,74 @@ function SearchPageContent() {
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [properties, setProperties] = useState([]);
+  const [error, setError] = useState(null);
 
-  // Parse URL params on component mount
+  // Fetch properties from API
+  const fetchProperties = async (overrideParams = {}) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+
+      // Use override params if provided, otherwise use current state
+      const currentTab = overrideParams.tab || activeTab;
+      const currentCity =
+        overrideParams.city !== undefined ? overrideParams.city : city;
+      const currentLocality =
+        overrideParams.locality !== undefined
+          ? overrideParams.locality
+          : locality;
+      const currentPropertyType =
+        overrideParams.propertyType !== undefined
+          ? overrideParams.propertyType
+          : propertyType;
+      const currentBudgetRange =
+        overrideParams.budgetRange !== undefined
+          ? overrideParams.budgetRange
+          : budgetRange;
+      const currentSortBy =
+        overrideParams.sortBy !== undefined ? overrideParams.sortBy : sortBy;
+      const currentVerifiedOnly =
+        overrideParams.showVerifiedOnly !== undefined
+          ? overrideParams.showVerifiedOnly
+          : showVerifiedOnly;
+
+      params.set("tab", currentTab);
+      if (currentCity) params.set("city", currentCity);
+      if (currentLocality) params.set("locality", currentLocality);
+      if (currentPropertyType) params.set("propertyType", currentPropertyType);
+      if (currentBudgetRange) {
+        params.set("budgetMin", currentBudgetRange.min.toString());
+        params.set("budgetMax", currentBudgetRange.max?.toString() || "");
+      }
+      params.set("sort", currentSortBy);
+      if (currentVerifiedOnly) params.set("verifiedOnly", "true");
+
+      const response = await fetch(`/api/properties?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch properties");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProperties(data.properties || []);
+      } else {
+        throw new Error(data.error || "Failed to fetch properties");
+      }
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+      setError(err.message);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Parse URL params and fetch initial data
   useEffect(() => {
     const tab = searchParams.get("tab") || "buy";
     const cityParam = searchParams.get("city") || "";
@@ -35,20 +102,28 @@ function SearchPageContent() {
     const budgetMin = searchParams.get("budgetMin");
     const budgetMax = searchParams.get("budgetMax");
 
+    // Set all state at once to avoid cascading renders
+    const newBudgetRange =
+      budgetMin && budgetMax
+        ? {
+            min: parseInt(budgetMin),
+            max: budgetMax ? parseInt(budgetMax) : null,
+          }
+        : null;
+
     setActiveTab(tab);
     setCity(cityParam);
     setLocality(localityParam);
     setPropertyType(propertyTypeParam);
+    if (newBudgetRange) setBudgetRange(newBudgetRange);
 
-    if (budgetMin && budgetMax) {
-      setBudgetRange({
-        min: parseInt(budgetMin),
-        max: budgetMax ? parseInt(budgetMax) : null,
-      });
-    }
+    // Fetch data after a brief delay to ensure state is set
+    const timer = setTimeout(() => {
+      fetchProperties();
+    }, 100);
 
-    setTimeout(() => setIsLoading(false), 500);
-  }, [searchParams]);
+    return () => clearTimeout(timer);
+  }, []); // Only run on mount
 
   // Get localities for selected city
   const availableLocalities = useMemo(() => {
@@ -63,89 +138,8 @@ function SearchPageContent() {
       label: range.label,
     })) || [];
 
-  // Filter properties based on search criteria
-  const filteredProperties = useMemo(() => {
-    let filtered = mockProperties.filter((property) => {
-      // Featured filter - check URL param directly
-      const featuredParam = searchParams.get("featured") === "true";
-      if (featuredParam && !property.featured) return false;
-
-      // Tab filter (buy/sell -> sell, rent -> rent)
-      if (activeTab === "buy" && property.propertyType !== "sell") return false;
-      if (activeTab === "rent" && property.propertyType !== "rent")
-        return false;
-      if (activeTab === "commercial" && property.category !== "Commercial")
-        return false;
-
-      // City filter
-      if (city && !property.city.toLowerCase().includes(city.toLowerCase()))
-        return false;
-
-      // Locality filter
-      if (
-        locality &&
-        !property.locality.toLowerCase().includes(locality.toLowerCase())
-      )
-        return false;
-
-      // Property type filter
-      if (
-        propertyType &&
-        !property.bhk.toLowerCase().includes(propertyType.toLowerCase())
-      )
-        return false;
-
-      // Budget filter
-      if (budgetRange) {
-        const priceValue = parseFloat(
-          property.price.replace(/[₹,]/g, "").split("/")[0]
-        );
-        if (budgetRange.max && priceValue > budgetRange.max) return false;
-        if (budgetRange.min && priceValue < budgetRange.min) return false;
-      }
-
-      // Verified filter
-      if (showVerifiedOnly && !property.verified) return false;
-
-      return true;
-    });
-
-    // Sort properties
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => {
-          const aPrice = parseFloat(a.price.replace(/[₹,]/g, "").split("/")[0]);
-          const bPrice = parseFloat(b.price.replace(/[₹,]/g, "").split("/")[0]);
-          return aPrice - bPrice;
-        });
-        break;
-      case "price-high":
-        filtered.sort((a, b) => {
-          const aPrice = parseFloat(a.price.replace(/[₹,]/g, "").split("/")[0]);
-          const bPrice = parseFloat(b.price.replace(/[₹,]/g, "").split("/")[0]);
-          return bPrice - aPrice;
-        });
-        break;
-      case "verified-first":
-        filtered.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));
-        break;
-      default:
-        break;
-    }
-
-    return filtered;
-  }, [
-    activeTab,
-    city,
-    locality,
-    propertyType,
-    budgetRange,
-    showVerifiedOnly,
-    sortBy,
-    searchParams,
-  ]);
-
   const handleSearch = () => {
+    // Update URL params
     const params = new URLSearchParams();
     params.set("tab", activeTab);
     if (city) params.set("city", city);
@@ -155,7 +149,35 @@ function SearchPageContent() {
       params.set("budgetMin", budgetRange.min.toString());
       params.set("budgetMax", budgetRange.max?.toString() || "");
     }
-    router.replace(`/search?${params.toString()}`);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+
+    // Fetch new results
+    fetchProperties();
+  };
+
+  const handleClearFilters = () => {
+    // Reset all filters
+    setCity("");
+    setLocality("");
+    setPropertyType("");
+    setBudgetRange(null);
+    setSortBy("relevance");
+    setShowVerifiedOnly(false);
+
+    // Update URL to remove all params except tab
+    const params = new URLSearchParams();
+    params.set("tab", activeTab);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+
+    // Fetch all properties for current tab with cleared filters
+    fetchProperties({
+      city: "",
+      locality: "",
+      propertyType: "",
+      budgetRange: null,
+      sortBy: "relevance",
+      showVerifiedOnly: false,
+    });
   };
 
   const handleWishlistClick = (propertyId) => {
@@ -226,6 +248,8 @@ function SearchPageContent() {
                     router.replace(`/search?${params.toString()}`, {
                       scroll: false,
                     });
+                    // Fetch properties for new tab
+                    fetchProperties();
                   }}
                   className={`px-6 py-3 text-sm font-semibold rounded-full transition-all duration-200 ${
                     activeTab === tab.toLowerCase()
@@ -546,6 +570,17 @@ function SearchPageContent() {
               </motion.button>
 
               <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleClearFilters}
+                transition={{ duration: 0.2 }}
+                className="bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 text-sm border border-gray-300"
+                suppressHydrationWarning
+              >
+                Clear Filters
+              </motion.button>
+
+              <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowFilters(!showFilters)}
@@ -583,11 +618,13 @@ function SearchPageContent() {
                           ? { value: sortBy, label: getSortLabel(sortBy) }
                           : null
                       }
-                      onChange={(selectedOption) =>
+                      onChange={(selectedOption) => {
                         setSortBy(
                           selectedOption ? selectedOption.value : "relevance"
-                        )
-                      }
+                        );
+                        // Fetch with new sort
+                        setTimeout(fetchProperties, 100);
+                      }}
                       options={[
                         { value: "relevance", label: "Relevance" },
                         { value: "price-low", label: "Price: Low to High" },
@@ -669,9 +706,11 @@ function SearchPageContent() {
                           type="checkbox"
                           id="verified-only"
                           checked={showVerifiedOnly}
-                          onChange={(e) =>
-                            setShowVerifiedOnly(e.target.checked)
-                          }
+                          onChange={(e) => {
+                            setShowVerifiedOnly(e.target.checked);
+                            // Fetch with new verified filter
+                            setTimeout(fetchProperties, 100);
+                          }}
                           className="sr-only peer"
                         />
                         <div className="w-5 h-5 bg-gray-200 rounded-lg peer-checked:bg-primary transition-colors duration-200 flex items-center justify-center">
@@ -709,7 +748,7 @@ function SearchPageContent() {
             <h1 className="text-2xl font-bold text-heading mb-2">
               {isLoading
                 ? "Searching..."
-                : `${filteredProperties.length} Properties Found${
+                : `${properties.length} Properties Found${
                     city ? ` in ${city}` : ""
                   }${locality ? `, ${locality}` : ""}`}
             </h1>
@@ -739,120 +778,43 @@ function SearchPageContent() {
               </div>
             ))}
           </div>
-        ) : filteredProperties.length > 0 ? (
+        ) : properties.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           >
-            {filteredProperties.map((property) => (
-              <motion.div
-                key={property.id}
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover={{
-                  y: -5,
-                  transition: {
-                    duration: 0.2,
-                  },
-                }}
-                onClick={() =>
-                  router.push(`/property/${property.slug || property.id}`)
-                }
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden border border-gray-100 flex flex-col group cursor-pointer"
-                style={{ willChange: "transform" }}
-              >
-                <div className="relative w-full h-48 overflow-hidden">
-                  <Image
-                    src={property.image}
-                    alt={property.title}
-                    fill
-                    className="object-cover rounded-t-2xl transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm border">
-                    {property.bhk}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWishlistClick(property.id);
-                    }}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
-                  >
-                    <AiOutlineHeart
-                      className="text-gray-600 hover:text-red-500 transition-colors"
-                      size={16}
-                    />
-                  </button>
-                </div>
+            {properties.map((property) => {
+              // Transform API data to match PropertyCard expectations
+              const transformedProperty = {
+                _id: property._id,
+                title: property.title,
+                price: property.price
+                  ? `₹${property.price.toLocaleString()}`
+                  : "Price not available",
+                images: property.images || [],
+                location:
+                  property.location || `${property.city}, ${property.state}`,
+                city: property.city,
+                state: property.state,
+                bhk: property.bhk || property.category,
+                builtUpArea: property.builtUpArea,
+                furnishing: property.furnishing || "Not specified",
+                verified: property.verified || false,
+                featured: property.featured || false,
+                propertyType: property.propertyType,
+                slug: property.slug,
+                ownerId: property.ownerId,
+              };
 
-                {property.ownerListing && (
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-sm z-10">
-                    Owner Listing
-                  </div>
-                )}
-
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
-                    {property.verified && (
-                      <div className="flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        <FaCheck size={10} />
-                        Verified
-                      </div>
-                    )}
-                    {property.noBrokerage && (
-                      <div className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                        No Brokerage
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mb-2">
-                    <p className="text-xl font-bold text-gray-900 leading-tight">
-                      {property.price}
-                    </p>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-base font-medium text-gray-800 leading-tight">
-                      {property.title}
-                    </p>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-600 leading-tight">
-                      {property.bhk} • {property.size} sq.ft •{" "}
-                      {property.furnishing}
-                    </p>
-                  </div>
-
-                  <div className="mb-auto">
-                    <p className="text-sm text-gray-500 flex items-center gap-1.5 leading-tight">
-                      <FiMapPin className="flex-shrink-0" size={14} />
-                      {property.location}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-3 border-t border-gray-100">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(
-                          `/property/${property.slug || property.id}`
-                        );
-                      }}
-                      transition={{ duration: 0.2 }}
-                      className="w-full bg-primary text-white text-sm font-semibold py-3 px-4 rounded-xl hover:shadow-sm transition-shadow"
-                    >
-                      View Details
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+              return (
+                <PropertyCard
+                  key={property._id}
+                  property={transformedProperty}
+                  onWishlistClick={handleWishlistClick}
+                />
+              );
+            })}
           </motion.div>
         ) : (
           <div className="text-center py-16">
@@ -864,10 +826,10 @@ function SearchPageContent() {
               Try adjusting your search criteria or browse all properties.
             </p>
             <button
-              onClick={() => router.push("/")}
+              onClick={handleClearFilters}
               className="bg-primary text-white px-6 py-3 rounded-lg hover:opacity-90"
             >
-              Browse All Properties
+              Clear Filters & Browse All
             </button>
           </div>
         )}
@@ -877,105 +839,7 @@ function SearchPageContent() {
   );
 }
 
-// Mock data matching FeaturedGrid (using static data as per todo requirements)
-const mockProperties = [
-  {
-    id: 1,
-    slug: "green-heights-baner",
-    price: "₹95 Lakh",
-    title: "Green Heights, Baner",
-    location: "Pune, Maharashtra",
-    bhk: "2BHK",
-    size: 1200,
-    furnishing: "Semi-furnished",
-    verified: true,
-    noBrokerage: true,
-    propertyType: "sell",
-    category: "Residential",
-    city: "Pune",
-    locality: "Baner",
-    image: "/images/home-lifestyle.png",
-    ownerListing: true,
-    featured: true,
-  },
-  {
-    id: 2,
-    slug: "skyline-residency-hsr",
-    price: "₹45,000/mo",
-    title: "Skyline Residency, HSR",
-    location: "Bengaluru, Karnataka",
-    bhk: "3BHK",
-    size: 1350,
-    furnishing: "Fully-furnished",
-    verified: false,
-    noBrokerage: false,
-    propertyType: "rent",
-    category: "Residential",
-    city: "Bangalore",
-    locality: "HSR",
-    image: "/images/home-lifestyle.png",
-    ownerListing: false,
-    featured: true,
-  },
-  {
-    id: 3,
-    slug: "grade-a-space-cybercity",
-    price: "₹1.2 Lakh/mo",
-    title: "Grade-A Space, Cybercity",
-    location: "Gurgaon, Haryana",
-    bhk: "Office",
-    size: 3000,
-    furnishing: "Bare shell",
-    verified: true,
-    noBrokerage: true,
-    propertyType: "rent",
-    category: "Commercial",
-    city: "Gurgaon",
-    locality: "Cybercity",
-    image: "/images/home-lifestyle.png",
-    ownerListing: true,
-    featured: false,
-  },
-  {
-    id: 4,
-    slug: "sunshine-apartments-andheri",
-    price: "₹75 Lakh",
-    title: "Sunshine Apartments, Andheri",
-    location: "Mumbai, Maharashtra",
-    bhk: "1BHK",
-    size: 650,
-    furnishing: "Fully-furnished",
-    verified: true,
-    noBrokerage: true,
-    propertyType: "sell",
-    category: "Residential",
-    city: "Mumbai",
-    locality: "Andheri",
-    image: "/images/home-lifestyle.png",
-    ownerListing: false,
-    featured: false,
-  },
-  {
-    id: 5,
-    slug: "tech-park-office-whitefield",
-    price: "₹85,000/mo",
-    title: "Tech Park Office, Whitefield",
-    location: "Bengaluru, Karnataka",
-    bhk: "Office Space",
-    size: 2500,
-    furnishing: "Fully-furnished",
-    verified: true,
-    noBrokerage: false,
-    propertyType: "rent",
-    category: "Commercial",
-    city: "Bangalore",
-    locality: "Whitefield",
-    image: "/images/home-lifestyle.png",
-    ownerListing: true,
-    featured: false,
-  },
-];
-
+// Static data for dropdowns
 const propertyTypes = {
   residential: ["1 RK", "1 BHK", "2 BHK", "3 BHK", "4+ BHK"],
   commercial: [
