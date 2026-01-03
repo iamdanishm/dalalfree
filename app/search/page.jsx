@@ -117,20 +117,19 @@ function SearchPageContent() {
     setPropertyType(propertyTypeParam);
     if (newBudgetRange) setBudgetRange(newBudgetRange);
 
-    // Fetch data after a brief delay to ensure state is set
-    const timer = setTimeout(() => {
-      fetchProperties();
-    }, 100);
+    // Fetch data immediately with the URL params to avoid state update timing issues
+    const urlParams = {
+      tab,
+      city: cityParam,
+      locality: localityParam,
+      propertyType: propertyTypeParam,
+      budgetRange: newBudgetRange,
+      sortBy: "relevance",
+      showVerifiedOnly: false,
+    };
 
-    return () => clearTimeout(timer);
+    fetchProperties(urlParams);
   }, []); // Only run on mount
-
-  // Get localities for selected city
-  const availableLocalities = useMemo(() => {
-    return city && localities[city]
-      ? localities[city].map((loc) => ({ value: loc, label: loc }))
-      : [];
-  }, [city]);
 
   const budgetOptions =
     budgetRanges[activeTab]?.map((range) => ({
@@ -248,8 +247,8 @@ function SearchPageContent() {
                     router.replace(`/search?${params.toString()}`, {
                       scroll: false,
                     });
-                    // Fetch properties for new tab
-                    fetchProperties();
+                    // Fetch properties for new tab with explicit tab parameter
+                    fetchProperties({ tab: newTab });
                   }}
                   className={`px-6 py-3 text-sm font-semibold rounded-full transition-all duration-200 ${
                     activeTab === tab.toLowerCase()
@@ -268,7 +267,7 @@ function SearchPageContent() {
                 value={city ? { value: city, label: city } : null}
                 onChange={(selectedOption) => {
                   setCity(selectedOption ? selectedOption.value : "");
-                  setLocality("");
+                  setLocality(""); // Clear locality when city changes
                 }}
                 options={cities.map((city) => ({ value: city, label: city }))}
                 placeholder="City"
@@ -334,74 +333,16 @@ function SearchPageContent() {
                 }}
               />
 
-              <Select
-                value={locality ? { value: locality, label: locality } : null}
-                onChange={(selectedOption) =>
-                  setLocality(selectedOption ? selectedOption.value : "")
-                }
-                options={availableLocalities}
-                placeholder="Locality"
-                className="w-full"
-                classNamePrefix="react-select"
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                isDisabled={!city}
-                styles={{
-                  control: (provided) => ({
-                    ...provided,
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "0.5rem",
-                    padding: "0.25rem",
-                    minHeight: "48px",
-                    boxShadow: "none",
-                    "&:hover": {
-                      border: "1px solid #e5e7eb",
-                    },
-                    "&:focus-within": {
-                      borderColor: "var(--color-primary)",
-                      borderWidth: "3px",
-                      boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
-                    },
-                  }),
-                  singleValue: (provided, state) => ({
-                    ...provided,
-                    color: "#374151",
-                  }),
-                  placeholder: (provided, state) => ({
-                    ...provided,
-                    color: "#9ca3af",
-                  }),
-                  option: (provided, state) => ({
-                    ...provided,
-                    backgroundColor: state.isSelected
-                      ? "var(--color-primary)"
-                      : state.isFocused
-                      ? "#f3f4f6"
-                      : "white",
-                    color: state.isSelected ? "white" : "#374151",
-                    cursor: "pointer",
-                  }),
-                  menu: (provided) => ({
-                    ...provided,
-                    borderRadius: "0.5rem",
-                    border: "1px solid #e5e7eb",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    zIndex: 9999,
-                  }),
-                  menuPortal: (provided) => ({
-                    ...provided,
-                    zIndex: 9999,
-                  }),
-                }}
-                components={{
-                  DropdownIndicator: () => (
-                    <MdKeyboardArrowDown
-                      className="text-gray-400 mr-2"
-                      size={16}
-                    />
-                  ),
-                }}
+              <input
+                type="text"
+                placeholder={city ? "Locality" : "Select city first"}
+                value={locality}
+                onChange={(e) => setLocality(e.target.value)}
+                disabled={!city}
+                className={`bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 w-full ${
+                  !city ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                suppressHydrationWarning
               />
 
               <Select
@@ -861,29 +802,6 @@ const cities = [
   "Gurgaon",
   "Hyderabad",
 ];
-
-const localities = {
-  Mumbai: ["Andheri", "Bandra", "Powai", "Lower Parel", "Goregaon"],
-  Bangalore: [
-    "HSR",
-    "Whitefield",
-    "Koramangala",
-    "Indiranagar",
-    "Electronic City",
-  ],
-  Pune: ["Baner", "Hinjewadi", "Aundh", "Koregaon Park", "Wakad"],
-  Chennai: ["T. Nagar", "Adyar", "Velachery", "Anna Nagar", "Thoraipakkam"],
-  Delhi: ["Connaught Place", "Karol Bagh", "Lajpat Nagar", "Dwarka", "Rohini"],
-  Noida: [
-    "Sector 62",
-    "Sector 18",
-    "Sector 15",
-    "Sector 62A",
-    "Botanical Garden",
-  ],
-  Gurgaon: ["Cybercity", "DLF Phase 1", "Golf Course Road", "MG Road"],
-  Hyderabad: ["Hi-Tech City", "Jubilee Hills", "Banjara Hills", "Gachibowli"],
-};
 
 const budgetRanges = {
   buy: [

@@ -162,27 +162,6 @@ export default function Navbar() {
 
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <nav className="flex items-center gap-6">
-              {/* Commercial navigation commented out per requirements */}
-              {["Buy", "Rent", "Sell" /*, "Commercial"*/].map((item) => (
-                <Link
-                  key={item}
-                  href={
-                    item === "Buy"
-                      ? "/?mode=buy"
-                      : item === "Rent"
-                      ? "/?mode=rent"
-                      : item === "Sell"
-                      ? "/sell"
-                      : "/commercial"
-                  }
-                  className="text-sm text-muted hover:text-secondary"
-                >
-                  {item}
-                </Link>
-              ))}
-            </nav>
-
             {/* Right-side actions */}
             <div className="flex items-center gap-6">
               <button
@@ -364,36 +343,6 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Main navigation */}
-              <nav className="space-y-1" aria-label="Main navigation">
-                {/* Commercial navigation commented out per requirements */}
-                {["Buy", "Rent", "Sell" /*, "Commercial"*/].map((item) => (
-                  <Link
-                    key={item}
-                    href={
-                      item === "Buy"
-                        ? "/?mode=buy"
-                        : item === "Rent"
-                        ? "/?mode=rent"
-                        : item === "Sell"
-                        ? "/sell"
-                        : "/commercial"
-                    }
-                    onClick={() => setOpen(false)}
-                    className="flex items-center px-3 py-3 text-base text-secondary font-medium rounded-lg hover:bg-gray-50 transition-colors duration-150 touch-manipulation"
-                  >
-                    {item === "Buy" && <FiSearch className="mr-3" size={20} />}
-                    {item === "Rent" && <FiSearch className="mr-3" size={20} />}
-                    {item === "Sell" && <FiPlus className="mr-3" size={20} />}
-                    {/* Commercial icon commented out per requirements */}
-                    {item === "Commercial" && (
-                      <FiSettings className="mr-3" size={20} />
-                    )}
-                    {item}
-                  </Link>
-                ))}
-              </nav>
-
               {/* Action buttons */}
               <div className="pt-4">
                 <button
@@ -478,7 +427,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]"
             onClick={() => setLoginPromptOpen(false)}
           >
             <motion.div
@@ -497,7 +446,7 @@ export default function Navbar() {
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 relative z-[101]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

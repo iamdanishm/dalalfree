@@ -26,6 +26,8 @@ export async function GET(request) {
     let query = {};
 
     // Tab filter (buy/rent/commercial)
+    // When users select "buy", they want properties available for sale (propertyType: "sell")
+    // When users select "rent", they want properties available for rent (propertyType: "rent")
     if (tab === "buy") {
       query.propertyType = "sell";
     } else if (tab === "rent") {

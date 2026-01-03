@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -50,6 +50,7 @@ export default function HeroSearch() {
   const [city, setCity] = useState("");
   const [locality, setLocality] = useState("");
   const [budgetRange, setBudgetRange] = useState(null);
+  const [error, setError] = useState("");
 
   const budgetOptions =
     budgetRanges[activeTab]?.map((range) => ({
@@ -58,6 +59,18 @@ export default function HeroSearch() {
     })) || [];
 
   const handleSearch = () => {
+    // Validate required fields
+    if (!city || !locality.trim()) {
+      setError(
+        "Please select both city and locality to search for properties."
+      );
+      return;
+    }
+
+    // Clear any existing error
+    setError("");
+
+    // Build search parameters
     const params = new URLSearchParams();
     params.set("tab", activeTab);
     if (city) params.set("city", city);
@@ -67,6 +80,7 @@ export default function HeroSearch() {
       params.set("budgetMin", budgetRange.min.toString());
       params.set("budgetMax", budgetRange.max?.toString() || "");
     }
+
     router.push(`/search?${params.toString()}`);
   };
 
@@ -75,6 +89,7 @@ export default function HeroSearch() {
     setCity("");
     setLocality("");
     setBudgetRange(null);
+    setError("");
   };
 
   return (
@@ -101,7 +116,7 @@ export default function HeroSearch() {
           style={{ willChange: "transform" }}
         >
           {/* Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
             {["Buy", "Rent"].map((tab) => (
               <button
                 key={tab}
@@ -109,6 +124,7 @@ export default function HeroSearch() {
                   setActiveTab(tab.toLowerCase());
                   setPropertyType("");
                   setBudgetRange(null);
+                  setError(""); // Clear error when switching tabs
                 }}
                 className={`px-5 py-2 text-sm sm:text-base font-medium rounded-full transition-colors duration-200 ${
                   activeTab === tab.toLowerCase()
@@ -121,6 +137,21 @@ export default function HeroSearch() {
               </button>
             ))}
           </div>
+
+          {/* Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Search Fields (Original 5-field layout) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
