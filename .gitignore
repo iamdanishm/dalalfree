@@ -41,7 +41,9 @@ next-env.d.ts
 
 # cline rules (user-specific, should not be committed)
 .clinerules
-
+.roo
+.roomodes
 # agent instructions (user-specific, should not be committed)
 agent.md
+AGENTS.md
 /uploads/
