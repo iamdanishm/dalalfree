@@ -103,6 +103,17 @@ const parkingOptions = [
   { value: "3+ Covered Parking", label: "3+ Covered Parking" },
 ];
 
+// Utility function to get ordinal suffix
+const getOrdinalSuffix = (num) => {
+  if (!num || isNaN(num)) return num;
+  const j = num % 10;
+  const k = num % 100;
+  if (j == 1 && k != 11) return num + "st";
+  if (j == 2 && k != 12) return num + "nd";
+  if (j == 3 && k != 13) return num + "rd";
+  return num + "th";
+};
+
 export default function StepSpecifications({
   formData,
   updateFormData,
@@ -143,6 +154,29 @@ export default function StepSpecifications({
       delete newErrors[field];
       setErrors(newErrors);
     }
+
+    // Validate floor vs totalFloors
+    if (field === "floor" || field === "totalFloors") {
+      const updatedFormData = { ...formData, [field]: value };
+      if (
+        updatedFormData.floor &&
+        updatedFormData.totalFloors &&
+        updatedFormData.floor > updatedFormData.totalFloors
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          floor:
+            "Specific floor cannot be greater than total floors in the building",
+        }));
+      } else if (errors.floor && errors.floor.includes("greater than")) {
+        // Clear the floor validation error if it exists
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.floor;
+          return newErrors;
+        });
+      }
+    }
   };
 
   // Fill dummy data function - Development only
@@ -159,7 +193,7 @@ export default function StepSpecifications({
       carpetArea: 1500,
 
       // Floor details
-      floor: "5th",
+      floor: 5,
       totalFloors: 12,
 
       // Property age
@@ -702,10 +736,13 @@ export default function StepSpecifications({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <input
-                  type="text"
+                  type="number"
                   value={formData.floor || ""}
-                  onChange={(e) => handleInputChange("floor", e.target.value)}
-                  placeholder="e.g., Ground, 1st, 2nd"
+                  onChange={(e) =>
+                    handleInputChange("floor", parseInt(e.target.value) || "")
+                  }
+                  placeholder="5"
+                  min="1"
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200"
                 />
                 <div className="text-xs text-muted mt-1">Specific floor</div>
@@ -733,8 +770,12 @@ export default function StepSpecifications({
             {(formData.floor || formData.totalFloors) && (
               <div className="text-sm text-primary font-medium bg-primary/5 px-3 py-1 rounded-full inline-block">
                 {formData.floor && formData.totalFloors
-                  ? `${formData.floor} of ${formData.totalFloors}`
-                  : formData.floor || `${formData.totalFloors} floors`}
+                  ? `${getOrdinalSuffix(formData.floor)} of ${
+                      formData.totalFloors
+                    }`
+                  : formData.floor
+                  ? getOrdinalSuffix(formData.floor)
+                  : `${formData.totalFloors} floors`}
               </div>
             )}
 
@@ -1155,8 +1196,12 @@ export default function StepSpecifications({
               </div>
               <div className="text-sm font-semibold text-slate-800">
                 {formData.floor && formData.totalFloors
-                  ? `${formData.floor} of ${formData.totalFloors}`
-                  : formData.floor || "—"}
+                  ? `${getOrdinalSuffix(formData.floor)} of ${
+                      formData.totalFloors
+                    }`
+                  : formData.floor
+                  ? getOrdinalSuffix(formData.floor)
+                  : "—"}
               </div>
             </div>
 

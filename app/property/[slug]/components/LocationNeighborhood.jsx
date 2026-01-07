@@ -17,12 +17,6 @@ export default function LocationNeighborhood({
             Location & Neighborhood
           </h2>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-sm font-medium text-gray-900">
-            Walk Score: {neighborhood.walkScore}/100
-          </span>
-        </div>
       </div>
 
       {/* Google Maps Iframe */}

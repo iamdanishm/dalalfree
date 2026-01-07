@@ -19,6 +19,17 @@ import {
 } from "react-icons/fi";
 import Image from "next/image";
 
+// Utility function to get ordinal suffix
+const getOrdinalSuffix = (num) => {
+  if (!num || isNaN(num)) return num;
+  const j = num % 10;
+  const k = num % 100;
+  if (j == 1 && k != 11) return num + "st";
+  if (j == 2 && k != 12) return num + "nd";
+  if (j == 3 && k != 13) return num + "rd";
+  return num + "th";
+};
+
 const imageCategories = [
   { value: "exterior", label: "Exterior", icon: "🏠" },
   { value: "interior", label: "Interior", icon: "🛋️" },
@@ -199,7 +210,7 @@ export default function StepReviewPublish({
         {
           label: "Floor",
           value: formData.floor
-            ? `${formData.floor} of ${formData.totalFloors}`
+            ? `${getOrdinalSuffix(formData.floor)} of ${formData.totalFloors}`
             : null,
         },
         {

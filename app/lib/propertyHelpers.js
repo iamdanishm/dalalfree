@@ -1,5 +1,16 @@
 // Property creation helpers for transforming UI data to API format
 
+// Utility function to get ordinal suffix
+const getOrdinalSuffix = (num) => {
+  if (!num || isNaN(num)) return num;
+  const j = num % 10;
+  const k = num % 100;
+  if (j == 1 && k != 11) return num + "st";
+  if (j == 2 && k != 12) return num + "nd";
+  if (j == 3 && k != 13) return num + "rd";
+  return num + "th";
+};
+
 /**
  * Transforms UI form data into API-compatible format for property creation
  * @param {Object} formData - Raw form data from the wizard
@@ -224,9 +235,11 @@ export function createPropertySummary(formData) {
     specifications: {
       bhk: formData.bhk,
       area: `${formData.builtUpArea} sq ft built-up, ${formData.carpetArea} sq ft carpet`,
-      floor: `${formData.floor}${
-        formData.totalFloors ? ` of ${formData.totalFloors}` : ""
-      }`,
+      floor: formData.floor
+        ? `${getOrdinalSuffix(formData.floor)}${
+            formData.totalFloors ? ` of ${formData.totalFloors}` : ""
+          }`
+        : "N/A",
       age: `${formData.age} ${formData.ageUnit}`,
       furnishing: formData.furnishing,
     },

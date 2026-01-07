@@ -27,6 +27,21 @@ const distanceOptions = [
   { value: "10", label: "Within 10 km" },
 ];
 
+// Validation function for nearby places
+const validateNearbyPlaces = (places) => {
+  if (!places || places.length === 0) return null;
+
+  for (const place of places) {
+    if (place.distance && !/^\d+(\.\d+)?(m|km)$/.test(place.distance)) {
+      return "Invalid distance format. Use format like 100m, 1.5km, 2km";
+    }
+    if (place.rating && (place.rating < 1 || place.rating > 5)) {
+      return "Rating must be between 1 and 5";
+    }
+  }
+  return null;
+};
+
 export default function StepAmenities({
   formData,
   updateFormData,
@@ -57,6 +72,12 @@ export default function StepAmenities({
     };
     fetchAmenities();
   }, []);
+
+  // Validate nearby places on formData change
+  useEffect(() => {
+    const validationError = validateNearbyPlaces(formData.nearbyPlaces);
+    setErrors((prev) => ({ ...prev, nearbyPlaces: validationError }));
+  }, [formData.nearbyPlaces]);
   // Development helper function to fill form with sample data
   const fillSampleData = () => {
     updateFormData({
@@ -145,6 +166,10 @@ export default function StepAmenities({
     const updatedPlaces = [...nearbyPlaces];
     updatedPlaces[index] = { ...updatedPlaces[index], [field]: value };
     updateFormData({ nearbyPlaces: updatedPlaces });
+
+    // Validate and set errors
+    const validationError = validateNearbyPlaces(updatedPlaces);
+    setErrors((prev) => ({ ...prev, nearbyPlaces: validationError }));
   };
 
   // Add new nearby place
@@ -243,7 +268,7 @@ export default function StepAmenities({
           Amenities & Highlights
         </h1>
         <p className="text-muted text-base sm:text-lg">
-          Highlight your property's best features and nearby attractions
+          Highlight your property&apos;s best features and nearby attractions
         </p>
       </motion.div>
 
@@ -515,13 +540,16 @@ export default function StepAmenities({
                     <input
                       type="number"
                       value={place.rating || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const rawValue = parseFloat(e.target.value);
+                        const clampedValue =
+                          rawValue > 5 ? 5 : rawValue < 1 ? 1 : rawValue;
                         handleNearbyPlaceChange(
                           index,
                           "rating",
-                          parseFloat(e.target.value) || ""
-                        )
-                      }
+                          clampedValue || ""
+                        );
+                      }}
                       placeholder="4.0"
                       min="1"
                       max="5"

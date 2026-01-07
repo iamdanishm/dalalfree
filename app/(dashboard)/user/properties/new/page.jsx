@@ -242,13 +242,23 @@ export default function PropertyWizard() {
         }
 
         // Floor required
-        if (!formData.floor?.trim()) {
+        if (!formData.floor && formData.floor !== 0) {
           stepErrors.floor = "Floor is required";
         }
 
         // Total floors required
         if (!formData.totalFloors && formData.totalFloors !== 0) {
           stepErrors.totalFloors = "Total floors is required";
+        }
+
+        // Floor validation: specific floor cannot be greater than total floors
+        if (
+          formData.floor &&
+          formData.totalFloors &&
+          formData.floor > formData.totalFloors
+        ) {
+          stepErrors.floor =
+            "Specific floor cannot be greater than total floors in the building";
         }
 
         // Property age required
@@ -282,13 +292,21 @@ export default function PropertyWizard() {
             "Please select at least one society amenity";
         }
 
-        // Nearby places validation (at least 2 places required)
+        // Nearby places validation (at least 2 places with complete and valid information required)
         const validNearbyPlaces = (formData.nearbyPlaces || []).filter(
-          (place) => place.type && place.name && place.distance
+          (place) => {
+            if (!place.type || !place.name || !place.distance) return false;
+            // Check distance format
+            if (!/^\d+(\.\d+)?(m|km)$/.test(place.distance)) return false;
+            // Check rating is between 1-5
+            if (place.rating && (place.rating < 1 || place.rating > 5))
+              return false;
+            return true;
+          }
         );
         if (validNearbyPlaces.length < 2) {
           stepErrors.nearbyPlaces =
-            "Please add at least 2 nearby places with complete information";
+            "Please add at least 2 nearby places with complete and valid information (proper distance format like 100m, 1.5km, and rating 1-5)";
         }
 
         // Key highlights validation (at least one highlight required)
@@ -382,11 +400,6 @@ export default function PropertyWizard() {
       // Prepare property data for API
       const propertyData = {
         ...formData,
-        // Combine floor and totalFloors for storage
-        floor:
-          formData.floor && formData.totalFloors
-            ? `${formData.floor} of ${formData.totalFloors}`
-            : formData.floor || "",
       };
 
       // Calculate total file size for progress tracking

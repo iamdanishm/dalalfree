@@ -39,6 +39,17 @@ import TrustBadges from "./components/TrustBadges";
 import ContactCTA from "./components/ContactCTA";
 import GalleryModal from "./components/GalleryModal";
 
+// Utility function to get ordinal suffix
+const getOrdinalSuffix = (num) => {
+  if (!num || isNaN(num)) return num;
+  const j = num % 10;
+  const k = num % 100;
+  if (j == 1 && k != 11) return num + "st";
+  if (j == 2 && k != 12) return num + "nd";
+  if (j == 3 && k != 13) return num + "rd";
+  return num + "th";
+};
+
 export default function PropertyDetails({ params }) {
   const { slug } = use(params);
   const [property, setProperty] = useState(null);
@@ -57,22 +68,22 @@ export default function PropertyDetails({ params }) {
     setShowGalleryModal(false);
   };
 
-  // Map icon strings to React components
-  const getIconComponent = (iconString) => {
-    const iconMap = {
-      FaGraduationCap: FaGraduationCap,
-      FaHospital: FaHospital,
-      FaShoppingBag: FaShoppingBag,
-      FaSubway: FaSubway,
-      FaUtensils: FaUtensils,
-      FaBus: FaBus,
-    };
-    return iconMap[iconString] || FiHome; // Default to FiHome if not found
-  };
-
   // Transform database property data to frontend format
   const transformPropertyData = (dbProperty) => {
     if (!dbProperty) return null;
+
+    // Map icon strings to React components
+    const getIconComponent = (iconString) => {
+      const iconMap = {
+        FaGraduationCap: FaGraduationCap,
+        FaHospital: FaHospital,
+        FaShoppingBag: FaShoppingBag,
+        FaSubway: FaSubway,
+        FaUtensils: FaUtensils,
+        FaBus: FaBus,
+      };
+      return iconMap[iconString] || FiHome; // Default to FiHome if not found
+    };
 
     // Create images array combining images and videos
     const images = [];
@@ -127,7 +138,7 @@ export default function PropertyDetails({ params }) {
           ? `${dbProperty.builtUpArea.toLocaleString()}`
           : "N/A",
         floor: dbProperty.floor
-          ? `${dbProperty.floor}${
+          ? `${getOrdinalSuffix(dbProperty.floor)}${
               dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
             }`
           : "N/A",
@@ -205,7 +216,7 @@ export default function PropertyDetails({ params }) {
           []
         ).map((place) => ({
           name: typeof place.name === "string" ? place.name : "Unknown Place",
-          icon: FaGraduationCap, // Default icon, can be enhanced with proper icon mapping
+          icon: getIconComponent(place.icon || "FaGraduationCap"),
           distance: typeof place.distance === "string" ? place.distance : "N/A",
           rating: typeof place.rating === "number" ? place.rating : 0,
         })),
@@ -264,7 +275,7 @@ export default function PropertyDetails({ params }) {
         {
           label: "Floor",
           value: dbProperty.floor
-            ? `${dbProperty.floor}${
+            ? `${getOrdinalSuffix(dbProperty.floor)}${
                 dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
               }`
             : "N/A",
