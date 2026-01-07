@@ -1,19 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { use } from "react";
+import Footer from "@/app/components/Footer";
+import Navbar from "@/app/components/Navbar";
 import { motion } from "framer-motion";
-import {
-  FiAward,
-  FiClock,
-  FiHeart,
-  FiHome,
-  FiPhone,
-  FiShield,
-  FiStar,
-  FiTrendingUp,
-} from "react-icons/fi";
+import { useSession } from "next-auth/react";
+import { use, useEffect, useState } from "react";
 import {
   FaBus,
   FaCheck,
@@ -23,22 +14,20 @@ import {
   FaSubway,
   FaUtensils,
 } from "react-icons/fa";
-import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer";
-import BreadcrumbNavigation from "./components/BreadcrumbNavigation";
-import PropertyHeader from "./components/PropertyHeader";
-import ImageGallery from "./components/ImageGallery";
-import QuickOverview from "./components/QuickOverview";
-import PropertyHighlights from "./components/PropertyHighlights";
+import { FiHome } from "react-icons/fi";
 import AmenitiesComponent from "./components/AmenitiesComponent";
-import PropertyDetailsGrid from "./components/PropertyDetailsGrid";
-import LocationNeighborhood from "./components/LocationNeighborhood";
+import BreadcrumbNavigation from "./components/BreadcrumbNavigation";
 import DescriptionComponent from "./components/DescriptionComponent";
-import PropertyOwnerCard from "./components/PropertyOwnerCard";
-import TrustBadges from "./components/TrustBadges";
-import ContactCTA from "./components/ContactCTA";
 import GalleryModal from "./components/GalleryModal";
+import ImageGallery from "./components/ImageGallery";
+import LocationNeighborhood from "./components/LocationNeighborhood";
 import OwnerActions from "./components/OwnerActions";
+import PropertyDetailsGrid from "./components/PropertyDetailsGrid";
+import PropertyHeader from "./components/PropertyHeader";
+import PropertyHighlights from "./components/PropertyHighlights";
+import PropertyOwnerCard from "./components/PropertyOwnerCard";
+import QuickOverview from "./components/QuickOverview";
+import TrustBadges from "./components/TrustBadges";
 
 // Utility function to get ordinal suffix
 const getOrdinalSuffix = (num) => {
