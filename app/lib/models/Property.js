@@ -135,8 +135,10 @@ const propertySchema = new mongoose.Schema(
       society: [
         {
           name: String,
+          title: String,
           available: { type: Boolean, default: true },
           icon: String,
+          image: String,
         },
       ],
       nearby: [

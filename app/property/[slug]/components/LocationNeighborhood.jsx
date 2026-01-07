@@ -10,7 +10,7 @@ export default function LocationNeighborhood({
     <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-100/50 shadow-lg">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
+          <div className="p-2 bg-linear-to-r from-blue-100 to-purple-100 rounded-lg">
             <FiMap className="w-5 h-5 text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900">
@@ -43,7 +43,7 @@ export default function LocationNeighborhood({
       </div>
 
       <div className="flex items-start mb-4">
-        <FiMapPin className="mr-3 mt-1 text-gray-400 flex-shrink-0" size={20} />
+        <FiMapPin className="mr-3 mt-1 text-gray-400 shrink-0" size={20} />
         <div>
           <div className="font-medium text-gray-900">{location}</div>
           <div className="text-sm text-gray-600">
@@ -57,7 +57,7 @@ export default function LocationNeighborhood({
         {amenities.slice(0, 3).map((amenity, index) => (
           <div
             key={index}
-            className="flex items-center p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/50 rounded-xl hover:shadow-md transition-all duration-200"
+            className="flex items-center p-4 bg-linear-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/50 rounded-xl hover:shadow-md transition-all duration-200"
           >
             <div className="p-2.5 bg-blue-100 rounded-lg mr-4">
               <amenity.icon className="text-blue-600" size={18} />
@@ -80,19 +80,6 @@ export default function LocationNeighborhood({
             )}
           </div>
         ))}
-      </div>
-
-      {/* Commute Times */}
-      <div>
-        <h3 className="font-medium text-gray-900 mb-2">Commute Times</h3>
-        <div className="space-y-2">
-          {neighborhood.commute.map((commute, index) => (
-            <div key={index} className="flex justify-between text-sm">
-              <span className="text-gray-600">To {commute.destination}</span>
-              <span className="font-medium">{commute.time}</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

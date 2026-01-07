@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Image from "next/image";
 
 export default function AmenitiesComponent({ amenities }) {
   const [showAllAmenities, setShowAllAmenities] = useState(false);
@@ -31,8 +32,18 @@ export default function AmenitiesComponent({ amenities }) {
             key={index}
             className="flex items-center p-4 rounded-lg border-2 bg-green-50 border-green-200 hover:bg-green-100 hover:shadow-md"
           >
-            <div className="p-3 rounded-lg mr-4 bg-blue-100 text-blue-600">
-              <amenity.icon size={20} />
+            <div className="p-3 rounded-lg mr-4 bg-blue-100">
+              <Image
+                src={amenity.image}
+                alt={amenity.name}
+                width={24}
+                height={24}
+                className="w-6 h-6 object-contain"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(13%) sepia(82%) saturate(6194%) hue-rotate(182deg) brightness(95%) contrast(93%)",
+                }}
+              />
             </div>
             <div>
               <span className="font-medium text-sm text-gray-900">

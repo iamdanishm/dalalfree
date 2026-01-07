@@ -6,12 +6,64 @@ import { generateUniquePropertySlug } from "@/app/lib/slug";
 
 // GET single property
 export async function GET(_, { params }) {
-  await connectDB();
-  const { id } = await params;
-  const property = await Property.findById(id);
-  if (!property)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(property);
+  try {
+    await connectDB();
+
+    const { id } = await params;
+
+    // Validate ID parameter
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Property ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Find property by ID or slug
+    let property;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      // If it's a valid MongoDB ObjectId format
+      property = await Property.findById(id).populate({
+        path: "amenities.society",
+        model: "Amenity",
+        select: "title",
+      });
+    } else {
+      // Otherwise, try to find by slug
+      property = await Property.findOne({ slug: id }).populate({
+        path: "amenities.society",
+        model: "Amenity",
+        select: "title",
+      });
+    }
+
+    if (!property) {
+      return NextResponse.json(
+        { success: false, error: "Property not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      property: property.toObject(),
+    });
+  } catch (error) {
+    console.error("Error fetching property:", error);
+
+    // Handle MongoDB ObjectId errors
+    if (error.name === "CastError") {
+      return NextResponse.json(
+        { success: false, error: "Invalid property ID format" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 // PUT update property

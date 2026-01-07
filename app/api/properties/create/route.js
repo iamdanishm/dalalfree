@@ -241,7 +241,7 @@ export const POST = requireAuth(async function (req) {
     // Transform amenities data
     console.log("=== AMENITIES TRANSFORMATION ===");
     propertyData.amenities = {
-      society: transformSocietyAmenities(propertyData.societyAmenities),
+      society: await transformSocietyAmenities(propertyData.societyAmenities),
       nearby: transformNearbyPlacesToAmenities(propertyData.nearbyPlaces),
     };
     console.log("Amenities transformed:", {
