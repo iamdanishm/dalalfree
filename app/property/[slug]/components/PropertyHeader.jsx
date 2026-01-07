@@ -1,11 +1,36 @@
-import { FiMapPin, FiShield, FiCheckCircle } from "react-icons/fi";
+import {
+  FiMapPin,
+  FiShield,
+  FiCheckCircle,
+  FiHome,
+  FiTag,
+} from "react-icons/fi";
 
 export default function PropertyHeader({ property, id }) {
+  const isRent = property.propertyType?.toLowerCase() === "rent";
+  const isNegotiable = property.negotiable === "Yes";
+
   return (
     <div className="bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 shadow-lg border border-blue-100 relative overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div className="mb-4 lg:mb-0">
           <div className="flex items-center gap-3 mb-2">
+            {/* Property Type Badge */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg border ${
+                isRent
+                  ? "bg-emerald-500 text-white border-emerald-400"
+                  : "bg-amber-500 text-white border-amber-400"
+              }`}
+            >
+              {isRent ? (
+                <FiHome className="w-3.5 h-3.5" />
+              ) : (
+                <FiTag className="w-3.5 h-3.5" />
+              )}
+              <span>{isRent ? "For Rent" : "For Sale"}</span>
+            </div>
+
             {/* Premium KYC Badge - Only show if verified */}
             {property.verified && (
               <div className="flex items-center gap-2 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/20">
@@ -30,9 +55,11 @@ export default function PropertyHeader({ property, id }) {
             <div className="text-2xl lg:text-3xl font-bold text-green-600">
               {property.price}
             </div>
-            <div className="text-sm text-green-700 font-semibold bg-green-100 px-2 py-1 rounded-full mt-1">
-              Negotiable Price
-            </div>
+            {isNegotiable && (
+              <div className="text-sm text-green-700 font-semibold bg-green-100 px-2 py-1 rounded-full mt-1">
+                Negotiable Price
+              </div>
+            )}
           </div>
         </div>
       </div>

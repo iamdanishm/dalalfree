@@ -38,6 +38,7 @@ import PropertyOwnerCard from "./components/PropertyOwnerCard";
 import TrustBadges from "./components/TrustBadges";
 import ContactCTA from "./components/ContactCTA";
 import GalleryModal from "./components/GalleryModal";
+import OwnerActions from "./components/OwnerActions";
 
 // Utility function to get ordinal suffix
 const getOrdinalSuffix = (num) => {
@@ -50,6 +51,21 @@ const getOrdinalSuffix = (num) => {
   return num + "th";
 };
 
+// Utility function to format price
+const formatPrice = (price) => {
+  if (!price) return "Price on request";
+  if (price < 100000) {
+    // Less than 1 lakh - show as-is with commas
+    return `₹${price.toLocaleString("en-IN")}`;
+  }
+  // 1 lakh or more - show in lakhs
+  const lakhs = price / 100000;
+  return `₹${lakhs.toLocaleString("en-IN", {
+    minimumFractionDigits: lakhs < 10 ? 1 : 0,
+    maximumFractionDigits: 2,
+  })} Lakh`;
+};
+
 export default function PropertyDetails({ params }) {
   const { slug } = use(params);
   const [property, setProperty] = useState(null);
@@ -57,7 +73,15 @@ export default function PropertyDetails({ params }) {
   const [error, setError] = useState(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
-  const { status } = useSession();
+  const { data: session, status: authStatus } = useSession();
+
+  // Check if current user is the property owner using session data
+  const isOwner =
+    authStatus === "authenticated" &&
+    session?.user?.id &&
+    property &&
+    (String(session.user.id) === String(property.ownerId) ||
+      String(session.user._id) === String(property.ownerId));
 
   const openGalleryModal = (startIndex = 0) => {
     setModalImageIndex(startIndex);
@@ -120,14 +144,13 @@ export default function PropertyDetails({ params }) {
       id: dbProperty._id,
       title: dbProperty.title,
       subtitle: dbProperty.subtitle,
-      price: dbProperty.price
-        ? `₹${(dbProperty.price / 100000).toFixed(1)} Lakh`
-        : "Price on request",
+      price: formatPrice(dbProperty.price),
       originalPrice: dbProperty.originalPrice
-        ? `₹${(dbProperty.originalPrice / 100000).toFixed(1)} Lakh`
+        ? formatPrice(dbProperty.originalPrice)
         : null,
+      negotiable: dbProperty.negotiable || "No",
       discount: dbProperty.discount,
-      propertyType: dbProperty.category || "Residential",
+      propertyType: dbProperty.propertyType || "rent",
       verified: dbProperty.verified || false,
 
       images,
@@ -223,16 +246,19 @@ export default function PropertyDetails({ params }) {
       },
       description: dbProperty.description || "No description available.",
       owner: {
-        name: "Property Owner", // Will need to fetch from User model
+        name: dbProperty.ownerId?.name || "Property Owner",
         role: "Verified Owner",
-        avatar: "/images/home-lifestyle.png",
+        avatar: dbProperty.ownerId?.avatar || "/images/home-lifestyle.png",
         contact: "Contact for details",
-        email: "contact@example.com",
-        rating: 4.5,
-        completedDeals: 0,
-        memberSince: "2024",
+        email: dbProperty.ownerId?.email || "contact@example.com",
+        rating: dbProperty.ownerId?.rating || 4.5,
+        completedDeals: dbProperty.ownerId?.completedDeals || 0,
+        memberSince: dbProperty.ownerId?.createdAt
+          ? new Date(dbProperty.ownerId.createdAt).getFullYear()
+          : "2024",
         response: "Responds within 24 hours",
       },
+      ownerId: dbProperty.ownerId?._id || dbProperty.ownerId || null,
       trustBadges: [
         {
           label: "Verified Listing",
@@ -540,14 +566,27 @@ export default function PropertyDetails({ params }) {
 
             {/* Right Column - Owner Info & Amenities */}
             <motion.div className="space-y-6" variants={itemVariants}>
-              {/* Enhanced Owner Information */}
-              <motion.div
-                className="pt-4"
-                variants={itemVariants}
-                whileHover={hoverVariants.hover}
-              >
-                <PropertyOwnerCard />
-              </motion.div>
+              {/* Owner Actions (Edit/Delete) - Only for property owner */}
+              {isOwner && (
+                <motion.div
+                  className="pt-4"
+                  variants={itemVariants}
+                  whileHover={hoverVariants.hover}
+                >
+                  <OwnerActions propertyId={property.id} propertySlug={slug} />
+                </motion.div>
+              )}
+
+              {/* Property Owner Card - Only for non-owners */}
+              {!isOwner && (
+                <motion.div
+                  className="pt-4"
+                  variants={itemVariants}
+                  whileHover={hoverVariants.hover}
+                >
+                  <PropertyOwnerCard />
+                </motion.div>
+              )}
 
               {/* Trust Badges */}
               <motion.div
