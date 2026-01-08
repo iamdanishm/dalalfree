@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
-import Kyc from "@/app/lib/models/Kyc";
 import { requireAuth } from "@/app/lib/auth";
 import { generateUniquePropertySlug } from "@/app/lib/slug";
 
@@ -157,12 +156,8 @@ export const POST = requireAuth(async function (req) {
       );
     }
 
-    // Check KYC status
-    const kyc = await Kyc.findOne({ userId });
-    if (!kyc || kyc.status !== "approved") {
-      return NextResponse.json({ error: "KYC not approved" }, { status: 403 });
-    }
-
+    // KYC is now per-property - user can create property, but it will be pending until KYC is verified
+    // Property will be created with verified: false and status: "pending"
     const body = await req.json();
 
     // Generate unique slug from title if not provided
@@ -172,7 +167,8 @@ export const POST = requireAuth(async function (req) {
       ...body,
       slug,
       ownerId: userId,
-      verified: true, // auto-verified since KYC approved
+      verified: false, // Will be set to true when admin verifies KYC
+      status: "pending",
     });
 
     return NextResponse.json(property);

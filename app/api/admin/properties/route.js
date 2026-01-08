@@ -15,6 +15,7 @@ export async function GET(req) {
   const status = searchParams.get("status");
   const verified = searchParams.get("verified");
   const featured = searchParams.get("featured");
+  const hasKyc = searchParams.get("hasKyc"); // "true" for properties with KYC docs
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = parseInt(searchParams.get("limit")) || 10;
 
@@ -22,6 +23,14 @@ export async function GET(req) {
   if (status) query.status = status;
   if (verified !== null) query.verified = verified === "true";
   if (featured !== null) query.featured = featured === "true";
+  if (hasKyc === "true") {
+    query.$or = [
+      { "kycFiles.aadhaar": { $exists: true, $ne: [] } },
+      { "kycFiles.pan": { $exists: true, $ne: null } },
+      { "kycFiles.agreement": { $exists: true, $ne: null } },
+      { "kycFiles.video": { $exists: true, $ne: null } },
+    ];
+  }
 
   const skip = (page - 1) * limit;
   const properties = await Property.find(query)
@@ -33,10 +42,24 @@ export async function GET(req) {
     .limit(limit)
     .lean();
 
+  // Add kycFiles summary to each property
+  const propertiesWithKycSummary = properties.map((prop) => ({
+    ...prop,
+    kycSummary: {
+      hasAadhaar: prop.kycFiles?.aadhaar?.length > 0 || false,
+      hasPan: !!prop.kycFiles?.pan,
+      hasAgreement: !!prop.kycFiles?.agreement,
+      hasVideo: !!prop.kycFiles?.video,
+      isComplete:
+        (prop.kycFiles?.aadhaar?.length > 0 || prop.kycFiles?.pan) &&
+        prop.kycFiles?.agreement,
+    },
+  }));
+
   const total = await Property.countDocuments(query);
 
   return NextResponse.json({
-    properties,
+    properties: propertiesWithKycSummary,
     pagination: {
       page,
       limit,

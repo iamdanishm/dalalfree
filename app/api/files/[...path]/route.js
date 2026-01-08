@@ -4,7 +4,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/app/lib/db";
 import { UPLOAD_CONFIG } from "@/app/lib/upload-config";
 import { UploadBridge } from "@/app/lib/upload-bridge.js";
-import Kyc from "@/app/lib/models/Kyc";
 import Property from "@/app/lib/models/Property";
 import path from "path";
 import fs from "fs";

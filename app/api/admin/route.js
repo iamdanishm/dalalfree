@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import User from "@/app/lib/models/User";
 import Property from "@/app/lib/models/Property";
-import Kyc from "@/app/lib/models/Kyc";
 
 export async function GET() {
   await connectDB();
@@ -14,6 +13,15 @@ export async function GET() {
 
   const users = await User.find().select("name email role createdAt");
   const properties = await Property.find().populate("ownerId", "name email");
-  const kycs = await Kyc.find().populate("userId", "name email");
-  return NextResponse.json({ users, properties, kycs });
+  // KYC is now per-property - count properties with KYC files pending verification
+  const pendingKyc = await Property.countDocuments({
+    verified: false,
+    $or: [
+      { "kycFiles.aadhaar": { $exists: true, $ne: [] } },
+      { "kycFiles.pan": { $exists: true, $ne: null } },
+      { "kycFiles.agreement": { $exists: true, $ne: null } },
+      { "kycFiles.video": { $exists: true, $ne: null } },
+    ],
+  });
+  return NextResponse.json({ users, properties, pendingKyc });
 }

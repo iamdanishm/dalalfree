@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { FiHome } from "react-icons/fi";
+import { FiHome, FiMapPin } from "react-icons/fi";
 import PropertiesManagementTable from "../components/PropertiesManagementTable";
 
 export default function AdminPropertiesPageClient() {
@@ -21,7 +21,7 @@ export default function AdminPropertiesPageClient() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <FiHome className="w-8 h-8 text-primary mb-3" />
+          <FiMapPin className="w-8 h-8 text-primary mb-3" />
         </motion.div>
         <motion.h1
           className="text-3xl font-bold text-heading"

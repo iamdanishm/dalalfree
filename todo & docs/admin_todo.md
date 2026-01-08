@@ -168,42 +168,42 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ## Phase 2: KYC Removal & Property Integration (NEW)
 
-**Priority:** High | **Status:** Not Started
+**Priority:** High | **Status:** ✅ COMPLETED - January 8, 2026
 
 ### 2.1 Remove Separate KYC API Routes
 
-- [ ] DELETE /api/admin/kyc/route.js - Remove entire file
-- [ ] DELETE /api/admin/kyc/[id]/route.js - Remove individual KYC endpoints
-- [ ] DELETE /api/kyc/route.js - Remove public KYC upload endpoint
-- [ ] DELETE /api/kyc/[id]/route.js - Remove KYC detail endpoint
-- [ ] DELETE /api/kyc/convert/route.js - Remove KYC convert endpoint
-- [ ] DELETE /app/lib/models/Kyc.js - Remove KYC model
+- [x] DELETE /api/admin/kyc/route.js - Remove entire file
+- [x] DELETE /api/admin/kyc/[id]/route.js - Remove individual KYC endpoints
+- [x] DELETE /api/kyc/route.js - Remove public KYC upload endpoint
+- [x] DELETE /api/kyc/[id]/route.js - Remove KYC detail endpoint
+- [x] DELETE /api/kyc/convert/route.js - Remove KYC convert endpoint
+- [x] DELETE /app/lib/models/Kyc.js - Remove KYC model
 
 ### 2.2 Remove KYC Admin UI
 
-- [ ] DELETE /app/(dashboard)/admin/kyc/page.jsx - Remove KYC page
-- [ ] DELETE /app/(dashboard)/admin/components/KycManagementTable.jsx - Remove table
-- [ ] UPDATE /app/(dashboard)/admin/components/AdminSidebar.jsx - Remove KYC nav item
-- [ ] UPDATE /app/(dashboard)/admin/components/AdminNavbar.jsx - Remove KYC badge
+- [x] DELETE /app/(dashboard)/admin/kyc/page.jsx - Remove KYC page
+- [x] DELETE /app/(dashboard)/admin/components/KycManagementTable.jsx - Remove table
+- [x] UPDATE /app/(dashboard)/admin/components/AdminSidebar.jsx - Remove KYC nav item
+- [ ] UPDATE /app/(dashboard)/admin/components/AdminNavbar.jsx - Remove KYC badge (not found)
 
 ### 2.3 Update Property Management UI
 
-**NEW**: Property Detail Page for Admin KYC Review
+**NEW**: Property Detail Page for Admin KYC Review ✅
 
-- [ ] CREATE /app/(dashboard)/admin/properties/[id]/page.jsx - Property detail page
-- [ ] ADD: KYC document viewer (aadhaar, pan, agreement, video)
-- [ ] ADD: KYC approval buttons (Approve/Reject with reason)
-- [ ] ADD: KYC status badge on property card
-- [ ] ADD: Filter properties by KYC status (hasKyc, verified, pending)
-- [ ] ADD: Show KYC pending count in admin dashboard
+- [x] CREATE /app/(dashboard)/admin/properties/[id]/page.jsx - Property detail page
+- [x] ADD: KYC document viewer (aadhaar, pan, agreement, video)
+- [x] ADD: KYC approval buttons (Approve/Reject with reason)
+- [x] ADD: KYC status badge on property card
+- [x] ADD: Filter properties by KYC status (hasKyc, verified, pending)
+- [x] ADD: Show KYC pending count in admin dashboard
 
 ### 2.4 Update Property API for KYC
 
-- [ ] UPDATE GET /api/admin/properties - Add kycFiles to response
-- [ ] UPDATE GET /api/admin/properties/[id] - Full kycFiles details
-- [ ] UPDATE PUT /api/admin/properties/[id] - Allow verified status change
-- [ ] ADD: PUT /api/admin/properties/[id]/verify-kyc - Approve KYC
-- [ ] ADD: PUT /api/admin/properties/[id]/reject-kyc - Reject KYC with reason
+- [x] UPDATE GET /api/admin/properties - Add kycFiles summary to response
+- [x] UPDATE GET /api/admin/properties/[id] - Full kycFiles details
+- [x] UPDATE PUT /api/admin/properties/[id] - Verify action now sets status=approved
+- [x] ADD: PUT /api/admin/properties/[id]/verify - Approve KYC (verified=true, status=approved)
+- [x] ADD: PUT /api/admin/properties/[id]/reject - Reject KYC (status=rejected, rejectionReason)
 
 ---
 
@@ -295,8 +295,8 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 - [x] Dashboard loads real data in <3 seconds (DB indexes confirmed)
 - [ ] Admin can process 100 users/properties per hour (requires bulk operations)
 - [x] 0 critical bugs in admin workflow (core systems validated)
-- [ ] **NEW**: Admin can review property KYC from property detail page
-- [ ] **NEW**: Separate KYC page removed from admin panel
+- [x] **✅ COMPLETED**: Admin can review property KYC from property detail page
+- [x] **✅ COMPLETED**: Separate KYC page removed from admin panel
 
 ---
 

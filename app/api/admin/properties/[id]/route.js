@@ -38,8 +38,12 @@ export async function PUT(req, { params }) {
     case "verify":
       updateData = {
         verified: data.verified,
+        status: data.verified ? "approved" : "pending",
+        approvedBy: data.verified ? session.user.id : null,
+        approvalDate: data.verified ? new Date() : null,
+        rejectionReason: data.verified ? null : undefined,
       };
-      message = `Property ${data.verified ? "verified" : "unverified"}`;
+      message = `Property KYC ${data.verified ? "verified" : "unverified"}`;
       break;
 
     case "feature":

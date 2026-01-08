@@ -43,15 +43,23 @@ export async function GET() {
     { $limit: 12 },
   ]);
 
-  // Import Property and Kyc for cross-entity metrics
+  // Import Property for cross-entity metrics
   const Property = (await import("@/app/lib/models/Property")).default;
-  const Kyc = (await import("@/app/lib/models/Kyc")).default;
 
   // Get related metrics
   const activeProperties = await Property.countDocuments({
     status: "approved",
   });
-  const pendingKyc = await Kyc.countDocuments({ status: "pending" });
+  // Count properties with KYC files that are not yet verified
+  const pendingKyc = await Property.countDocuments({
+    verified: false,
+    $or: [
+      { "kycFiles.aadhaar": { $exists: true, $ne: [] } },
+      { "kycFiles.pan": { $exists: true, $ne: null } },
+      { "kycFiles.agreement": { $exists: true, $ne: null } },
+      { "kycFiles.video": { $exists: true, $ne: null } },
+    ],
+  });
 
   // Revenue placeholder - would come from payments table
   const monthlyRevenue = 12450; // Placeholder until payments implemented
