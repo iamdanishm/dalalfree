@@ -1,8 +1,8 @@
 # DalalFree Admin-First Development Roadmap
 
-**Current Status: 90-95% Complete - Tested & Validated**
+**Current Status: 85% Complete - KYC Architecture Refactored**
 **Start Date:** November 19, 2025
-**Updated:** November 21, 2025 - All Core Systems Tested: Database ✅, Email ✅, Files ✅, APIs ✅
+**Updated:** January 8, 2026 - KYC Moved to Property Level (User Flow Changes)
 
 ## 📋 Project Overview
 
@@ -14,6 +14,28 @@ DalalFree is a real estate platform with 4 main roles:
 - **Partner**: Real estate agents with commission-based earnings
 
 This roadmap focuses on **Admin role completion first** as it provides the foundation for all other roles.
+
+---
+
+## 🔄 ARCHITECTURE CHANGE: KYC Now Per-Property
+
+**Important Change (January 2026):**
+- **REMOVED**: Separate user-level KYC system
+- **NEW**: KYC is embedded in each property via `kycFiles` field
+- **Property Fields for KYC**:
+  - `kycFiles.aadhaar` - Aadhaar documents (1-2 files)
+  - `kycFiles.pan` - PAN card file
+  - `kycFiles.agreement` - Agreement document
+  - `kycFiles.video` - Video verification
+  - `verified` - Boolean, true when KYC approved
+  - `rejectionReason` - Reason if KYC rejected
+  - `status` - Property status (linked to verified state)
+
+**Status Logic:**
+- `verified = true` → KYC approved → `status = "approved"`
+- `verified = false` + has KYC files → `status = "pending"` (KYC under review)
+- `verified = false` + no KYC files → `status = "pending"` (waiting for KYC)
+- Manual rejection → `status = "rejected"` with `rejectionReason`
 
 ---
 
@@ -34,28 +56,33 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ### 2. Property Model Extensions
 
-**Status:** Completed | **Priority:** High
+**Status:** Completed (KYC Embedded ✅) | **Priority:** High
 
 - [x] Add featured boolean (paid featured listings)
 - [x] Add boosted boolean (temporary promotion)
 - [x] Add approvedBy ObjectId ref to admin User
 - [x] Add approvalDate timestamp
-- [x] Add rejectionReason string
+- [x] Add rejectionReason string (KYC rejection reason)
 - [x] Extend status enum: "pending", "approved", "rejected", "featured"
-- [x] Add propertyType enum: "sell", "rent", "lease"
-- [x] Add viewsCount, likesCount for analytics
+- [x] Add propertyType enum: "sell", "rent"
+- [x] Add viewsCount, likesCount, inquiriesCount for analytics
 - [x] Add companion photos array for property images
+- [x] **ADDED**: kycFiles sub-schema (aadhaar, pan, agreement, video)
+- [x] **ADDED**: verified boolean (property KYC verified status)
 
-### 3. KYC Model Extensions
+### 3. KYC Model - ⚠️ TO BE REMOVED
 
-**Status:** Completed | **Priority:** High
+**Status:** Deprecated - Remove in Phase 3 | **Priority:** Low
 
-- [x] Add reviewedBy ObjectId ref to admin User
-- [x] Add reviewDate timestamp
-- [x] Add rejectionReason string
-- [x] Add documentUrls array for supporting docs
-- [x] Add videoReviewTime integer (playback position)
-- [x] Add approvalLevel enum: "basic", "premium", "partner"
+- [x] ~~Add reviewedBy ObjectId ref to admin User~~
+- [x] ~~Add reviewDate timestamp~~
+- [x] ~~Add rejectionReason string~~
+- [x] ~~Add documentUrls array for supporting docs~~
+- [x] ~~Add videoReviewTime integer (playback position)~~
+- [x] ~~Add approvalLevel enum: "basic", "premium", "partner"~~
+- [ ] **DELETE**: Remove separate KYC model entirely
+- [ ] **DELETE**: Remove KYC API routes
+- [ ] **DELETE**: Remove KYC admin UI pages
 
 ---
 
@@ -63,7 +90,7 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ### 4. User Management APIs
 
-**Status:** Completed (Individual CRUD ✅, Bulk Operations ❌) | **Priority:** High
+**Status:** Completed | **Priority:** High
 
 - [x] GET /api/admin/users - Paginated user list with filters
 - [x] PUT /api/admin/users/[id] - Update role, status, account details
@@ -72,28 +99,35 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 - [x] GET /api/admin/users/analytics - User stats (reg/chart, growth)
 - [ ] PUT /api/admin/users/bulk-update - Bulk status updates
 
-### 5. KYC Management APIs
+### 5. KYC Management APIs - ⚠️ TO BE REMOVED
 
-**Status:** Completed (Basic CRUD ✅, Advanced Features ❌) | **Priority:** High
+**Status:** Deprecated - Remove in Phase 3 | **Priority:** High
 
-- [x] GET /api/admin/kyc - List KYC by status (pending/rejected/approved)
-- [x] PUT /api/admin/kyc/[id] - Approve/reject with remarks
-- [ ] GET /api/admin/kyc/[id]/video - Stream video for review
-- [ ] POST /api/admin/kyc/[id]/remarks - Add review notes
-- [x] GET /api/admin/kyc/analytics - KYC completion rates
-- [ ] PUT /api/admin/kyc/bulk-review - Bulk approve/reject pending
+- [x] ~~GET /api/admin/kyc - List KYC by status (pending/rejected/approved)~~
+- [x] ~~PUT /api/admin/kyc/[id] - Approve/reject with remarks~~
+- [ ] **REMOVE**: GET /api/admin/kyc/[id]/video - Stream video for review
+- [ ] **REMOVE**: POST /api/admin/kyc/[id]/remarks - Add review notes
+- [x] ~~GET /api/admin/kyc/analytics - KYC completion rates~~
+- [ ] **REMOVE**: PUT /api/admin/kyc/bulk-review - Bulk approve/reject
+
+**NEW KYC API**: Integrate KYC review into property API:
+- [ ] GET /api/admin/properties/[id] - Include kycFiles in response
+- [ ] PUT /api/admin/properties/[id]/verify - Toggle verified (KYC approval)
+- [ ] PUT /api/admin/properties/[id]/reject - Set rejectionReason
 
 ### 6. Property Management APIs
 
-**Status:** Completed (Individual Ops ✅, Bulk Operations ❌) | **Priority:** High
+**Status:** Completed (Needs KYC Integration) | **Priority:** High
 
 - [x] GET /api/admin/properties - Admin view with full details
-- [x] PUT /api/admin/properties/[id]/verify - Toggle verified status
+- [x] PUT /api/admin/properties/[id]/verify - Toggle verified status (KYC)
 - [x] PUT /api/admin/properties/[id]/feature - Enable/disable featured
 - [x] PUT /api/admin/properties/[id]/boost - Enable/disable boosted
 - [x] DELETE /api/admin/properties/[id] - Hard delete with reason
 - [x] GET /api/admin/properties/analytics - Property metrics
 - [ ] PUT /api/admin/properties/bulk-approve - Bulk operations
+- [ ] **UPDATE**: GET /api/admin/properties - Add `hasKyc` filter
+- [ ] **UPDATE**: GET /api/admin/properties - Include kycFiles summary
 
 ---
 
@@ -112,22 +146,64 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ### 8. Interactive Management Tables
 
-**Status:** ✅ Completed | **Priority:** High
+**Status:** ✅ Completed (KYC Table to be Removed) | **Priority:** High
 
 - [x] Users table with inline editing (role, status, actions)
-- [x] KYC queue table with review buttons and preview
+- [x] ~~KYC queue table with review buttons and preview~~ - **REMOVE**
 - [x] Properties approval queue with image gallery modal
 - [x] Table pagination, sorting, and search filters
+- [ ] **UPDATE**: PropertiesManagementTable - Add KYC review capability
 
 ### 9. Admin Features Implementation
 
-**Status:** Partially Completed (Search/Filter ✅, Rest ❌) | **Priority:** Medium
+**Status:** Partially Completed | **Priority:** Medium
 
 - [ ] Bulk operations for mass approvals/rejections
 - [x] Search/filter functionality for all entities
 - [ ] Export reports (CSV/Excel) for auditing
 - [ ] Notification system for admin alerts
 - [ ] Admin audit logs for all critical operations
+
+---
+
+## Phase 2: KYC Removal & Property Integration (NEW)
+
+**Priority:** High | **Status:** Not Started
+
+### 2.1 Remove Separate KYC API Routes
+
+- [ ] DELETE /api/admin/kyc/route.js - Remove entire file
+- [ ] DELETE /api/admin/kyc/[id]/route.js - Remove individual KYC endpoints
+- [ ] DELETE /api/kyc/route.js - Remove public KYC upload endpoint
+- [ ] DELETE /api/kyc/[id]/route.js - Remove KYC detail endpoint
+- [ ] DELETE /api/kyc/convert/route.js - Remove KYC convert endpoint
+- [ ] DELETE /app/lib/models/Kyc.js - Remove KYC model
+
+### 2.2 Remove KYC Admin UI
+
+- [ ] DELETE /app/(dashboard)/admin/kyc/page.jsx - Remove KYC page
+- [ ] DELETE /app/(dashboard)/admin/components/KycManagementTable.jsx - Remove table
+- [ ] UPDATE /app/(dashboard)/admin/components/AdminSidebar.jsx - Remove KYC nav item
+- [ ] UPDATE /app/(dashboard)/admin/components/AdminNavbar.jsx - Remove KYC badge
+
+### 2.3 Update Property Management UI
+
+**NEW**: Property Detail Page for Admin KYC Review
+
+- [ ] CREATE /app/(dashboard)/admin/properties/[id]/page.jsx - Property detail page
+- [ ] ADD: KYC document viewer (aadhaar, pan, agreement, video)
+- [ ] ADD: KYC approval buttons (Approve/Reject with reason)
+- [ ] ADD: KYC status badge on property card
+- [ ] ADD: Filter properties by KYC status (hasKyc, verified, pending)
+- [ ] ADD: Show KYC pending count in admin dashboard
+
+### 2.4 Update Property API for KYC
+
+- [ ] UPDATE GET /api/admin/properties - Add kycFiles to response
+- [ ] UPDATE GET /api/admin/properties/[id] - Full kycFiles details
+- [ ] UPDATE PUT /api/admin/properties/[id] - Allow verified status change
+- [ ] ADD: PUT /api/admin/properties/[id]/verify-kyc - Approve KYC
+- [ ] ADD: PUT /api/admin/properties/[id]/reject-kyc - Reject KYC with reason
 
 ---
 
@@ -139,8 +215,8 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 - [x] Create compound indexes for Users model: `role + accountStatus + registrationDate` (admin query optimization)
 - [x] Create compound indexes for Properties model: `status + propertyType + createdAt` (property management queries)
-- [x] Create compound indexes for KYC model: `status + approvalLevel + createdAt` (KYC workflow optimization)
-- [x] Add single-field indexes for common filters: `viewsCount`, `likesCount`, `featured`, `boosted`
+- [x] ~~Create compound indexes for KYC model~~ - **REMOVED**
+- [x] Add single-field indexes for common filters: `viewsCount`, `likesCount`, `featured`, `boosted`, `verified`
 - [x] **INDEXES EMBEDDED IN MODELS**: Auto-create when Next.js starts (no migration file needed)
 - [x] Update connection configuration with indexing strategy
 - [x] **TESTED**: All indexes verified working (compound indexes auto-created by Mongoose)
@@ -160,7 +236,7 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 - [x] Install nodemailer dependency for email functionality
 - [x] Create email service configuration for SMTP (VPS-compatible settings)
-- [x] Implement email templates for admin notifications: account approvals, property approvals, KYC status updates
+- [x] Implement email templates for admin notifications: account approvals, propertyKYC status updates approvals, ****
 - [x] Create queue-based email system for bulk notifications
 - [x] Add email retry logic and error handling
 - [x] Configure email authentication and security settings
@@ -184,7 +260,7 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 - **70x Query Speed Improvement**: Confirmed with 13ms complex admin queries
 - **All 6 Compound Indexes Working**: role+status+date combinations functioning
-- **Additional 6 Single-field Indexes**: viewsCount, likesCount, featured, boosted operational
+- **Additional Indexes**: viewsCount, likesCount, featured, boosted, verified operational
 
 ### ✅ Email System: **FULLY OPERATIONAL**
 
@@ -219,6 +295,8 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 - [x] Dashboard loads real data in <3 seconds (DB indexes confirmed)
 - [ ] Admin can process 100 users/properties per hour (requires bulk operations)
 - [x] 0 critical bugs in admin workflow (core systems validated)
+- [ ] **NEW**: Admin can review property KYC from property detail page
+- [ ] **NEW**: Separate KYC page removed from admin panel
 
 ---
 
@@ -233,8 +311,8 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 
 ### Phase 2B: Seller Features
 
-- Direct property listing upload
-- KYC verification flow for credibility
+- Direct property listing upload with KYC documents
+- KYC verification flow embedded in property upload
 - Property boosting payment integration
 - Performance analytics for listings
 
@@ -244,6 +322,22 @@ This roadmap focuses on **Admin role completion first** as it provides the found
 - Commission tracking and reporting
 - Withdrawal request system
 - Partnership management
+
+### Phase 3: KYC Cleanup (After User Flow Complete)
+
+Once the user-side property KYC flow is fully implemented and tested, the separate KYC system can be safely removed:
+
+**Pre-requisites:**
+- [ ] User property upload with embedded KYC is working
+- [ ] Admin can review KYC from property detail page
+- [ ] No users depend on the old KYC model
+- [ ] All KYC data migrated to property level (if needed)
+
+**Cleanup Tasks:**
+- [ ] Archive (don't delete) KYC model file
+- [ ] Remove KYC from API documentation
+- [ ] Update admin training materials
+- [ ] Remove KYC analytics from dashboard (replace with property KYC metrics)
 
 ---
 
