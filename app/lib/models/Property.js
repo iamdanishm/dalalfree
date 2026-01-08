@@ -173,7 +173,7 @@ const propertySchema = new mongoose.Schema(
     rejectionReason: String,
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "featured"],
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
   },

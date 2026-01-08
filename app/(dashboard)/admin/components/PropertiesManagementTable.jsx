@@ -250,7 +250,6 @@ export default function PropertiesManagementTable() {
                 { value: "pending", label: "Pending" },
                 { value: "approved", label: "Approved" },
                 { value: "rejected", label: "Rejected" },
-                { value: "featured", label: "Featured" },
               ]}
               placeholder="All Status"
               className="w-full"
