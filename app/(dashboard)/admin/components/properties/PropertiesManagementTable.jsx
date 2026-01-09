@@ -36,7 +36,9 @@ export default function PropertiesManagementTable() {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedPropertyForAction, setSelectedPropertyForAction] = useState(null);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [selectedPropertyForAction, setSelectedPropertyForAction] =
+    useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -118,13 +120,22 @@ export default function PropertiesManagementTable() {
   const confirmApprove = async () => {
     if (!selectedPropertyForAction) return;
 
+    console.log("Frontend approve request:", {
+      propertyId: selectedPropertyForAction._id,
+      propertyTitle: selectedPropertyForAction.title,
+      propertyStatus: selectedPropertyForAction.status,
+    });
+
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verified: true, status: "approved" }),
-      });
+      const response = await fetch(
+        `/api/admin/properties/${selectedPropertyForAction._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "approved", verified: true }),
+        }
+      );
 
       if (response.ok) {
         fetchProperties(
@@ -162,6 +173,7 @@ export default function PropertiesManagementTable() {
           statusFilter?.value || "",
           debouncedSearchTerm
         );
+        setSelectedProperty(null); // Close modal
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to approve property");
@@ -178,16 +190,22 @@ export default function PropertiesManagementTable() {
     setShowRejectModal(true);
   };
 
-  const confirmReject = async () => {
-    if (!selectedPropertyForAction || !rejectionReason.trim()) return;
+  const confirmReject = async (reason) => {
+    if (!selectedPropertyForAction || !reason?.trim()) return;
 
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected", rejectionReason: rejectionReason.trim() }),
-      });
+      const response = await fetch(
+        `/api/admin/properties/${selectedPropertyForAction._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "rejected",
+            rejectionReason: reason.trim(),
+          }),
+        }
+      );
 
       if (response.ok) {
         fetchProperties(
@@ -197,7 +215,6 @@ export default function PropertiesManagementTable() {
         );
         setShowRejectModal(false);
         setSelectedPropertyForAction(null);
-        setRejectionReason("");
         // Show success toast or message
       } else {
         const data = await response.json();
@@ -213,14 +230,11 @@ export default function PropertiesManagementTable() {
 
   const handleReject = async (propertyId) => {
     // Keep for backward compatibility with PropertyDetailModal
-    const reason = prompt("Reason for rejection:");
-    if (!reason) return;
-
     try {
       const response = await fetch(`/api/admin/properties/${propertyId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected", rejectionReason: reason }),
+        body: JSON.stringify({ status: "rejected", rejectionReason: "Rejected by admin" }),
       });
 
       if (response.ok) {
@@ -229,6 +243,7 @@ export default function PropertiesManagementTable() {
           statusFilter?.value || "",
           debouncedSearchTerm
         );
+        setSelectedProperty(null); // Close modal
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to reject property");
@@ -249,9 +264,17 @@ export default function PropertiesManagementTable() {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/properties/${selectedPropertyForAction._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            isArchived: true,
+            archivedReason: "Archived by admin",
+          }),
+        }
+      );
 
       if (response.ok) {
         fetchProperties(
@@ -274,13 +297,56 @@ export default function PropertiesManagementTable() {
     }
   };
 
-  const handleDelete = async (propertyId) => {
-    // Keep for backward compatibility with PropertyDetailModal
-    if (!confirm("Are you sure you want to delete this property?")) return;
+  const handleUnarchiveClick = (property) => {
+    setSelectedPropertyForAction(property);
+    setShowUnarchiveModal(true);
+  };
 
+  const confirmUnarchive = async () => {
+    if (!selectedPropertyForAction) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/properties/${selectedPropertyForAction._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isArchived: false }),
+        }
+      );
+
+      if (response.ok) {
+        fetchProperties(
+          currentPage,
+          statusFilter?.value || "",
+          debouncedSearchTerm
+        );
+        setShowUnarchiveModal(false);
+        setSelectedPropertyForAction(null);
+        // Show success toast or message
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to unarchive property");
+      }
+    } catch (err) {
+      console.error("Error unarchiving property:", err);
+      // Show error toast or message
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (propertyId) => {
+    // Keep for backward compatibility with PropertyDetailModal - use archive
     try {
       const response = await fetch(`/api/admin/properties/${propertyId}`, {
-        method: "DELETE",
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isArchived: true,
+          archivedReason: "Archived by admin",
+        }),
       });
 
       if (response.ok) {
@@ -289,12 +355,39 @@ export default function PropertiesManagementTable() {
           statusFilter?.value || "",
           debouncedSearchTerm
         );
+        setSelectedProperty(null); // Close modal
       } else {
         const data = await response.json();
-        throw new Error(data.error || "Failed to delete property");
+        throw new Error(data.error || "Failed to archive property");
       }
     } catch (err) {
-      console.error("Error deleting property:", err);
+      console.error("Error archiving property:", err);
+      throw err;
+    }
+  };
+
+  const handleUnarchive = async (propertyId) => {
+    // For backward compatibility with PropertyDetailModal
+    try {
+      const response = await fetch(`/api/admin/properties/${propertyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: false }),
+      });
+
+      if (response.ok) {
+        fetchProperties(
+          currentPage,
+          statusFilter?.value || "",
+          debouncedSearchTerm
+        );
+        setSelectedProperty(null); // Close modal
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to unarchive property");
+      }
+    } catch (err) {
+      console.error("Error unarchiving property:", err);
       throw err;
     }
   };
@@ -303,7 +396,11 @@ export default function PropertiesManagementTable() {
     fetchProperties(page, statusFilter?.value || "", debouncedSearchTerm);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, isArchived = false) => {
+    if (isArchived) {
+      return "bg-orange-100 text-orange-800";
+    }
+
     switch (status?.toLowerCase()) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
@@ -544,10 +641,11 @@ export default function PropertiesManagementTable() {
                         <td className="px-6 py-4">
                           <span
                             className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                              property.status
+                              property.status,
+                              property.isArchived
                             )}`}
                           >
-                            {property.status}
+                            {property.isArchived ? "Archived" : property.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-body">
@@ -557,38 +655,52 @@ export default function PropertiesManagementTable() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-2">
-                            {property.status === "pending" && (
-                              <>
-                                <button
-                                  className="flex items-center justify-center w-8 h-8 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 hover:text-green-800 rounded-lg transition-all duration-200 hover:scale-105"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApproveClick(property);
-                                  }}
-                                  title="Approve Property"
-                                >
-                                  <FiCheck className="w-4 h-4" />
-                                </button>
+                            {property.status === "pending" &&
+                              !property.isArchived && (
+                                <>
+                                  <button
+                                    className="flex items-center justify-center w-8 h-8 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 hover:text-green-800 rounded-lg transition-all duration-200 hover:scale-105"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleApproveClick(property);
+                                    }}
+                                    title="Approve Property"
+                                  >
+                                    <FiCheck className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    className="flex items-center justify-center w-8 h-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 hover:text-red-800 rounded-lg transition-all duration-200 hover:scale-105"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRejectClick(property);
+                                    }}
+                                    title="Reject Property"
+                                  >
+                                    <FiX className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            {property.status !== "pending" &&
+                              !property.isArchived && (
                                 <button
                                   className="flex items-center justify-center w-8 h-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 hover:text-red-800 rounded-lg transition-all duration-200 hover:scale-105"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRejectClick(property);
+                                    handleDeleteClick(property);
                                   }}
-                                  title="Reject Property"
+                                  title="Delete Property"
                                 >
-                                  <FiX className="w-4 h-4" />
+                                  <FiTrash2 className="w-4 h-4" />
                                 </button>
-                              </>
-                            )}
-                            {property.status !== "pending" && (
+                              )}
+                            {property.isArchived && (
                               <button
-                                className="flex items-center justify-center w-8 h-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 hover:text-red-800 rounded-lg transition-all duration-200 hover:scale-105"
+                                className="flex items-center justify-center w-8 h-8 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 hover:text-blue-800 rounded-lg transition-all duration-200 hover:scale-105"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDeleteClick(property);
+                                  handleUnarchiveClick(property);
                                 }}
-                                title="Delete Property"
+                                title="Unarchive Property"
                               >
                                 <FiTrash2 className="w-4 h-4" />
                               </button>
@@ -674,6 +786,7 @@ export default function PropertiesManagementTable() {
         onApprove={handleApprove}
         onReject={handleReject}
         onDelete={handleDelete}
+        onUnarchive={handleUnarchive}
       />
 
       {/* Approve Property Modal */}
@@ -713,10 +826,26 @@ export default function PropertiesManagementTable() {
         }}
         onConfirm={confirmDelete}
         title="Delete Property"
-        message={`Are you sure you want to delete "${selectedPropertyForAction?.title}"? This action cannot be undone and will permanently remove the property.`}
+        message={`Are you sure you want to delete "${selectedPropertyForAction?.title}"? This action will archive the property.`}
         confirmText="Delete"
         cancelText="Cancel"
         confirmButtonColor="bg-red-600 hover:bg-red-700"
+        loading={actionLoading}
+      />
+
+      {/* Unarchive Property Modal */}
+      <ConfirmationModal
+        isOpen={showUnarchiveModal}
+        onClose={() => {
+          setShowUnarchiveModal(false);
+          setSelectedPropertyForAction(null);
+        }}
+        onConfirm={confirmUnarchive}
+        title="Unarchive Property"
+        message={`Are you sure you want to unarchive "${selectedPropertyForAction?.title}"? This will make the property visible again.`}
+        confirmText="Unarchive"
+        cancelText="Cancel"
+        confirmButtonColor="bg-blue-600 hover:bg-blue-700"
         loading={actionLoading}
       />
     </>

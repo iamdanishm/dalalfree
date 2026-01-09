@@ -18,6 +18,7 @@ export default function PropertyDetailModal({
   onApprove,
   onReject,
   onDelete,
+  onUnarchive,
 }) {
   const [activeTab, setActiveTab] = useState("details");
 
@@ -25,6 +26,7 @@ export default function PropertyDetailModal({
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -54,14 +56,13 @@ export default function PropertyDetailModal({
     setShowRejectModal(true);
   };
 
-  const confirmReject = async () => {
-    if (!onReject || !rejectionReason.trim()) return;
+  const confirmReject = async (reason) => {
+    if (!onReject || !reason?.trim()) return;
 
     setActionLoading(true);
     try {
-      await onReject(property._id, rejectionReason.trim());
+      await onReject(property._id, reason.trim());
       setShowRejectModal(false);
-      setRejectionReason("");
       // Success message handled by parent component
     } catch (err) {
       console.error("Error rejecting property:", err);
@@ -85,6 +86,26 @@ export default function PropertyDetailModal({
       // Success message handled by parent component
     } catch (err) {
       console.error("Error deleting property:", err);
+      // Error message handled by parent component
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnarchiveClick = () => {
+    setShowUnarchiveModal(true);
+  };
+
+  const confirmUnarchive = async () => {
+    if (!onUnarchive) return;
+
+    setActionLoading(true);
+    try {
+      await onUnarchive(property._id);
+      setShowUnarchiveModal(false);
+      // Success message handled by parent component
+    } catch (err) {
+      console.error("Error unarchiving property:", err);
       // Error message handled by parent component
     } finally {
       setActionLoading(false);
@@ -180,7 +201,7 @@ export default function PropertyDetailModal({
                     </button>
                   </>
                 )}
-                {property.status !== "pending" && onDelete && (
+                {property.status !== "pending" && !property.isArchived && onDelete && (
                   <button
                     onClick={handleDeleteClick}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -188,6 +209,16 @@ export default function PropertyDetailModal({
                   >
                     <FiTrash2 className="w-4 h-4" />
                     Delete
+                  </button>
+                )}
+                {property.isArchived && onUnarchive && (
+                  <button
+                    onClick={handleUnarchiveClick}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    title="Unarchive Property"
+                  >
+                    <MdCheckCircle className="w-4 h-4" />
+                    Unarchive
                   </button>
                 )}
                 <button
@@ -279,10 +310,25 @@ export default function PropertyDetailModal({
         }}
         onConfirm={confirmDelete}
         title="Delete Property"
-        message={`Are you sure you want to delete "${property.title}"? This action cannot be undone and will permanently remove the property.`}
+        message={`Are you sure you want to delete "${property.title}"? This action will archive the property.`}
         confirmText="Delete"
         cancelText="Cancel"
         confirmButtonColor="bg-red-600 hover:bg-red-700"
+        loading={actionLoading}
+      />
+
+      {/* Unarchive Property Modal */}
+      <ConfirmationModal
+        isOpen={showUnarchiveModal}
+        onClose={() => {
+          setShowUnarchiveModal(false);
+        }}
+        onConfirm={confirmUnarchive}
+        title="Unarchive Property"
+        message={`Are you sure you want to unarchive "${property.title}"? This will make the property visible again.`}
+        confirmText="Unarchive"
+        cancelText="Cancel"
+        confirmButtonColor="bg-blue-600 hover:bg-blue-700"
         loading={actionLoading}
       />
     </>
