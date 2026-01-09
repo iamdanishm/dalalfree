@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 import PropertyDetailModal from "./PropertyDetailModal";
 import ConfirmationModal from "@/app/components/ConfirmationModal";
+import RejectionModal from "@/app/components/RejectionModal";
 
 export default function PropertiesManagementTable() {
   const [properties, setProperties] = useState([]);
@@ -692,85 +693,16 @@ export default function PropertiesManagementTable() {
       />
 
       {/* Reject Property Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            className="bg-white rounded-xl p-6 w-full max-w-md mx-4"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-heading">
-                Reject Property
-              </h3>
-              <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedPropertyForAction(null);
-                  setRejectionReason("");
-                }}
-                className="text-muted hover:text-heading"
-                disabled={actionLoading}
-              >
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <p className="text-body text-sm">
-                  Please provide a reason for rejecting "{selectedPropertyForAction?.title}":
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-heading mb-2">
-                  Rejection Reason *
-                </label>
-                <textarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                  rows={3}
-                  placeholder="Enter the reason for rejection..."
-                  required
-                  disabled={actionLoading}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setSelectedPropertyForAction(null);
-                    setRejectionReason("");
-                  }}
-                  disabled={actionLoading}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg text-body hover:bg-surface transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmReject}
-                  disabled={actionLoading || !rejectionReason.trim()}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {actionLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Rejecting...
-                    </div>
-                  ) : (
-                    "Reject Property"
-                  )}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <RejectionModal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setSelectedPropertyForAction(null);
+        }}
+        onConfirm={confirmReject}
+        propertyTitle={selectedPropertyForAction?.title}
+        loading={actionLoading}
+      />
 
       {/* Delete Property Modal */}
       <ConfirmationModal
