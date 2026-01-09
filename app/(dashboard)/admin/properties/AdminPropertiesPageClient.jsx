@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { FiHome, FiMapPin } from "react-icons/fi";
-import PropertiesManagementTable from "../components/PropertiesManagementTable";
+import PropertiesManagementTable from "../components/properties/PropertiesManagementTable";
 
 export default function AdminPropertiesPageClient() {
   return (

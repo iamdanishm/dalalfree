@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { FiHome } from "react-icons/fi";
-import AmenitiesManagementTable from "../components/AmenitiesManagementTable";
+import AmenitiesManagementTable from "../components/amenities/AmenitiesManagementTable";
 
 export default function AdminAmenitiesPageClient() {
   return (

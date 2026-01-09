@@ -1,20 +1,34 @@
-import React, { useEffect } from "react";
+"use client";
+import { useEffect } from "react";
 import Image from "next/image";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { MdClose } from "react-icons/md";
 
-export default function GalleryModal({
+export default function AdminGalleryModal({
+  processedMedia,
+  galleryIndex,
+  setGalleryIndex,
+  showAllGallery,
+  setShowAllGallery,
   property,
-  isOpen,
-  currentIndex,
-  onClose,
-  onNavigate,
-  onKeyDown,
 }) {
   // Handle keyboard events
   useEffect(() => {
-    if (!isOpen) return;
+    if (!showAllGallery) return;
 
-    const handleKeyDown = (e) => onKeyDown(e);
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowLeft") {
+        setGalleryIndex((prev) =>
+          prev > 0 ? prev - 1 : processedMedia.length - 1
+        );
+      } else if (e.key === "ArrowRight") {
+        setGalleryIndex((prev) =>
+          prev < processedMedia.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === "Escape") {
+        setShowAllGallery(false);
+      }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     document.body.style.overflow = "hidden";
@@ -23,40 +37,31 @@ export default function GalleryModal({
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "auto";
     };
-  }, [isOpen, currentIndex, onKeyDown]);
+  }, [
+    showAllGallery,
+    setShowAllGallery,
+    processedMedia.length,
+    setGalleryIndex,
+  ]);
 
-  if (!isOpen) return null;
+  if (!showAllGallery) return null;
 
-  // Handle both legacy string format and new object format
-  const currentMedia =
-    typeof property.images[currentIndex] === "object"
-      ? property.images[currentIndex]
-      : { src: property.images[currentIndex], type: "image" };
+  const currentMedia = processedMedia[galleryIndex];
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Header */}
-      <div className="flex-none bg-linear-to-b from-black/80 to-transparent p-4 z-10">
+      <div className="flex-none bg-gradient-to-b from-black/80 to-transparent p-4 z-10">
         <div className="flex items-center justify-between text-white max-w-7xl mx-auto">
-          <div className="text-lg font-semibold truncate">{property.title}</div>
+          <div className="text-lg font-semibold truncate">
+            {property?.title || "Property"}
+          </div>
           <button
-            onClick={onClose}
+            onClick={() => setShowAllGallery(false)}
             className="w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition-colors flex-none"
             aria-label="Close gallery"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <MdClose className="w-6 h-6" />
           </button>
         </div>
       </div>
@@ -65,11 +70,15 @@ export default function GalleryModal({
       <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
         <div className="relative w-full max-w-5xl h-full flex items-center justify-center">
           {/* Navigation Arrows */}
-          {property.images.length > 1 && (
+          {processedMedia.length > 1 && (
             <>
-              {currentIndex > 0 && (
+              {galleryIndex > 0 && (
                 <button
-                  onClick={() => onNavigate("prev")}
+                  onClick={() =>
+                    setGalleryIndex((prev) =>
+                      prev > 0 ? prev - 1 : processedMedia.length - 1
+                    )
+                  }
                   className="absolute left-0 z-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group ml-2 md:ml-4"
                   aria-label="Previous image"
                 >
@@ -77,9 +86,13 @@ export default function GalleryModal({
                 </button>
               )}
 
-              {currentIndex < property.images.length - 1 && (
+              {galleryIndex < processedMedia.length - 1 && (
                 <button
-                  onClick={() => onNavigate("next")}
+                  onClick={() =>
+                    setGalleryIndex((prev) =>
+                      prev < processedMedia.length - 1 ? prev + 1 : 0
+                    )
+                  }
                   className="absolute right-0 z-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group mr-2 md:mr-4"
                   aria-label="Next image"
                 >
@@ -91,7 +104,7 @@ export default function GalleryModal({
 
           {/* Media Container */}
           <div className="w-full max-h-full flex items-center justify-center">
-            {currentMedia.type === "video" ? (
+            {currentMedia?.type === "video" ? (
               <video
                 src={currentMedia.src}
                 controls
@@ -102,8 +115,10 @@ export default function GalleryModal({
               />
             ) : (
               <Image
-                src={currentMedia.src}
-                alt={`${property.title} - Photo ${currentIndex + 1}`}
+                src={currentMedia?.src || ""}
+                alt={`${property?.title || "Property"} - Photo ${
+                  galleryIndex + 1
+                }`}
                 width={1200}
                 height={800}
                 className="max-w-full max-h-[50vh] md:max-h-[55vh] object-contain rounded-lg shadow-2xl"
@@ -120,29 +135,24 @@ export default function GalleryModal({
           {/* Image Counter */}
           <div className="flex justify-center mb-3 md:mb-4">
             <div className="bg-black/60 backdrop-blur-sm text-white px-4 py-1.5 md:px-6 md:py-2 rounded-full text-sm md:text-base">
-              <span className="font-semibold">{currentIndex + 1}</span>
+              <span className="font-semibold">{galleryIndex + 1}</span>
               <span className="text-white/60 mx-2">/</span>
-              <span className="text-white/60">{property.images.length}</span>
+              <span className="text-white/60">{processedMedia.length}</span>
             </div>
           </div>
 
           {/* Thumbnail Strip */}
           <div className="flex justify-center">
             <div className="flex gap-2 overflow-x-auto max-w-[95vw] p-2 rounded-lg bg-black/20 backdrop-blur-sm">
-              {property.images.map((image, index) => {
-                const media =
-                  typeof image === "object"
-                    ? image
-                    : { src: image, type: "image" };
+              {processedMedia.map((media, index) => {
                 const thumbnailSrc =
                   media.type === "video" ? media.thumbnail : media.src;
-
                 return (
                   <button
                     key={index}
-                    onClick={() => onNavigate("goto", index)}
+                    onClick={() => setGalleryIndex(index)}
                     className={`flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-white/50 ${
-                      index === currentIndex
+                      index === galleryIndex
                         ? "border-white shadow-lg scale-110"
                         : "border-transparent opacity-70 hover:opacity-100 hover:border-white/50"
                     } relative`}

@@ -16,6 +16,7 @@ export async function GET(req) {
   const verified = searchParams.get("verified");
   const featured = searchParams.get("featured");
   const hasKyc = searchParams.get("hasKyc"); // "true" for properties with KYC docs
+  const search = searchParams.get("search");
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = parseInt(searchParams.get("limit")) || 10;
 
@@ -23,13 +24,32 @@ export async function GET(req) {
   if (status) query.status = status;
   if (verified !== null) query.verified = verified === "true";
   if (featured !== null) query.featured = featured === "true";
+
+  // Handle search and hasKyc conditions
+  const andConditions = [];
+
+  if (search) {
+    andConditions.push({
+      $or: [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ],
+    });
+  }
+
   if (hasKyc === "true") {
-    query.$or = [
-      { "kycFiles.aadhaar": { $exists: true, $ne: [] } },
-      { "kycFiles.pan": { $exists: true, $ne: null } },
-      { "kycFiles.agreement": { $exists: true, $ne: null } },
-      { "kycFiles.video": { $exists: true, $ne: null } },
-    ];
+    andConditions.push({
+      $or: [
+        { "kycFiles.aadhaar": { $exists: true, $ne: [] } },
+        { "kycFiles.pan": { $exists: true, $ne: null } },
+        { "kycFiles.agreement": { $exists: true, $ne: null } },
+        { "kycFiles.video": { $exists: true, $ne: null } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    query.$and = andConditions;
   }
 
   const skip = (page - 1) * limit;

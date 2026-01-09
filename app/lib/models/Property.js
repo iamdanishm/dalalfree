@@ -214,6 +214,9 @@ propertySchema.index({
 propertySchema.index({ ownerId: 1, lastViewed: -1 });
 propertySchema.index({ ownerId: 1, inquiriesCount: -1 });
 
+// Text search index for admin
+propertySchema.index({ title: "text", description: "text" });
+
 // Aggressive model cache clearing for development
 if (mongoose.models && mongoose.models.Property) {
   delete mongoose.models.Property;

@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { FiUsers } from "react-icons/fi";
-import UsersManagementTable from "../components/UsersManagementTable";
+import UsersManagementTable from "../components/users/UsersManagementTable";
 
 export default function AdminUsersPageClient() {
   return (

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "../../globals.css";
-import AdminNavbar from "./components/AdminNavbar";
-import AdminSidebar from "./components/AdminSidebar";
+import AdminNavbar from "./components/layout/AdminNavbar";
+import AdminSidebar from "./components/layout/AdminSidebar";
 
 export default function AdminLayout({ children }) {
   const { data: session, status } = useSession();

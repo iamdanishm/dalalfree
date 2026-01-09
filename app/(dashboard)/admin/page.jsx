@@ -15,8 +15,8 @@ import {
   FiActivity,
   FiRefreshCw,
 } from "react-icons/fi";
-import MetricsCard from "./components/MetricsCard";
-import RecentPropertiesChart from "./components/RecentPropertiesChart";
+import MetricsCard from "./components/layout/MetricsCard";
+import RecentPropertiesChart from "./components/analytics/RecentPropertiesChart";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
       setError(null);
 
       // Fetch user analytics
-      const userAnalyticsRes = await fetch("/api/admin/users/analytics");
+      const userAnalyticsRes = await fetch("/api/admin/properties/analytics");
       const userAnalytics = await userAnalyticsRes.json();
 
       // Fetch recent users
