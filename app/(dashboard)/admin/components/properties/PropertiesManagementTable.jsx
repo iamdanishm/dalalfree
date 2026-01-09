@@ -16,6 +16,7 @@ import {
   FiMapPin,
 } from "react-icons/fi";
 import PropertyDetailModal from "./PropertyDetailModal";
+import ConfirmationModal from "@/app/components/ConfirmationModal";
 
 export default function PropertiesManagementTable() {
   const [properties, setProperties] = useState([]);
@@ -29,6 +30,14 @@ export default function PropertiesManagementTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
+
+  // Modal states
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedPropertyForAction, setSelectedPropertyForAction] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchProperties = async (
     page = 1,
@@ -100,7 +109,45 @@ export default function PropertiesManagementTable() {
     handleStatusFilterChange();
   }, [handleStatusFilterChange]);
 
+  const handleApproveClick = (property) => {
+    setSelectedPropertyForAction(property);
+    setShowApproveModal(true);
+  };
+
+  const confirmApprove = async () => {
+    if (!selectedPropertyForAction) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verified: true, status: "approved" }),
+      });
+
+      if (response.ok) {
+        fetchProperties(
+          currentPage,
+          statusFilter?.value || "",
+          debouncedSearchTerm
+        );
+        setShowApproveModal(false);
+        setSelectedPropertyForAction(null);
+        // Show success toast or message
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to approve property");
+      }
+    } catch (err) {
+      console.error("Error approving property:", err);
+      // Show error toast or message
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleApprove = async (propertyId) => {
+    // Keep for backward compatibility with PropertyDetailModal
     try {
       const response = await fetch(`/api/admin/properties/${propertyId}`, {
         method: "PUT",
@@ -109,7 +156,6 @@ export default function PropertiesManagementTable() {
       });
 
       if (response.ok) {
-        alert("Property approved successfully");
         fetchProperties(
           currentPage,
           statusFilter?.value || "",
@@ -117,15 +163,55 @@ export default function PropertiesManagementTable() {
         );
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to approve property");
+        throw new Error(data.error || "Failed to approve property");
       }
     } catch (err) {
       console.error("Error approving property:", err);
-      alert("Failed to approve property");
+      throw err;
+    }
+  };
+
+  const handleRejectClick = (property) => {
+    setSelectedPropertyForAction(property);
+    setRejectionReason("");
+    setShowRejectModal(true);
+  };
+
+  const confirmReject = async () => {
+    if (!selectedPropertyForAction || !rejectionReason.trim()) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "rejected", rejectionReason: rejectionReason.trim() }),
+      });
+
+      if (response.ok) {
+        fetchProperties(
+          currentPage,
+          statusFilter?.value || "",
+          debouncedSearchTerm
+        );
+        setShowRejectModal(false);
+        setSelectedPropertyForAction(null);
+        setRejectionReason("");
+        // Show success toast or message
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to reject property");
+      }
+    } catch (err) {
+      console.error("Error rejecting property:", err);
+      // Show error toast or message
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleReject = async (propertyId) => {
+    // Keep for backward compatibility with PropertyDetailModal
     const reason = prompt("Reason for rejection:");
     if (!reason) return;
 
@@ -137,7 +223,6 @@ export default function PropertiesManagementTable() {
       });
 
       if (response.ok) {
-        alert("Property rejected");
         fetchProperties(
           currentPage,
           statusFilter?.value || "",
@@ -145,15 +230,51 @@ export default function PropertiesManagementTable() {
         );
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to reject property");
+        throw new Error(data.error || "Failed to reject property");
       }
     } catch (err) {
       console.error("Error rejecting property:", err);
-      alert("Failed to reject property");
+      throw err;
+    }
+  };
+
+  const handleDeleteClick = (property) => {
+    setSelectedPropertyForAction(property);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPropertyForAction) return;
+
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/admin/properties/${selectedPropertyForAction._id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchProperties(
+          currentPage,
+          statusFilter?.value || "",
+          debouncedSearchTerm
+        );
+        setShowDeleteModal(false);
+        setSelectedPropertyForAction(null);
+        // Show success toast or message
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete property");
+      }
+    } catch (err) {
+      console.error("Error deleting property:", err);
+      // Show error toast or message
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDelete = async (propertyId) => {
+    // Keep for backward compatibility with PropertyDetailModal
     if (!confirm("Are you sure you want to delete this property?")) return;
 
     try {
@@ -162,7 +283,6 @@ export default function PropertiesManagementTable() {
       });
 
       if (response.ok) {
-        alert("Property deleted successfully");
         fetchProperties(
           currentPage,
           statusFilter?.value || "",
@@ -170,11 +290,11 @@ export default function PropertiesManagementTable() {
         );
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to delete property");
+        throw new Error(data.error || "Failed to delete property");
       }
     } catch (err) {
       console.error("Error deleting property:", err);
-      alert("Failed to delete property");
+      throw err;
     }
   };
 
@@ -439,22 +559,22 @@ export default function PropertiesManagementTable() {
                             {property.status === "pending" && (
                               <>
                                 <button
-                                  className="text-green-600 hover:text-green-800 p-1"
+                                  className="flex items-center justify-center w-8 h-8 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 hover:text-green-800 rounded-lg transition-all duration-200 hover:scale-105"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleApprove(property._id);
+                                    handleApproveClick(property);
                                   }}
-                                  title="Approve"
+                                  title="Approve Property"
                                 >
                                   <FiCheck className="w-4 h-4" />
                                 </button>
                                 <button
-                                  className="text-red-600 hover:text-red-800 p-1"
+                                  className="flex items-center justify-center w-8 h-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 hover:text-red-800 rounded-lg transition-all duration-200 hover:scale-105"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleReject(property._id);
+                                    handleRejectClick(property);
                                   }}
-                                  title="Reject"
+                                  title="Reject Property"
                                 >
                                   <FiX className="w-4 h-4" />
                                 </button>
@@ -462,12 +582,12 @@ export default function PropertiesManagementTable() {
                             )}
                             {property.status !== "pending" && (
                               <button
-                                className="text-gray-600 hover:text-gray-800 p-1"
+                                className="flex items-center justify-center w-8 h-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 hover:text-red-800 rounded-lg transition-all duration-200 hover:scale-105"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDelete(property._id);
+                                  handleDeleteClick(property);
                                 }}
-                                title="Delete"
+                                title="Delete Property"
                               >
                                 <FiTrash2 className="w-4 h-4" />
                               </button>
@@ -553,6 +673,119 @@ export default function PropertiesManagementTable() {
         onApprove={handleApprove}
         onReject={handleReject}
         onDelete={handleDelete}
+      />
+
+      {/* Approve Property Modal */}
+      <ConfirmationModal
+        isOpen={showApproveModal}
+        onClose={() => {
+          setShowApproveModal(false);
+          setSelectedPropertyForAction(null);
+        }}
+        onConfirm={confirmApprove}
+        title="Approve Property"
+        message={`Are you sure you want to approve "${selectedPropertyForAction?.title}"? This will make the property visible to all users.`}
+        confirmText="Approve"
+        cancelText="Cancel"
+        confirmButtonColor="bg-green-600 hover:bg-green-700"
+        loading={actionLoading}
+      />
+
+      {/* Reject Property Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            className="bg-white rounded-xl p-6 w-full max-w-md mx-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-heading">
+                Reject Property
+              </h3>
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedPropertyForAction(null);
+                  setRejectionReason("");
+                }}
+                className="text-muted hover:text-heading"
+                disabled={actionLoading}
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-body text-sm">
+                  Please provide a reason for rejecting "{selectedPropertyForAction?.title}":
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-heading mb-2">
+                  Rejection Reason *
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  rows={3}
+                  placeholder="Enter the reason for rejection..."
+                  required
+                  disabled={actionLoading}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setSelectedPropertyForAction(null);
+                    setRejectionReason("");
+                  }}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg text-body hover:bg-surface transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmReject}
+                  disabled={actionLoading || !rejectionReason.trim()}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {actionLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Rejecting...
+                    </div>
+                  ) : (
+                    "Reject Property"
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Property Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedPropertyForAction(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Property"
+        message={`Are you sure you want to delete "${selectedPropertyForAction?.title}"? This action cannot be undone and will permanently remove the property.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmButtonColor="bg-red-600 hover:bg-red-700"
+        loading={actionLoading}
       />
     </>
   );
