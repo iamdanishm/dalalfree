@@ -32,7 +32,7 @@ export async function GET(req) {
   const skip = (page - 1) * limit;
   const users = await User.find(query)
     .select(
-      "name email phone role isSubAdmin accountStatus accountStatusReason reraNumber isVerified createdAt"
+      "name email phone role accountStatus accountStatusReason reraNumber subscription createdAt"
     )
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -49,7 +49,7 @@ export async function GET(req) {
         ? "Partner"
         : user.role === "admin"
         ? "Admin"
-        : user.role === "subadmin"
+        : user.role === "sub-admin"
         ? "Sub-Admin"
         : user.role,
     accountStatus:
@@ -71,7 +71,7 @@ export async function GET(req) {
   });
 }
 
-// POST /api/admin/users - Admin create user (any role: user, partner, admin, sub-admin: user, partner, admin, sub-admin)
+// POST /api/admin/users - Admin create user (any role: user, partner, sub-admin, admin)
 export async function POST(req) {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -81,20 +81,38 @@ export async function POST(req) {
       { status: 403 }
     );
 
-  const { name, email, password, phone, role = "user" } = await req.json();
+  const { name, email, password, phone, role = "user", reraNumber } = await req.json();
 
   // Validate required fields
-  const errors = [];
-  if (!name) errors.push("name");
-  if (!email) errors.push("email");
-  if (!password) errors.push("password");
+  const fieldErrors = {};
+  if (!name?.trim()) fieldErrors.name = "Name is required";
+  if (!email?.trim()) fieldErrors.email = "Email is required";
+  if (!password) fieldErrors.password = "Password is required";
+  if (!phone?.trim()) fieldErrors.phone = "Phone number is required";
 
-  if (errors.length > 0) {
+  // Additional validations
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fieldErrors.email = "Please enter a valid email address";
+  }
+
+  if (password && password.length < 8) {
+    fieldErrors.password = "Password must be at least 8 characters";
+  }
+
+  if (phone && !/^[\+]?[1-9][\d]{0,15}$/.test(phone)) {
+    fieldErrors.phone = "Please enter a valid phone number";
+  }
+
+  if (role === "partner" && !reraNumber?.trim()) {
+    fieldErrors.reraNumber = "RERA number is required for partners";
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
     return NextResponse.json(
       {
-        error: "Missing required fields",
-        required: ["name", "email", "password"],
-        missing: errors,
+        error: "Validation failed",
+        fieldErrors,
+        type: "validation_error",
       },
       { status: 400 }
     );
@@ -119,7 +137,7 @@ export async function POST(req) {
     password: hashedPassword,
     phone,
     role,
-    isSubAdmin: role === "subadmin", // Set isSubAdmin for subadmin roles
+    reraNumber,
     accountStatus: "active",
   });
 
@@ -130,9 +148,9 @@ export async function POST(req) {
       email: newUser.email,
       role: newUser.role,
       phone: newUser.phone,
+      reraNumber: newUser.reraNumber,
       accountStatus: newUser.accountStatus,
-      isVerified: newUser.isVerified,
-      isSubAdmin: newUser.isSubAdmin,
+      subscription: newUser.subscription, // Include nested subscription object (only for users)
       createdAt: newUser.createdAt,
     },
     message: `User created successfully as ${newUser.role}`,

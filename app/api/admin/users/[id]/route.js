@@ -11,18 +11,79 @@ export async function PUT(req, { params }) {
   if (!session || session.user.role !== "admin")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { role, accountStatus, accountStatusReason, isSubAdmin } =
+  // Await params in Next.js 15+
+  const { id } = await params;
+
+  const { name, email, phone, role, accountStatus, accountStatusReason, reraNumber } =
     await req.json();
+
+  // Validate required fields
+  const fieldErrors = {};
+  if (name !== undefined && (!name?.trim())) fieldErrors.name = "Name is required";
+  if (email !== undefined && (!email?.trim())) fieldErrors.email = "Email is required";
+  if (phone !== undefined && (!phone?.trim())) fieldErrors.phone = "Phone number is required";
+
+  // Email format validation
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fieldErrors.email = "Please enter a valid email address";
+  }
+
+  // Phone validation
+  if (phone && !/^[\+]?[1-9][\d]{0,15}$/.test(phone)) {
+    fieldErrors.phone = "Please enter a valid phone number";
+  }
+
+  // RERA validation for partners
+  if (role === "partner" && !reraNumber?.trim()) {
+    fieldErrors.reraNumber = "RERA number is required for partners";
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return NextResponse.json(
+      {
+        error: "Validation failed",
+        fieldErrors,
+        type: "validation_error",
+      },
+      { status: 400 }
+    );
+  }
+
+  // Check if email is already taken by another user
+  if (email) {
+    // First get the current user's email to compare
+    const currentUser = await User.findById(id);
+    if (!currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Only check for duplicates if email is actually changing
+    if (email.toLowerCase() !== currentUser.email.toLowerCase()) {
+      const existingUser = await User.findOne({
+        email: email.toLowerCase(),
+        _id: { $ne: id }
+      });
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email already exists" },
+          { status: 400 }
+        );
+      }
+    }
+  }
 
   // Only allow specific fields to be updated
   const updateData = {};
-  if (role) updateData.role = role;
-  if (accountStatus) updateData.accountStatus = accountStatus;
+  if (name !== undefined) updateData.name = name.trim();
+  if (email !== undefined) updateData.email = email.trim().toLowerCase();
+  if (phone !== undefined) updateData.phone = phone.trim() || undefined;
+  if (role !== undefined) updateData.role = role;
+  if (accountStatus !== undefined) updateData.accountStatus = accountStatus;
   if (accountStatusReason !== undefined)
     updateData.accountStatusReason = accountStatusReason;
-  if (isSubAdmin !== undefined) updateData.isSubAdmin = isSubAdmin;
+  if (reraNumber !== undefined) updateData.reraNumber = reraNumber?.trim() || undefined;
 
-  const updated = await User.findByIdAndUpdate(params.id, updateData, {
+  const updated = await User.findByIdAndUpdate(id, updateData, {
     new: true,
   });
 
@@ -56,7 +117,7 @@ export async function PUT(req, { params }) {
 
   // Log admin action
   console.log(
-    `Admin ${session.user.id} updated user ${params.id}:`,
+    `Admin ${session.user.id} updated user ${id}:`,
     updateData
   );
 
@@ -73,11 +134,14 @@ export async function DELETE(req, { params }) {
   if (!session || session.user.role !== "admin")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  // Await params in Next.js 15+
+  const { id } = await params;
+
   const { reason } = await req.json();
 
   // Soft delete by suspending account instead of hard delete
   const updated = await User.findByIdAndUpdate(
-    params.id,
+    id,
     {
       accountStatus: "suspended",
       accountStatusReason: reason || "Account suspended by admin",
@@ -87,7 +151,7 @@ export async function DELETE(req, { params }) {
 
   // Audit log
   console.log(
-    `User ${params.id} suspended by admin ${session.user.id}: ${reason}`
+    `User ${id} suspended by admin ${session.user.id}: ${reason}`
   );
 
   return NextResponse.json({

@@ -3,15 +3,32 @@ import mongoose from "mongoose";
 const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String },
-    phone: { type: String },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      validate: {
+        validator: function(v) {
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        },
+        message: 'Invalid email format'
+      }
+    },
+    password: { type: String, required: true, minlength: 8 },
+    phone: {
+      type: String,
+      validate: {
+        validator: function(v) {
+          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
+        },
+        message: 'Invalid phone number format'
+      }
+    },
     role: {
       type: String,
-      enum: ["user", "partner", "subadmin", "admin"],
+      enum: ["user", "partner", "sub-admin", "admin"],
       default: "user",
     },
-    isSubAdmin: { type: Boolean, default: false },
     accountStatus: {
       type: String,
       enum: ["active", "suspended", "pending"],
@@ -31,23 +48,27 @@ const UserSchema = new mongoose.Schema(
         message: "RERA number is required for partners",
       },
     },
-    isVerified: { type: Boolean, default: false }, // KYC status
 
-    // Subscription fields for buyers
-    subscriptionStatus: {
-      type: String,
-      enum: ["free_trial", "active", "expired", "cancelled", "none"],
-      default: "none", // Buyers start with no subscription, must activate trial
-    },
-    subscriptionStartDate: { type: Date },
-    subscriptionEndDate: { type: Date },
-    freeTrialUsed: { type: Boolean, default: false },
-    freeTrialStartDate: { type: Date },
-    freeTrialEndDate: { type: Date }, // No default - set only when trial is activated
-    adUnlockCredits: {
-      type: Number,
-      default: 0, // Must watch ads or purchase to get credits
-      min: 0,
+    // Subscription object only for regular users (buyers/sellers)
+    subscription: {
+      type: {
+        status: {
+          type: String,
+          enum: ["free_trial", "active", "expired", "cancelled", "none"],
+          default: "none",
+        },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        freeTrialUsed: { type: Boolean, default: false },
+        freeTrialStartDate: { type: Date },
+        freeTrialEndDate: { type: Date },
+        adUnlockCredits: {
+          type: Number,
+          default: 0,
+          min: 0,
+        }
+      },
+      required: false, // Only required for users, not admins/partners
     },
 
     // Password reset OTP fields
@@ -57,11 +78,28 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Pre-save middleware to conditionally set subscription for regular users only
+UserSchema.pre('save', function(next) {
+  // Only regular users (role: "user") should have subscription data
+  if (this.role === 'user') {
+    // Ensure subscription object exists for regular users
+    if (!this.subscription) {
+      this.subscription = {
+        status: 'none',
+        freeTrialUsed: false,
+        adUnlockCredits: 0
+      };
+    }
+  } else {
+    // Remove subscription data for non-user roles
+    this.subscription = undefined;
+  }
+  next();
+});
+
 // Add indexes for performance - single field indexes
 UserSchema.index({ role: 1 });
 UserSchema.index({ accountStatus: 1 });
-UserSchema.index({ isVerified: 1 });
-UserSchema.index({ isSubAdmin: 1 });
 
 // Compound index for admin user queries: role + accountStatus + createdAt
 // Used in /api/admin/users for filtering and sorting admin user lists

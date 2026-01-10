@@ -1,0 +1,513 @@
+"use client";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiX, FiUser, FiMail, FiPhone, FiLock, FiShield, FiEye, FiEyeOff } from "react-icons/fi";
+import Select from "react-select";
+import { MdKeyboardArrowDown } from "react-icons/md";
+
+export default function AddUserModal({ isOpen, onClose, onSubmit, loading, serverErrors }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    role: "user",
+    reraNumber: "",
+  });
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Merge server errors with client errors
+  const combinedErrors = { ...errors };
+  if (serverErrors) {
+    Object.keys(serverErrors).forEach(field => {
+      if (serverErrors[field]) {
+        combinedErrors[field] = serverErrors[field];
+      }
+    });
+  }
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        phone: "",
+        role: "user",
+        reraNumber: "",
+      });
+      setErrors({});
+      setTouched({});
+    }
+  }, [isOpen]);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field, formData[field]);
+  };
+
+  const validateField = (field, value) => {
+    const newErrors = { ...errors };
+
+    switch (field) {
+      case "name":
+        if (!value.trim()) {
+          newErrors.name = "Name is required";
+        } else if (value.trim().length < 2) {
+          newErrors.name = "Name must be at least 2 characters";
+        } else {
+          delete newErrors.name;
+        }
+        break;
+
+      case "email":
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value.trim()) {
+          newErrors.email = "Email is required";
+        } else if (!emailRegex.test(value)) {
+          newErrors.email = "Please enter a valid email address";
+        } else {
+          delete newErrors.email;
+        }
+        break;
+
+      case "password":
+        if (!value) {
+          newErrors.password = "Password is required";
+        } else if (value.length < 8) {
+          newErrors.password = "Password must be at least 8 characters";
+        } else {
+          delete newErrors.password;
+        }
+        break;
+
+      case "phone":
+        if (!value.trim()) {
+          newErrors.phone = "Phone number is required";
+        } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(value)) {
+          newErrors.phone = "Please enter a valid phone number";
+        } else {
+          delete newErrors.phone;
+        }
+        break;
+
+      case "reraNumber":
+        if (formData.role === "partner" && !value.trim()) {
+          newErrors.reraNumber = "RERA number is required for partners";
+        } else {
+          delete newErrors.reraNumber;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const validateAllFields = () => {
+    const newErrors = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    // Phone validation
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone)) {
+      newErrors.phone = "Please enter a valid phone number";
+    }
+
+    // RERA validation
+    if (formData.role === "partner" && !formData.reraNumber.trim()) {
+      newErrors.reraNumber = "RERA number is required for partners";
+    }
+
+    return newErrors;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Validate all fields synchronously
+    const validationErrors = validateAllFields();
+
+    // Update errors state and mark all fields as touched
+    setErrors(validationErrors);
+    const allTouched = {
+      name: true,
+      email: true,
+      password: true,
+      phone: true,
+      reraNumber: true
+    };
+    setTouched(allTouched);
+
+    // Check if there are any errors
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    // Prepare data for submission
+    const submitData = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+      phone: formData.phone.trim() || undefined,
+      role: formData.role,
+    };
+
+    // Add RERA number only for partners
+    if (formData.role === "partner") {
+      submitData.reraNumber = formData.reraNumber.trim();
+    }
+
+    onSubmit(submitData);
+  };
+
+  const roleOptions = [
+    { value: "user", label: "User" },
+    { value: "partner", label: "Partner" },
+    { value: "sub-admin", label: "Sub-Admin" },
+    { value: "admin", label: "Admin" },
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black/50 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+
+          {/* Modal */}
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          >
+            <motion.div
+              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+              exit={{ y: 20 }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <h2 className="text-xl font-semibold text-heading flex items-center">
+                  <FiUser className="w-5 h-5 mr-2 text-primary" />
+                  Add New User
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="text-muted hover:text-gray-600 transition-colors"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="p-6">
+                {/* Form Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    {/* Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                        <FiUser className="w-4 h-4 mr-2 text-primary" />
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        onBlur={() => handleBlur("name")}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all bg-surface ${
+                          errors.name && touched.name
+                            ? "border-red-300 focus:border-red-500"
+                            : "border-border focus:border-primary"
+                        }`}
+                        placeholder="Enter full name"
+                      />
+                      {combinedErrors.name && touched.name && (
+                        <p className="text-red-600 text-sm mt-2 flex items-center">
+                          <span className="w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                          {combinedErrors.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                        <FiMail className="w-4 h-4 mr-2 text-primary" />
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        onBlur={() => handleBlur("email")}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all bg-surface ${
+                          errors.email && touched.email
+                            ? "border-red-300 focus:border-red-500"
+                            : "border-border focus:border-primary"
+                        }`}
+                        placeholder="Enter email address"
+                      />
+                      {combinedErrors.email && touched.email && (
+                        <p className="text-red-600 text-sm mt-2 flex items-center">
+                          <span className="w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                          {combinedErrors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Role */}
+                    <div>
+                      <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                        <FiShield className="w-4 h-4 mr-2 text-primary" />
+                        User Role *
+                      </label>
+                      <Select
+                        value={roleOptions.find(option => option.value === formData.role)}
+                        onChange={(selectedOption) => handleInputChange("role", selectedOption.value)}
+                        options={roleOptions}
+                        className="w-full"
+                        classNamePrefix="react-select"
+                        menuPortalTarget={document.body}
+                        styles={{
+                          control: (provided) => ({
+                            ...provided,
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "0.5rem",
+                            padding: "0.25rem",
+                            minHeight: "48px",
+                            boxShadow: "none",
+                            backgroundColor: "var(--color-surface)",
+                            "&:hover": {
+                              border: "1px solid #e5e7eb",
+                            },
+                            "&:focus-within": {
+                              borderColor: "var(--color-primary)",
+                              borderWidth: "2px",
+                              boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                            },
+                          }),
+                          singleValue: (provided) => ({
+                            ...provided,
+                            color: "#374151",
+                          }),
+                          placeholder: (provided) => ({
+                            ...provided,
+                            color: "#9ca3af",
+                          }),
+                          option: (provided, state) => ({
+                            ...provided,
+                            backgroundColor: state.isSelected
+                              ? "var(--color-primary)"
+                              : state.isFocused
+                              ? "#f3f4f6"
+                              : "white",
+                            color: state.isSelected ? "white" : "#374151",
+                            cursor: "pointer",
+                          }),
+                          menu: (provided) => ({
+                            ...provided,
+                            borderRadius: "0.5rem",
+                            border: "1px solid #e5e7eb",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                            zIndex: 9999,
+                          }),
+                          menuPortal: (provided) => ({
+                            ...provided,
+                            zIndex: 9999,
+                          }),
+                        }}
+                        components={{
+                          DropdownIndicator: () => (
+                            <MdKeyboardArrowDown className="text-gray-400 mr-2" />
+                          ),
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    {/* Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                        <FiLock className="w-4 h-4 mr-2 text-primary" />
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) => handleInputChange("password", e.target.value)}
+                          onBlur={() => handleBlur("password")}
+                          className={`w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all bg-surface ${
+                            errors.password && touched.password
+                              ? "border-red-300 focus:border-red-500"
+                              : "border-border focus:border-primary"
+                          }`}
+                          placeholder="Enter password (min 8 characters)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-gray-600 transition-colors focus:outline-none focus:text-gray-600"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <FiEyeOff className="w-5 h-5" />
+                          ) : (
+                            <FiEye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                      {combinedErrors.password && touched.password && (
+                        <p className="text-red-600 text-sm mt-2 flex items-center">
+                          <span className="w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                          {combinedErrors.password}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                        <FiPhone className="w-4 h-4 mr-2 text-primary" />
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        onBlur={() => handleBlur("phone")}
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all bg-surface ${
+                          errors.phone && touched.phone
+                            ? "border-red-300 focus:border-red-500"
+                            : "border-border focus:border-primary"
+                        }`}
+                        placeholder="Enter phone number"
+                      />
+                      {combinedErrors.phone && touched.phone && (
+                        <p className="text-red-600 text-sm mt-2 flex items-center">
+                          <span className="w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                          {combinedErrors.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* RERA Number - Conditional */}
+                    <AnimatePresence>
+                      {formData.role === "partner" && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div>
+                            <label className="block text-sm font-medium text-heading mb-3 flex items-center">
+                              <FiShield className="w-4 h-4 mr-2 text-primary" />
+                              RERA Number *
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.reraNumber}
+                              onChange={(e) => handleInputChange("reraNumber", e.target.value)}
+                              onBlur={() => handleBlur("reraNumber")}
+                              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all bg-surface ${
+                                errors.reraNumber && touched.reraNumber
+                                  ? "border-red-300 focus:border-red-500"
+                                  : "border-border focus:border-primary"
+                              }`}
+                              placeholder="Enter RERA registration number"
+                            />
+                            {combinedErrors.reraNumber && touched.reraNumber && (
+                              <p className="text-red-600 text-sm mt-2 flex items-center">
+                                <span className="w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                                {combinedErrors.reraNumber}
+                              </p>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 px-4 py-3 border border-border rounded-lg text-body hover:bg-surface transition-colors"
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      "Create User"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

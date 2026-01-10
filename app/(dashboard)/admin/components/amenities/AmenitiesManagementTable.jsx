@@ -475,40 +475,64 @@ export default function AmenitiesManagementTable() {
 
         {/* Pagination */}
         {!error && totalPages > 1 && (
-          <motion.div
-            className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.4 }}
-          >
+          <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
             <div className="text-sm text-muted">
-              Showing page {currentPage} of {totalPages} ({totalAmenities} total
-              amenities)
+              Showing page {currentPage} of {totalPages} ({totalAmenities}{" "}
+              total amenities)
             </div>
             <div className="flex items-center space-x-2">
-              <motion.button
+              <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
               >
                 <FiChevronLeft className="w-4 h-4" />
-              </motion.button>
-              <span className="px-3 py-1 border border-border rounded-md bg-white font-medium">
-                {currentPage}
-              </span>
-              <motion.button
+              </button>
+
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+                let startPage = Math.max(
+                  1,
+                  currentPage - Math.floor(maxVisiblePages / 2)
+                );
+                let endPage = Math.min(
+                  totalPages,
+                  startPage + maxVisiblePages - 1
+                );
+
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      onClick={() => handlePageChange(i)}
+                      className={`px-3 py-1 border border-border rounded-md ${
+                        i === currentPage
+                          ? "bg-primary text-white border-primary"
+                          : "hover:bg-white"
+                      }`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+
+                return pages;
+              })()}
+
+              <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
               >
                 <FiChevronRight className="w-4 h-4" />
-              </motion.button>
+              </button>
             </div>
-          </motion.div>
+          </div>
         )}
       </motion.div>
 

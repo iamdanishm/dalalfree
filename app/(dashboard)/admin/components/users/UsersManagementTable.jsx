@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useToast } from "@/app/lib/hooks/useToast";
 import {
   FiUsers,
   FiSearch,
@@ -11,9 +12,14 @@ import {
   FiEye,
   FiChevronLeft,
   FiChevronRight,
+  FiX,
+  FiPlus,
 } from "react-icons/fi";
+import AddUserModal from "./AddUserModal";
+import EditUserModal from "./EditUserModal";
 
 export default function UsersManagementTable() {
+  const { success, error: showError } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -22,6 +28,7 @@ export default function UsersManagementTable() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState({
     value: "",
     label: "All Roles",
@@ -30,6 +37,14 @@ export default function UsersManagementTable() {
     value: "",
     label: "All Status",
   });
+
+  // Modal states
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [editUserLoading, setEditUserLoading] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
 
   const fetchUsers = async (
     page = 1,
@@ -73,21 +88,20 @@ export default function UsersManagementTable() {
     }
   };
 
-  const handleSearch = () => {
-    fetchUsers(
-      1,
-      searchTerm,
-      roleFilter?.value || "",
-      statusFilter?.value || ""
-    );
-  };
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  // Immediate filter when role/status changes (no loading spinner)
+  // Trigger search when debounced term changes
   useEffect(() => {
     if (!initialLoad) {
-      fetchUsers(1, "", roleFilter?.value || "", "");
+      fetchUsers(1, debouncedSearchTerm, roleFilter?.value || "", statusFilter?.value || "");
     }
-  }, [roleFilter, statusFilter]);
+  }, [debouncedSearchTerm, roleFilter, statusFilter]);
 
   useEffect(() => {
     fetchUsers(1, "", "", "", true); // Show loading on initial load
@@ -96,7 +110,7 @@ export default function UsersManagementTable() {
   const handlePageChange = (page) => {
     fetchUsers(
       page,
-      searchTerm,
+      debouncedSearchTerm,
       roleFilter?.value || "",
       statusFilter?.value || ""
     );
@@ -118,7 +132,7 @@ export default function UsersManagementTable() {
             alert("User suspended successfully");
             fetchUsers(
               currentPage,
-              searchTerm,
+              debouncedSearchTerm,
               roleFilter?.value || "",
               statusFilter?.value || ""
             );
@@ -130,6 +144,106 @@ export default function UsersManagementTable() {
     } catch (err) {
       console.error("Error performing action:", err);
       alert("Failed to perform action");
+    }
+  };
+
+  const handleAddUser = async (userData) => {
+    setAddUserLoading(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        success(`User "${userData.name}" created successfully!`);
+        setShowAddUserModal(false);
+        setServerErrors({}); // Clear server errors on success
+        // Refresh the users list
+        fetchUsers(
+          currentPage,
+          debouncedSearchTerm,
+          roleFilter?.value || "",
+          statusFilter?.value || ""
+        );
+      } else {
+        // Handle API validation errors - don't show toast, let modal handle it
+        if (data.fieldErrors) {
+          // This is a field-specific validation error, pass to modal
+          setServerErrors(data.fieldErrors);
+        } else if (data.missing && Array.isArray(data.missing)) {
+          // Legacy validation error format
+          console.error("Validation error:", data);
+          setServerErrors({ general: data.error || "Validation failed" });
+        } else {
+          // Other errors (like email exists) still show as toast
+          setServerErrors({});
+          showError(data.error || "Failed to create user");
+        }
+      }
+    } catch (err) {
+      console.error("Error creating user:", err);
+      showError("Failed to create user. Please try again.");
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowEditUserModal(true);
+  };
+
+  const handleEditSubmit = async (userData) => {
+    setEditUserLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        success(`User "${userData.name}" updated successfully!`);
+        setShowEditUserModal(false);
+        setSelectedUser(null);
+        setServerErrors({}); // Clear server errors on success
+        // Refresh the users list
+        fetchUsers(
+          currentPage,
+          debouncedSearchTerm,
+          roleFilter?.value || "",
+          statusFilter?.value || ""
+        );
+      } else {
+        // Handle API validation errors - don't show toast, let modal handle it
+        if (data.fieldErrors) {
+          // This is a field-specific validation error, pass to modal
+          setServerErrors(data.fieldErrors);
+        } else if (data.missing && Array.isArray(data.missing)) {
+          // Legacy validation error format
+          console.error("Validation error:", data);
+          setServerErrors({ general: data.error || "Validation failed" });
+        } else {
+          // Other errors (like email exists) still show as toast
+          setServerErrors({});
+          showError(data.error || "Failed to update user");
+        }
+      }
+    } catch (err) {
+      console.error("Error updating user:", err);
+      showError("Failed to update user. Please try again.");
+    } finally {
+      setEditUserLoading(false);
     }
   };
 
@@ -186,7 +300,18 @@ export default function UsersManagementTable() {
             <FiUsers className="w-5 h-5 mr-2 text-primary" />
             User Management
           </h2>
-          <div className="text-sm text-muted">Total: {totalUsers} users</div>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-muted">Total: {totalUsers} users</div>
+            <motion.button
+              onClick={() => setShowAddUserModal(true)}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all duration-200 shadow-soft"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <FiPlus className="w-4 h-4 mr-2" />
+              Add User
+            </motion.button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -197,36 +322,27 @@ export default function UsersManagementTable() {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <motion.div
-            className="relative flex-1 flex gap-2"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
+            className="relative flex-1"
           >
-            <div className="relative flex-1">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
-              <motion.input
-                type="text"
-                placeholder="Search by name, email, or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                initial={{ scale: 0.98 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5, duration: 0.3 }}
-              />
-            </div>
-            <motion.button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 whitespace-nowrap"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
-            >
-              Search
-            </motion.button>
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by name, phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-gray-600"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
 
           <motion.div
@@ -477,6 +593,7 @@ export default function UsersManagementTable() {
                       <button
                         className="text-orange-600 hover:text-orange-800 p-1"
                         title="Edit User"
+                        onClick={() => handleEditUser(user)}
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
@@ -498,41 +615,92 @@ export default function UsersManagementTable() {
 
       {/* Pagination */}
       {!error && totalPages > 1 && (
-        <motion.div
-          className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.4 }}
-        >
+        <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
           <div className="text-sm text-muted">
-            Showing page {currentPage} of {totalPages} ({totalUsers} total
-            users)
+            Showing page {currentPage} of {totalPages} ({totalUsers}{" "}
+            total users)
           </div>
           <div className="flex items-center space-x-2">
-            <motion.button
+            <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
             >
               <FiChevronLeft className="w-4 h-4" />
-            </motion.button>
-            <span className="px-3 py-1 border border-border rounded-md bg-white font-medium">
-              {currentPage}
-            </span>
-            <motion.button
+            </button>
+
+            {(() => {
+              const pages = [];
+              const maxVisiblePages = 5;
+              let startPage = Math.max(
+                1,
+                currentPage - Math.floor(maxVisiblePages / 2)
+              );
+              let endPage = Math.min(
+                totalPages,
+                startPage + maxVisiblePages - 1
+              );
+
+              if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+              }
+
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`px-3 py-1 border border-border rounded-md ${
+                      i === currentPage
+                        ? "bg-primary text-white border-primary"
+                        : "hover:bg-white"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+
+              return pages;
+            })()}
+
+            <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all duration-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
             >
               <FiChevronRight className="w-4 h-4" />
-            </motion.button>
+            </button>
           </div>
-        </motion.div>
+        </div>
       )}
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setServerErrors({}); // Clear server errors when closing
+        }}
+        onSubmit={handleAddUser}
+        loading={addUserLoading}
+        serverErrors={serverErrors}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={() => {
+          setShowEditUserModal(false);
+          setSelectedUser(null);
+          setServerErrors({}); // Clear server errors when closing
+        }}
+        onSubmit={handleEditSubmit}
+        loading={editUserLoading}
+        serverErrors={serverErrors}
+        userData={selectedUser}
+      />
     </motion.div>
   );
 }
+              <FiChevronRight className="w-4 h-4" />
