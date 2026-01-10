@@ -1,14 +1,16 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { FiSearch } from "react-icons/fi";
 import PropertyCard from "@/app/components/PropertyCard";
 import { motion } from "framer-motion";
+import { useToast } from "@/app/lib/hooks/useToast";
 
 export default function UserPropertiesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,6 +32,21 @@ export default function UserPropertiesPage() {
       }
     }
   }, [status, session, router]);
+
+  // Clean up success parameter from URL if present (no need to show toast here since it's already shown during creation)
+  useEffect(() => {
+    const successParam = searchParams.get("success");
+    if (successParam === "true") {
+      // Clean up URL by removing the success parameter
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("success");
+      newSearchParams.delete("propertyId");
+      const newUrl = newSearchParams.toString()
+        ? `${window.location.pathname}?${newSearchParams.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   // Fetch user properties
   const fetchProperties = useCallback(async () => {

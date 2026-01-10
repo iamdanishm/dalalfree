@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FiArrowLeft, FiArrowRight, FiCheck } from "react-icons/fi";
+import { useToast } from "@/app/lib/hooks/useToast";
 import {
   FiHome,
   FiInfo,
@@ -78,6 +79,7 @@ const steps = [
 export default function PropertyWizard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -471,6 +473,9 @@ export default function PropertyWizard() {
       // Final progress update
       setUploadProgress(100);
 
+      // Show success toast
+      success("Property created successfully! 🎉");
+
       // Redirect to success page or property management
       router.push(
         `/user/properties?success=true&propertyId=${result.property.id}`
@@ -480,6 +485,9 @@ export default function PropertyWizard() {
       console.error("Error details:", error.message);
       setErrors({ submit: error.message });
       setUploadStatus("error");
+
+      // Show error toast
+      showError(error.message || "Failed to create property. Please try again.");
     } finally {
       setIsSubmitting(false);
       // Reset progress after a delay

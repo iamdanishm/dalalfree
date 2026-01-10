@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useToast } from "@/app/lib/hooks/useToast";
 import {
   FiHome,
   FiSearch,
@@ -20,6 +21,7 @@ import ConfirmationModal from "@/app/components/ConfirmationModal";
 import RejectionModal from "@/app/components/RejectionModal";
 
 export default function PropertiesManagementTable() {
+  const { success, error: showError } = useToast();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -145,14 +147,14 @@ export default function PropertiesManagementTable() {
         );
         setShowApproveModal(false);
         setSelectedPropertyForAction(null);
-        // Show success toast or message
+        success(`Property "${selectedPropertyForAction.title}" approved successfully!`);
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to approve property");
       }
     } catch (err) {
       console.error("Error approving property:", err);
-      // Show error toast or message
+      showError(err.message || "Failed to approve property");
     } finally {
       setActionLoading(false);
     }
@@ -215,14 +217,14 @@ export default function PropertiesManagementTable() {
         );
         setShowRejectModal(false);
         setSelectedPropertyForAction(null);
-        // Show success toast or message
+        success(`Property "${selectedPropertyForAction.title}" rejected successfully!`);
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to reject property");
       }
     } catch (err) {
       console.error("Error rejecting property:", err);
-      // Show error toast or message
+      showError(err.message || "Failed to reject property");
     } finally {
       setActionLoading(false);
     }
@@ -284,14 +286,14 @@ export default function PropertiesManagementTable() {
         );
         setShowDeleteModal(false);
         setSelectedPropertyForAction(null);
-        // Show success toast or message
+        success(`Property "${selectedPropertyForAction.title}" archived successfully!`);
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to delete property");
       }
     } catch (err) {
       console.error("Error deleting property:", err);
-      // Show error toast or message
+      showError(err.message || "Failed to archive property");
     } finally {
       setActionLoading(false);
     }
@@ -324,14 +326,14 @@ export default function PropertiesManagementTable() {
         );
         setShowUnarchiveModal(false);
         setSelectedPropertyForAction(null);
-        // Show success toast or message
+        success(`Property "${selectedPropertyForAction.title}" unarchived successfully!`);
       } else {
         const data = await response.json();
         throw new Error(data.error || "Failed to unarchive property");
       }
     } catch (err) {
       console.error("Error unarchiving property:", err);
-      // Show error toast or message
+      showError(err.message || "Failed to unarchive property");
     } finally {
       setActionLoading(false);
     }

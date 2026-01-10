@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdClose, MdCheckCircle, MdCancel } from "react-icons/md";
 import { FiTrash2, FiX } from "react-icons/fi";
+import { useToast } from "@/app/lib/hooks/useToast";
 import ConfirmationModal from "@/app/components/ConfirmationModal";
 import RejectionModal from "@/app/components/RejectionModal";
 import PropertyDetailsTab from "./PropertyDetailsTab";
@@ -20,6 +21,7 @@ export default function PropertyDetailModal({
   onDelete,
   onUnarchive,
 }) {
+  const { success, error: showError } = useToast();
   const [activeTab, setActiveTab] = useState("details");
 
   // Modal states
@@ -42,10 +44,10 @@ export default function PropertyDetailModal({
     try {
       await onApprove(property._id);
       setShowApproveModal(false);
-      // Success message handled by parent component
+      success(`Property "${property.title}" approved successfully!`);
     } catch (err) {
       console.error("Error approving property:", err);
-      // Error message handled by parent component
+      showError(err.message || "Failed to approve property");
     } finally {
       setActionLoading(false);
     }
@@ -63,10 +65,10 @@ export default function PropertyDetailModal({
     try {
       await onReject(property._id, reason.trim());
       setShowRejectModal(false);
-      // Success message handled by parent component
+      success(`Property "${property.title}" rejected successfully!`);
     } catch (err) {
       console.error("Error rejecting property:", err);
-      // Error message handled by parent component
+      showError(err.message || "Failed to reject property");
     } finally {
       setActionLoading(false);
     }
@@ -83,10 +85,10 @@ export default function PropertyDetailModal({
     try {
       await onDelete(property._id);
       setShowDeleteModal(false);
-      // Success message handled by parent component
+      success(`Property "${property.title}" archived successfully!`);
     } catch (err) {
       console.error("Error deleting property:", err);
-      // Error message handled by parent component
+      showError(err.message || "Failed to archive property");
     } finally {
       setActionLoading(false);
     }
@@ -103,10 +105,10 @@ export default function PropertyDetailModal({
     try {
       await onUnarchive(property._id);
       setShowUnarchiveModal(false);
-      // Success message handled by parent component
+      success(`Property "${property.title}" unarchived successfully!`);
     } catch (err) {
       console.error("Error unarchiving property:", err);
-      // Error message handled by parent component
+      showError(err.message || "Failed to unarchive property");
     } finally {
       setActionLoading(false);
     }
