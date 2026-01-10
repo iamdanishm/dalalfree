@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { FiHome } from "react-icons/fi";
+import { FiAward } from "react-icons/fi";
 import AmenitiesManagementTable from "../components/amenities/AmenitiesManagementTable";
 
 export default function AdminAmenitiesPageClient() {
@@ -21,7 +21,7 @@ export default function AdminAmenitiesPageClient() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <FiHome className="w-8 h-8 text-primary mb-3" />
+          <FiAward className="w-8 h-8 text-primary mb-3" />
         </motion.div>
         <motion.h1
           className="text-3xl font-bold text-heading"

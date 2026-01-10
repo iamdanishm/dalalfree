@@ -2,36 +2,9 @@ import mongoose from "mongoose";
 
 const amenitySchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: [100, "Name cannot exceed 100 characters"],
-    },
-    icon: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      required: true,
-      trim: true,
-      enum: [
-        "safety",
-        "utilities",
-        "convenience",
-        "recreational",
-        "fitness",
-        "family",
-        "services",
-        "technology",
-        "eco",
-        "wellness",
-      ],
-    },
     title: {
       type: String,
+      required: true,
       trim: true,
       maxLength: [100, "Title cannot exceed 100 characters"],
     },
@@ -50,22 +23,21 @@ const amenitySchema = new mongoose.Schema(
 );
 
 // Add index for faster searches
-amenitySchema.index({ name: 1 });
-amenitySchema.index({ category: 1 });
+amenitySchema.index({ title: 1 });
 amenitySchema.index({ available: 1 });
 amenitySchema.index({ createdAt: -1 });
 
-// Prevent duplicate names (case-insensitive)
+// Prevent duplicate titles (case-insensitive)
 amenitySchema.pre("save", async function (next) {
-  if (this.isNew || this.isModified("name")) {
+  if (this.isNew || this.isModified("title")) {
     const existing = await mongoose.models.Amenity.findOne({
-      name: { $regex: new RegExp(`^${this.name}$`, "i") },
+      title: { $regex: new RegExp(`^${this.title}$`, "i") },
       _id: { $ne: this._id },
     });
 
     if (existing) {
-      const error = new Error("An amenity with this name already exists");
-      error.code = "DUPLICATE_NAME";
+      const error = new Error("An amenity with this title already exists");
+      error.code = "DUPLICATE_TITLE";
       return next(error);
     }
   }
@@ -88,3 +60,4 @@ if (mongoose.modelSchemas && mongoose.modelSchemas.Amenity) {
 const Amenity = mongoose.model("Amenity", amenitySchema);
 
 export default Amenity;
+

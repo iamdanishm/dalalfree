@@ -9,9 +9,9 @@ import {
   FiUsers,
   FiMapPin,
   FiCheckCircle,
+  FiXCircle,
   FiDollarSign,
   FiClock,
-  FiEye,
   FiActivity,
   FiRefreshCw,
 } from "react-icons/fi";
@@ -287,6 +287,8 @@ export default function AdminDashboard() {
                   ? FiMapPin
                   : metric.title === "Pending KYC"
                   ? FiCheckCircle
+                  : metric.title === "Rejected Today"
+                  ? FiXCircle
                   : FiDollarSign
               }
               positive={metric.positive}
@@ -297,6 +299,8 @@ export default function AdminDashboard() {
                   ? "bg-gradient-to-r from-green-500 to-emerald-600"
                   : metric.title === "Pending KYC"
                   ? "bg-gradient-to-r from-orange-500 to-amber-600"
+                  : metric.title === "Rejected Today"
+                  ? "bg-gradient-to-r from-red-500 to-red-600"
                   : "bg-gradient-to-r from-purple-500 to-pink-600"
               }
               delay={delay}
@@ -339,9 +343,6 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -372,12 +373,7 @@ export default function AdminDashboard() {
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-primary hover:text-primary/80">
-                      <button className="flex items-center">
-                        <FiEye className="w-4 h-4 mr-1" />
-                        View
-                      </button>
-                    </td>
+
                   </tr>
                 ))}
               </tbody>

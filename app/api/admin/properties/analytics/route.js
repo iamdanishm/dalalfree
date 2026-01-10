@@ -6,10 +6,11 @@ import User from "@/app/lib/models/User";
 
 // GET /api/admin/users/analytics - User stats (registration charts, growth)
 export async function GET() {
-  await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin")
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await connectDB();
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin")
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   // Total users by role
   const totalUsers = await User.countDocuments();
@@ -61,8 +62,26 @@ export async function GET() {
     ],
   });
 
-  // Revenue placeholder - would come from payments table
-  const monthlyRevenue = 12450; // Placeholder until payments implemented
+  // Count rejected properties today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const rejectedToday = await Property.countDocuments({
+    status: "rejected",
+    createdAt: { $gte: today, $lt: tomorrow },
+  });
+
+  // Count rejected properties yesterday for growth calculation
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayEnd = new Date(today);
+
+  const rejectedYesterday = await Property.countDocuments({
+    status: "rejected",
+    createdAt: { $gte: yesterday, $lt: yesterdayEnd },
+  });
 
   // Helper function to calculate percentage change
   const calculateChange = (current, previous) => {
@@ -93,8 +112,8 @@ export async function GET() {
   // KYC processing rate
   const kycGrowth = { change: "-5%", positive: false };
 
-  // Revenue (placeholder for now)
-  const revenueGrowth = { change: "+18%", positive: true };
+  // Rejected properties growth calculation
+  const rejectedGrowth = calculateChange(rejectedToday, rejectedYesterday);
 
   return NextResponse.json({
     metrics: [
@@ -117,10 +136,10 @@ export async function GET() {
         positive: kycGrowth.positive,
       },
       {
-        title: "Monthly Revenue",
-        value: `$${monthlyRevenue.toLocaleString()}`,
-        change: revenueGrowth.change,
-        positive: revenueGrowth.positive,
+        title: "Rejected Today",
+        value: rejectedToday.toString(),
+        change: rejectedGrowth.change,
+        positive: rejectedGrowth.positive,
       },
     ],
     detailedStats: {
@@ -139,8 +158,15 @@ export async function GET() {
         userGrowth,
         approvedPropertiesGrowth,
         kycGrowth,
-        revenueGrowth,
+        rejectedGrowth,
       },
     },
   });
+  } catch (error) {
+    console.error("Error in analytics API:", error);
+    return NextResponse.json(
+      { error: "Internal server error", details: error.message },
+      { status: 500 }
+    );
+  }
 }

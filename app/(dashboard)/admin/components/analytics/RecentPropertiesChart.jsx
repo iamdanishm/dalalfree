@@ -5,22 +5,26 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import { FiBarChart, FiTrendingUp } from "react-icons/fi";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 export default function RecentPropertiesChart({ propertyData }) {
@@ -66,36 +70,19 @@ export default function RecentPropertiesChart({ propertyData }) {
       {
         label: "Properties Added",
         data: recentData,
-        backgroundColor: [
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.8)",
-          "rgba(229, 9, 20, 0.9)",
-        ],
-        borderColor: [
-          "#d1080f",
-          "#d1080f",
-          "#d1080f",
-          "#d1080f",
-          "#d1080f",
-          "#d1080f",
-          "#d1080f",
-        ],
-        borderWidth: 1,
-        borderRadius: 6,
-        borderSkipped: false,
-        hoverBackgroundColor: [
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-          "rgba(229, 9, 20, 1)",
-        ],
+        fill: true,
+        backgroundColor: "rgba(229, 9, 20, 0.1)",
+        borderColor: "#e50914",
+        borderWidth: 3,
+        pointBackgroundColor: "#e50914",
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: "#e50914",
+        pointHoverBorderColor: "#ffffff",
+        pointHoverBorderWidth: 3,
+        tension: 0.4,
       },
     ],
   };
@@ -103,7 +90,6 @@ export default function RecentPropertiesChart({ propertyData }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    indexAxis: isLargeScreen ? "y" : "x", // Horizontal bars on large screens
     plugins: {
       legend: {
         display: false,
@@ -121,14 +107,13 @@ export default function RecentPropertiesChart({ propertyData }) {
             return context[0].label;
           },
           label: function (context) {
-            return `${context.parsed.x || context.parsed.y} properties added`;
+            return `${context.parsed.y} properties added`;
           },
         },
       },
     },
     scales: {
       x: {
-        display: !isLargeScreen, // Hide x-axis on horizontal bars
         grid: {
           display: false,
         },
@@ -152,20 +137,25 @@ export default function RecentPropertiesChart({ propertyData }) {
             weight: "500",
           },
           stepSize: 1,
+          beginAtZero: true,
         },
       },
     },
     elements: {
-      bar: {
-        borderRadius: 6,
-        borderSkipped: false,
-        barThickness: isLargeScreen ? 40 : 40,
-        maxBarThickness: isLargeScreen ? 60 : 60,
+      point: {
+        hoverRadius: 8,
+      },
+      line: {
+        tension: 0.4,
       },
     },
     animation: {
       duration: 1000,
       easing: "easeOutQuart",
+    },
+    interaction: {
+      intersect: false,
+      mode: "index",
     },
   };
 
@@ -188,7 +178,7 @@ export default function RecentPropertiesChart({ propertyData }) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-heading flex items-center">
-              <FiBarChart className="w-5 h-5 mr-2 text-primary" />
+              <FiTrendingUp className="w-5 h-5 mr-2 text-primary" />
               Recent Properties Added
             </h2>
             <p className="text-sm text-muted mt-1">
@@ -213,7 +203,7 @@ export default function RecentPropertiesChart({ propertyData }) {
 
       <div className="p-6">
         <div className={`${isLargeScreen ? "h-80" : "h-64"} w-full`}>
-          <Bar ref={chartRef} data={data} options={options} />
+          <Line ref={chartRef} data={data} options={options} />
         </div>
 
         {/* Additional stats */}

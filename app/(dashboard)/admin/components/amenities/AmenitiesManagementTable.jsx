@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/app/lib/hooks/useToast";
 import ConfirmationModal from "@/app/components/ConfirmationModal";
 import {
-  FiHome,
+  FiAward,
   FiSearch,
   FiPlus,
   FiEdit,
@@ -28,6 +28,7 @@ export default function AmenitiesManagementTable() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalAmenities, setTotalAmenities] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -103,17 +104,28 @@ export default function AmenitiesManagementTable() {
     }
   };
 
-  const handleSearch = () => {
-    fetchAmenities(1, searchTerm);
-  };
-
   useEffect(() => {
     // Initial load from API
     fetchAmenities(1, "", false);
   }, []);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Trigger search when debounced term changes
+  useEffect(() => {
+    if (!initialLoad) {
+      fetchAmenities(1, debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm]);
+
   const handlePageChange = (page) => {
-    fetchAmenities(page, searchTerm);
+    fetchAmenities(page, debouncedSearchTerm);
   };
 
   const handleImageChange = (e) => {
@@ -170,7 +182,7 @@ export default function AmenitiesManagementTable() {
         setUploading(false);
         setShowAddModal(false);
         resetForm();
-        fetchAmenities(currentPage, searchTerm);
+        fetchAmenities(currentPage, debouncedSearchTerm);
         success("Amenity added successfully!");
       } else {
         throw new Error(data.error || "Failed to add amenity");
@@ -208,7 +220,7 @@ export default function AmenitiesManagementTable() {
         setShowEditModal(false);
         setSelectedAmenity(null);
         resetForm();
-        fetchAmenities(currentPage, searchTerm);
+        fetchAmenities(currentPage, debouncedSearchTerm);
         success("Amenity updated successfully!");
       } else {
         throw new Error(data.error || "Failed to update amenity");
@@ -239,7 +251,7 @@ export default function AmenitiesManagementTable() {
       const data = await response.json();
 
       if (response.ok) {
-        fetchAmenities(currentPage, searchTerm);
+        fetchAmenities(currentPage, debouncedSearchTerm);
         success("Amenity deleted successfully!");
         setShowDeleteModal(false);
         setSelectedAmenityToDelete(null);
@@ -267,7 +279,7 @@ export default function AmenitiesManagementTable() {
       const data = await response.json();
 
       if (response.ok) {
-        fetchAmenities(currentPage, searchTerm);
+        fetchAmenities(currentPage, debouncedSearchTerm);
         success(
           `Amenity ${!currentStatus ? "enabled" : "disabled"} successfully!`
         );
@@ -302,7 +314,7 @@ export default function AmenitiesManagementTable() {
         <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-heading flex items-center">
-              <FiHome className="w-5 h-5 mr-2 text-primary" />
+              <FiAward className="w-5 h-5 mr-2 text-primary" />
               Amenities Management
             </h2>
             <div className="text-sm text-muted">
@@ -318,48 +330,31 @@ export default function AmenitiesManagementTable() {
             transition={{ delay: 0.3, duration: 0.4 }}
           >
             <motion.div
-              className="relative flex-1 flex gap-2"
+              className="relative flex-1"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.4 }}
             >
-              <div className="relative flex-1">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
-                <motion.input
-                  type="text"
-                  placeholder="Search amenities..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                  initial={{ scale: 0.98 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.5, duration: 0.3 }}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm("");
-                      fetchAmenities(1, "");
-                    }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-heading transition-colors"
-                    title="Clear search"
-                  >
-                    <FiX className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <motion.button
-                onClick={handleSearch}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 whitespace-nowrap"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.3 }}
-              >
-                Search
-              </motion.button>
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+              <motion.input
+                type="text"
+                placeholder="Search amenities..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                initial={{ scale: 0.98 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-heading transition-colors"
+                  title="Clear search"
+                >
+                  <FiX className="w-4 h-4" />
+                </button>
+              )}
             </motion.div>
 
             <motion.button
@@ -595,19 +590,33 @@ export default function AmenitiesManagementTable() {
                 </div>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="available"
-                  checked={formData.available}
-                  onChange={(e) =>
-                    setFormData({ ...formData, available: e.target.checked })
-                  }
-                  className="mr-2"
-                />
-                <label htmlFor="available" className="text-sm text-body">
-                  Available
+              <div>
+                <label className="block text-sm font-medium text-heading mb-2">
+                  Status
                 </label>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        available: !formData.available,
+                      })
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                      formData.available ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                        formData.available ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm text-body">
+                    {formData.available ? "Available" : "Disabled"}
+                  </span>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -708,19 +717,33 @@ export default function AmenitiesManagementTable() {
                 </div>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="edit-available"
-                  checked={formData.available}
-                  onChange={(e) =>
-                    setFormData({ ...formData, available: e.target.checked })
-                  }
-                  className="mr-2"
-                />
-                <label htmlFor="edit-available" className="text-sm text-body">
-                  Available
+              <div>
+                <label className="block text-sm font-medium text-heading mb-2">
+                  Status
                 </label>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        available: !formData.available,
+                      })
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                      formData.available ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                        formData.available ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm text-body">
+                    {formData.available ? "Available" : "Disabled"}
+                  </span>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

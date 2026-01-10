@@ -1,4 +1,5 @@
 import { FiCheck } from "react-icons/fi";
+import Image from "next/image";
 
 export default function PropertyAmenitiesTab({ property }) {
   return (
@@ -17,9 +18,11 @@ export default function PropertyAmenitiesTab({ property }) {
               >
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
                   {amenity.image ? (
-                    <img
+                    <Image
                       src={amenity.image}
                       alt={amenity.title || amenity.name}
+                      width={24}
+                      height={24}
                       className="w-5 h-5 md:w-6 md:h-6"
                     />
                   ) : (
