@@ -4,10 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiMenu,
-  FiBell,
   FiUser,
   FiLogOut,
-  FiSettings,
   FiChevronDown,
 } from "react-icons/fi";
 import { useSession, signOut } from "next-auth/react";
@@ -15,45 +13,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function AdminNavbar({ onMenuClick }) {
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const notificationsRef = useRef(null);
   const dropdownRef = useRef(null);
   const { data: session } = useSession();
 
-  // Mock notifications - replace with real data
-  const notifications = [
-    {
-      id: 1,
-      title: "New user registered",
-      description: "John Doe joined the platform",
-      time: "2 minutes ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "Property approved",
-      description: "Apartment in Downtown approved",
-      time: "15 minutes ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      title: "KYC pending review",
-      description: "Sarah Wilson requires verification",
-      time: "1 hour ago",
-      unread: false,
-    },
-  ];
-
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target)
-      ) {
-        setNotificationsOpen(false);
-      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setUserDropdownOpen(false);
       }
@@ -63,12 +28,6 @@ export default function AdminNavbar({ onMenuClick }) {
   }, []);
 
   const userDropdownVariants = {
-    hidden: { opacity: 0, y: -10, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, y: -10, scale: 0.95 },
-  };
-
-  const notificationsVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, y: -10, scale: 0.95 },
@@ -125,87 +84,13 @@ export default function AdminNavbar({ onMenuClick }) {
             </motion.button>
           </motion.div>
 
-          {/* Right side - Notifications and User menu */}
+          {/* Right side - User menu */}
           <motion.div
             className="flex items-center space-x-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
           >
-            {/* Notifications */}
-            <div className="relative" ref={notificationsRef}>
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 rounded-lg text-secondary hover:bg-surface transition-colors"
-                aria-label="Notifications"
-              >
-                <FiBell className="w-5 h-5" />
-                {notifications.filter((n) => n.unread).length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {notifications.filter((n) => n.unread).length}
-                  </span>
-                )}
-              </button>
-
-              {/* Notifications Dropdown */}
-              <AnimatePresence>
-                {notificationsOpen && (
-                  <motion.div
-                    variants={notificationsVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-soft border border-border overflow-hidden z-100"
-                  >
-                    <div className="p-4 border-b border-border">
-                      <h3 className="text-sm font-semibold text-heading">
-                        Notifications
-                      </h3>
-                    </div>
-
-                    <div className="max-h-64 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-4 border-b border-border/50 hover:bg-surface/50 cursor-pointer transition-colors ${
-                            notification.unread ? "bg-primary/5" : ""
-                          }`}
-                        >
-                          <div className="flex items-start">
-                            <div
-                              className={`shrink-0 w-2 h-2 rounded-full mt-2 ${
-                                notification.unread
-                                  ? "bg-primary"
-                                  : "bg-transparent"
-                              }`}
-                            />
-                            <div className="ml-3 flex-1">
-                              <p className="text-sm font-medium text-heading">
-                                {notification.title}
-                              </p>
-                              <p className="text-xs text-muted mt-1">
-                                {notification.description}
-                              </p>
-                              <p className="text-xs text-muted/70 mt-2">
-                                {notification.time}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="p-4 text-center">
-                      <button className="text-sm text-primary hover:text-primary/80 font-medium">
-                        View all notifications
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -252,16 +137,9 @@ export default function AdminNavbar({ onMenuClick }) {
                       </div>
                     </div>
 
-                    <div className="py-2">
-                      <button className="w-full flex items-center px-4 py-3 text-sm text-body hover:bg-surface transition-colors">
-                        <FiSettings className="w-4 h-4 mr-3" />
-                        Profile Settings
-                      </button>
-                    </div>
-
                     <div className="border-t border-border pt-2">
                       <button
-                        onClick={() => signOut()}
+                        onClick={() => signOut({ callbackUrl: "/" })}
                         className="w-full flex items-center px-4 py-3 text-sm text-error hover:bg-error/10 transition-colors"
                       >
                         <FiLogOut className="w-4 h-4 mr-3" />

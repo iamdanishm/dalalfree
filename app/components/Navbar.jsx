@@ -271,7 +271,7 @@ export default function Navbar() {
                           <button
                             onClick={() => {
                               setUserDropdownOpen(false);
-                              signOut();
+                              signOut({ callbackUrl: "/" });
                             }}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
                           >
@@ -405,7 +405,7 @@ export default function Navbar() {
                     <button
                       onClick={() => {
                         setOpen(false);
-                        signOut();
+                        signOut({ callbackUrl: "/" });
                       }}
                       className="flex items-center w-full px-3 py-3 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors duration-150 touch-manipulation"
                     >

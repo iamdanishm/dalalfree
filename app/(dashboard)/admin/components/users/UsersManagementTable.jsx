@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/app/lib/hooks/useToast";
 import {
   FiUsers,
@@ -17,8 +18,11 @@ import {
 } from "react-icons/fi";
 import AddUserModal from "./AddUserModal";
 import EditUserModal from "./EditUserModal";
+import UserDetailModal from "./UserDetailModal";
+import ConfirmationModal from "@/app/components/ConfirmationModal";
 
 export default function UsersManagementTable() {
+  const { data: session } = useSession();
   const { success, error: showError } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,9 +45,14 @@ export default function UsersManagementTable() {
   // Modal states
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showUserDetailModal, setShowUserDetailModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState(null);
   const [addUserLoading, setAddUserLoading] = useState(false);
   const [editUserLoading, setEditUserLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [serverErrors, setServerErrors] = useState({});
 
   const fetchUsers = async (
@@ -116,34 +125,44 @@ export default function UsersManagementTable() {
     );
   };
 
-  const handleUserAction = async (userId, action) => {
-    try {
-      if (action === "delete") {
-        if (confirm("Are you sure you want to suspend this user?")) {
-          const response = await fetch(`/api/admin/users/${userId}`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              reason: "Suspended by admin",
-            }),
-          });
+  const handleDeleteUser = (user) => {
+    setSelectedUserToDelete(user);
+    setShowDeleteModal(true);
+  };
 
-          if (response.ok) {
-            alert("User suspended successfully");
-            fetchUsers(
-              currentPage,
-              debouncedSearchTerm,
-              roleFilter?.value || "",
-              statusFilter?.value || ""
-            );
-          } else {
-            alert("Failed to suspend user");
-          }
-        }
+  const confirmDeleteUser = async () => {
+    if (!selectedUserToDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUserToDelete._id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: "Suspended by admin",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        success("User suspended successfully!");
+        setShowDeleteModal(false);
+        setSelectedUserToDelete(null);
+        // Refresh the users list
+        fetchUsers(
+          currentPage,
+          debouncedSearchTerm,
+          roleFilter?.value || "",
+          statusFilter?.value || ""
+        );
+      } else {
+        throw new Error(data.error || "Failed to suspend user");
       }
-    } catch (err) {
-      console.error("Error performing action:", err);
-      alert("Failed to perform action");
+    } catch (error) {
+      showError(error.message || "Failed to suspend user");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -192,6 +211,11 @@ export default function UsersManagementTable() {
     } finally {
       setAddUserLoading(false);
     }
+  };
+
+  const handleRowClick = (user) => {
+    setSelectedUserId(user._id);
+    setShowUserDetailModal(true);
   };
 
   const handleEditUser = (user) => {
@@ -530,7 +554,8 @@ export default function UsersManagementTable() {
               {users.map((user, index) => (
                 <motion.tr
                   key={user._id || index}
-                  className="hover:bg-surface transition-colors"
+                  className="hover:bg-surface transition-colors cursor-pointer"
+                  onClick={() => handleRowClick(user)}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.3 }}
@@ -585,25 +610,28 @@ export default function UsersManagementTable() {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
                       <button
-                        className="text-blue-600 hover:text-blue-800 p-1"
-                        title="View Details"
-                      >
-                        <FiEye className="w-4 h-4" />
-                      </button>
-                      <button
                         className="text-orange-600 hover:text-orange-800 p-1"
                         title="Edit User"
-                        onClick={() => handleEditUser(user)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click
+                          handleEditUser(user);
+                        }}
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
-                      <button
-                        className="text-red-600 hover:text-red-800 p-1"
-                        onClick={() => handleUserAction(user._id, "delete")}
-                        title="Suspend User"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
+                      {/* Only show suspend button for other users, not for current admin */}
+                      {user._id !== session?.user?.id && (
+                        <button
+                          className="text-red-600 hover:text-red-800 p-1"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent row click
+                            handleDeleteUser(user);
+                          }}
+                          title="Suspend User"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </motion.tr>
@@ -700,7 +728,34 @@ export default function UsersManagementTable() {
         serverErrors={serverErrors}
         userData={selectedUser}
       />
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        isOpen={showUserDetailModal}
+        onClose={() => {
+          setShowUserDetailModal(false);
+          setSelectedUserId(null);
+        }}
+        onEdit={handleEditUser}
+        userId={selectedUserId}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedUserToDelete(null);
+        }}
+        onConfirm={confirmDeleteUser}
+        title="Suspend User"
+        message={`Are you sure you want to suspend "${selectedUserToDelete?.name}"? This action will change their account status to suspended.`}
+        confirmText="Suspend"
+        cancelText="Cancel"
+        confirmButtonColor="bg-red-600 hover:bg-red-700"
+        loading={deleteLoading}
+      />
     </motion.div>
   );
 }
-              <FiChevronRight className="w-4 h-4" />
+              <FiChevronRight className="w-4 h-4" />

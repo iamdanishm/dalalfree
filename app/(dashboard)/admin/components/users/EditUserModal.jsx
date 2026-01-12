@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiUser, FiMail, FiPhone, FiShield, FiEdit } from "react-icons/fi";
+import { FiX, FiUser, FiMail, FiPhone, FiShield, FiEdit, FiLock } from "react-icons/fi";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useSession } from "next-auth/react";
 
 export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serverErrors, userData }) {
+  const { data: session } = useSession();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,6 +23,11 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
   const [touched, setTouched] = useState({});
   const [initialStatus, setInitialStatus] = useState("active");
 
+  // Check if user is editing themselves (prevent admin self-changes)
+  const isEditingSelf = userData && session?.user?.id === userData._id;
+  const canChangeStatus = !isEditingSelf || session?.user?.role !== "admin";
+  const canChangeRole = !isEditingSelf || session?.user?.role !== "admin";
+
   // Merge server errors with client errors
   const combinedErrors = { ...errors };
   if (serverErrors) {
@@ -29,6 +37,17 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
       }
     });
   }
+
+  // Helper function to convert display role back to raw role
+  const getRawRole = (displayRole) => {
+    switch (displayRole) {
+      case "User": return "user";
+      case "Partner": return "partner";
+      case "Sub-Admin": return "sub-admin";
+      case "Admin": return "admin";
+      default: return displayRole?.toLowerCase() || "user";
+    }
+  };
 
   // Reset form when modal closes or user data changes
   useEffect(() => {
@@ -51,7 +70,7 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
         name: userData.name || "",
         email: userData.email || "",
         phone: userData.phone || "",
-        role: userData.role || "user",
+        role: getRawRole(userData.role) || "user", // Convert display role to raw role
         accountStatus: userData.accountStatus || userData.status || "active",
         accountStatusReason: userData.accountStatusReason || "",
         reraNumber: userData.reraNumber || "",
@@ -325,6 +344,9 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                       <label className="block text-sm font-medium text-heading mb-3 flex items-center">
                         <FiShield className="w-4 h-4 mr-2 text-primary" />
                         User Role *
+                        {!canChangeRole && (
+                          <FiLock className="w-4 h-4 ml-2 text-gray-400" title="You cannot change your own role" />
+                        )}
                       </label>
                       <Select
                         value={roleOptions.find(option => option.value === formData.role)}
@@ -332,28 +354,31 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                         options={roleOptions}
                         className="w-full"
                         classNamePrefix="react-select"
+                        isDisabled={!canChangeRole}
                         menuPortalTarget={document.body}
                         styles={{
-                          control: (provided) => ({
+                          control: (provided, state) => ({
                             ...provided,
                             border: "1px solid #e5e7eb",
                             borderRadius: "0.5rem",
                             padding: "0.25rem",
                             minHeight: "48px",
                             boxShadow: "none",
-                            backgroundColor: "var(--color-surface)",
+                            backgroundColor: state.isDisabled ? "#f9fafb" : "var(--color-surface)",
+                            opacity: state.isDisabled ? 0.6 : 1,
+                            cursor: state.isDisabled ? "not-allowed" : "pointer",
                             "&:hover": {
-                              border: "1px solid #e5e7eb",
+                              border: state.isDisabled ? "1px solid #e5e7eb" : "1px solid #e5e7eb",
                             },
                             "&:focus-within": {
-                              borderColor: "var(--color-primary)",
-                              borderWidth: "2px",
-                              boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                              borderColor: state.isDisabled ? "#e5e7eb" : "var(--color-primary)",
+                              borderWidth: state.isDisabled ? "1px" : "2px",
+                              boxShadow: state.isDisabled ? "none" : "0 0 0 2px rgba(var(--color-primary), 0.5)",
                             },
                           }),
-                          singleValue: (provided) => ({
+                          singleValue: (provided, state) => ({
                             ...provided,
-                            color: "#374151",
+                            color: state.isDisabled ? "#6b7280" : "#374151",
                           }),
                           placeholder: (provided) => ({
                             ...provided,
@@ -387,6 +412,12 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                           ),
                         }}
                       />
+                      {!canChangeRole && (
+                        <p className="text-sm text-gray-500 mt-2 flex items-center">
+                          <FiLock className="w-4 h-4 mr-1" />
+                          You cannot change your own role
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -423,6 +454,9 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                       <label className="block text-sm font-medium text-heading mb-3 flex items-center">
                         <FiShield className="w-4 h-4 mr-2 text-primary" />
                         Account Status *
+                        {!canChangeStatus && (
+                          <FiLock className="w-4 h-4 ml-2 text-gray-400" title="You cannot change your own status" />
+                        )}
                       </label>
                       <Select
                         value={statusOptions.find(option => option.value === formData.accountStatus)}
@@ -430,28 +464,31 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                         options={statusOptions}
                         className="w-full"
                         classNamePrefix="react-select"
+                        isDisabled={!canChangeStatus}
                         menuPortalTarget={document.body}
                         styles={{
-                          control: (provided) => ({
+                          control: (provided, state) => ({
                             ...provided,
                             border: "1px solid #e5e7eb",
                             borderRadius: "0.5rem",
                             padding: "0.25rem",
                             minHeight: "48px",
                             boxShadow: "none",
-                            backgroundColor: "var(--color-surface)",
+                            backgroundColor: state.isDisabled ? "#f9fafb" : "var(--color-surface)",
+                            opacity: state.isDisabled ? 0.6 : 1,
+                            cursor: state.isDisabled ? "not-allowed" : "pointer",
                             "&:hover": {
-                              border: "1px solid #e5e7eb",
+                              border: state.isDisabled ? "1px solid #e5e7eb" : "1px solid #e5e7eb",
                             },
                             "&:focus-within": {
-                              borderColor: "var(--color-primary)",
-                              borderWidth: "2px",
-                              boxShadow: "0 0 0 2px rgba(var(--color-primary), 0.5)",
+                              borderColor: state.isDisabled ? "#e5e7eb" : "var(--color-primary)",
+                              borderWidth: state.isDisabled ? "1px" : "2px",
+                              boxShadow: state.isDisabled ? "none" : "0 0 0 2px rgba(var(--color-primary), 0.5)",
                             },
                           }),
-                          singleValue: (provided) => ({
+                          singleValue: (provided, state) => ({
                             ...provided,
-                            color: "#374151",
+                            color: state.isDisabled ? "#6b7280" : "#374151",
                           }),
                           placeholder: (provided) => ({
                             ...provided,
@@ -485,6 +522,12 @@ export default function EditUserModal({ isOpen, onClose, onSubmit, loading, serv
                           ),
                         }}
                       />
+                      {!canChangeStatus && (
+                        <p className="text-sm text-gray-500 mt-2 flex items-center">
+                          <FiLock className="w-4 h-4 mr-1" />
+                          You cannot change your own account status
+                        </p>
+                      )}
                     </div>
 
                     {/* RERA Number - Conditional */}

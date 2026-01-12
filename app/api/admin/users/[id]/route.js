@@ -1,9 +1,81 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
+import Property from "@/app/lib/models/Property";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { sendEmail } from "@/app/lib/email";
+
+export async function GET(req, { params }) {
+  await connectDB();
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // Await params in Next.js 15+
+  const { id } = await params;
+
+  try {
+    // Fetch user details
+    const user = await User.findById(id).select(
+      "name email phone role accountStatus accountStatusReason reraNumber subscription createdAt updatedAt"
+    ).lean();
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Fetch property statistics for this user
+    const propertyStats = await Property.aggregate([
+      { $match: { ownerId: user._id } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Convert to simple object
+    const stats = {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0
+    };
+
+    propertyStats.forEach(stat => {
+      stats[stat._id] = stat.count;
+      stats.total += stat.count;
+    });
+
+    // Format user data for frontend - keep raw role for editing compatibility
+    const formattedUser = {
+      ...user,
+      role: user.role, // Keep raw role value for form compatibility
+      displayRole: user.role === "user" ? "User" :
+                   user.role === "partner" ? "Partner" :
+                   user.role === "sub-admin" ? "Sub-Admin" :
+                   user.role === "admin" ? "Admin" : user.role,
+      status: user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
+      accountStatus: user.accountStatus,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    };
+
+    return NextResponse.json({
+      user: formattedUser,
+      propertyStats: stats
+    });
+
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user details" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(req, { params }) {
   await connectDB();
