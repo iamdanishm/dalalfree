@@ -2,9 +2,11 @@
 
 import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
+import ConfirmationModal from "@/app/components/ConfirmationModal";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { use, useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   FaBus,
   FaCheck,
@@ -57,11 +59,14 @@ const formatPrice = (price) => {
 
 export default function PropertyDetails({ params }) {
   const { slug } = use(params);
+  const router = useRouter();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { data: session, status: authStatus } = useSession();
 
   // Check if current user is the property owner using session data
@@ -83,6 +88,40 @@ export default function PropertyDetails({ params }) {
 
   const closeGalleryModal = () => {
     setShowGalleryModal(false);
+  };
+
+  // Handle delete property
+  const handleDeleteProperty = async () => {
+    if (!property?.id) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/properties/${property.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Redirect to user's properties page or show success
+        router.push("/dashboard/user/properties");
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to delete property");
+      }
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      alert("An error occurred while deleting the property");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  // Handle delete button click (opens modal)
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
   };
 
   // Transform database property data to frontend format
@@ -585,7 +624,7 @@ export default function PropertyDetails({ params }) {
                   variants={itemVariants}
                   whileHover={hoverVariants.hover}
                 >
-                  <OwnerActions propertyId={property.id} propertySlug={slug} property={property} />
+                  <OwnerActions propertyId={property.id} propertySlug={slug} property={property} onDeleteClick={handleDeleteClick} />
                 </motion.div>
               )}
 
@@ -651,6 +690,19 @@ export default function PropertyDetails({ params }) {
           }}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteProperty}
+        title="Delete Property"
+        message="Are you sure you want to delete this property? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isLoading={isDeleting}
+        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+      />
     </>
   );
 }
