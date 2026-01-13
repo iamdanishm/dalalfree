@@ -8,7 +8,7 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import ProfileHeader from "./components/ProfileHeader";
 import SubscriptionDashboard from "./components/SubscriptionDashboard";
-import ActivityStats from "./components/ActivityStats";
+import PropertyManagement from "./components/PropertyManagement";
 import AccountSettings from "./components/AccountSettings";
 
 export default function ProfilePage() {
@@ -109,7 +109,7 @@ export default function ProfilePage() {
               My Profile
             </h1>
             <p className="text-gray-600">
-              Manage your account settings and view your subscription details
+              Manage your account, properties, and subscription
             </p>
           </div>
 
@@ -128,8 +128,8 @@ export default function ProfilePage() {
               onProfileUpdate={fetchUserProfile}
             />
 
-            {/* Stats Cards Grid */}
-            <ActivityStats user={userProfile} />
+            {/* Property Management Section - Full Width */}
+            <PropertyManagement user={userProfile} />
 
             {/* Main Content Cards - Responsive Layout */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">

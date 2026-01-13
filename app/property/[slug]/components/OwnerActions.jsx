@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ConfirmationModal from "@/app/components/ConfirmationModal";
 
-export default function OwnerActions({ propertyId, propertySlug }) {
+export default function OwnerActions({ propertyId, propertySlug, property }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -47,10 +47,11 @@ export default function OwnerActions({ propertyId, propertySlug }) {
   return (
     <>
       <motion.div
-        className="bg-white rounded-xl shadow-lg p-6"
+        className="bg-white rounded-xl shadow-lg p-6 border-2 border-red-500"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        style={{ zIndex: 100 }}
       >
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -63,13 +64,15 @@ export default function OwnerActions({ propertyId, propertySlug }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3">
-          <button
-            onClick={handleEdit}
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary text-white rounded-lg hover:opacity-90 transition-all font-medium"
-          >
-            <FiEdit className="w-5 h-5" />
-            Edit Property
-          </button>
+          {property?.status !== "rejected" && (
+            <button
+              onClick={handleEdit}
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary text-white rounded-lg hover:opacity-90 transition-all font-medium"
+            >
+              <FiEdit className="w-5 h-5" />
+              Edit Property
+            </button>
+          )}
           <button
             onClick={() => setShowDeleteModal(true)}
             className="flex items-center justify-center gap-2 w-full py-3 px-4 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-all font-medium"

@@ -4,7 +4,7 @@ import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useMemo } from "react";
 import {
   FaBus,
   FaCheck,
@@ -65,12 +65,16 @@ export default function PropertyDetails({ params }) {
   const { data: session, status: authStatus } = useSession();
 
   // Check if current user is the property owner using session data
-  const isOwner =
-    authStatus === "authenticated" &&
-    session?.user?.id &&
-    property &&
-    (String(session.user.id) === String(property.ownerId) ||
-      String(session.user._id) === String(property.ownerId));
+  const isOwner = useMemo(() => {
+    if (authStatus !== "authenticated" || !session?.user?.id || !property?.ownerId) {
+      return false;
+    }
+
+    const sessionUserId = String(session.user.id || session.user._id);
+    const propertyOwnerId = String(property.ownerId._id || property.ownerId);
+
+    return sessionUserId === propertyOwnerId;
+  }, [authStatus, session?.user?.id, session?.user?._id, property?.ownerId]);
 
   const openGalleryModal = (startIndex = 0) => {
     setModalImageIndex(startIndex);
@@ -141,6 +145,8 @@ export default function PropertyDetails({ params }) {
       discount: dbProperty.discount,
       propertyType: dbProperty.propertyType || "rent",
       verified: dbProperty.verified || false,
+      status: dbProperty.status,
+      rejectionReason: dbProperty.rejectionReason,
 
       images,
       imageCategories: dbProperty.imageCategories || [],
@@ -555,19 +561,36 @@ export default function PropertyDetails({ params }) {
 
             {/* Right Column - Owner Info & Amenities */}
             <motion.div className="space-y-6" variants={itemVariants}>
-              {/* Owner Actions (Edit/Delete) - Only for property owner */}
-              {isOwner && (
+              {/* Loading state for session */}
+              {authStatus === "loading" && (
                 <motion.div
                   className="pt-4"
                   variants={itemVariants}
                   whileHover={hoverVariants.hover}
                 >
-                  <OwnerActions propertyId={property.id} propertySlug={slug} />
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                      <div className="h-10 bg-gray-200 rounded mb-3"></div>
+                      <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Owner Actions (Edit/Delete) - Only for property owner */}
+              {authStatus === "authenticated" && isOwner && (
+                <motion.div
+                  className="pt-4"
+                  variants={itemVariants}
+                  whileHover={hoverVariants.hover}
+                >
+                  <OwnerActions propertyId={property.id} propertySlug={slug} property={property} />
                 </motion.div>
               )}
 
               {/* Property Owner Card - Only for non-owners */}
-              {!isOwner && (
+              {authStatus === "authenticated" && !isOwner && (
                 <motion.div
                   className="pt-4"
                   variants={itemVariants}

@@ -10,14 +10,10 @@ import {
   FiCalendar,
   FiMail,
 } from "react-icons/fi";
+import ProfileEditModal from "./ProfileEditModal";
 
 export default function ProfileHeader({ user, onProfileUpdate }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    phone: user?.phone || "",
-  });
-  const [isSaving, setIsSaving] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Get user initials for avatar
   const getInitials = (name) => {
@@ -28,47 +24,6 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      const response = await fetch("/api/users/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      setIsEditing(false);
-      onProfileUpdate(); // Refresh profile data
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      // TODO: Show error message to user
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setFormData({
-      name: user?.name || "",
-      phone: user?.phone || "",
-    });
-    setIsEditing(false);
   };
 
   return (
@@ -121,12 +76,7 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
                     </motion.div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <FiShield size={14} className="shrink-0" />
-                  <span className="text-sm">
-                    KYC {user?.isVerified ? "Verified" : "Pending"}
-                  </span>
-                </div>
+
               </div>
             </motion.div>
           </div>
@@ -139,7 +89,7 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
             transition={{ delay: 0.4, duration: 0.5 }}
           >
             <motion.button
-              onClick={() => setIsEditing(true)}
+              onClick={() => setShowEditModal(true)}
               className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg border border-white/30 transition-all duration-200 text-sm"
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
@@ -164,76 +114,13 @@ export default function ProfileHeader({ user, onProfileUpdate }) {
         </div>
       </div>
 
-      {/* Edit Modal - Transforms into white card */}
-      {isEditing && (
-        <motion.div
-          className="bg-white rounded-t-lg mt-2 p-6 shadow-lg"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Edit Profile Information
-            </h3>
-
-            {/* Quick Edit Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-            </div>
-
-            {/* Edit Actions */}
-            <div className="flex gap-3 pt-4 border-t">
-              <motion.button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </motion.button>
-
-              <motion.button
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Cancel
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        user={user}
+        onProfileUpdate={onProfileUpdate}
+      />
     </motion.div>
   );
 }

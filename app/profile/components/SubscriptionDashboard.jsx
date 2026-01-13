@@ -16,25 +16,19 @@ export default function SubscriptionDashboard({ user }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  const getStaticSubscriptionData = () => {
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
-
+  const getSubscriptionData = () => {
     return {
-      subscriptionStatus: user?.subscriptionStatus || "none",
-      subscriptionStartDate: user?.subscriptionStartDate || now,
-      subscriptionEndDate: user?.subscriptionEndDate || sevenDaysFromNow,
-      freeTrialUsed: user?.freeTrialUsed || false,
-      freeTrialStartDate: user?.freeTrialStartDate,
-      freeTrialEndDate: user?.freeTrialEndDate || thirtyDaysFromNow,
-      adUnlockCredits: user?.adUnlockCredits || 0,
+      subscriptionStatus: user?.subscription?.status || "none",
+      subscriptionStartDate: user?.subscription?.startDate,
+      subscriptionEndDate: user?.subscription?.endDate,
+      freeTrialUsed: user?.subscription?.freeTrialUsed || false,
+      freeTrialStartDate: user?.subscription?.freeTrialStartDate,
+      freeTrialEndDate: user?.subscription?.freeTrialEndDate,
+      adUnlockCredits: user?.subscription?.adUnlockCredits || 0,
     };
   };
 
-  const staticSubscriptionData = getStaticSubscriptionData();
+  const subscriptionData = getSubscriptionData();
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -65,9 +59,9 @@ export default function SubscriptionDashboard({ user }) {
   };
 
   const calculateTrialDaysLeft = () => {
-    if (!staticSubscriptionData.freeTrialEndDate) return 0;
+    if (!subscriptionData.freeTrialEndDate) return 0;
     const now = new Date();
-    const endDate = new Date(staticSubscriptionData.freeTrialEndDate);
+    const endDate = new Date(subscriptionData.freeTrialEndDate);
     const diffTime = endDate - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return Math.max(0, diffDays);
@@ -102,10 +96,10 @@ export default function SubscriptionDashboard({ user }) {
           >
             Subscription & Credits
           </motion.h2>
-          {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+          {subscriptionData.subscriptionStatus === "free_trial" && (
             <motion.div
               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                staticSubscriptionData.subscriptionStatus
+                subscriptionData.subscriptionStatus
               )}`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -136,10 +130,10 @@ export default function SubscriptionDashboard({ user }) {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  {staticSubscriptionData.subscriptionStatus ===
+                  {subscriptionData.subscriptionStatus ===
                   "free_trial" ? (
                     <FiGift size={24} />
-                  ) : staticSubscriptionData.subscriptionStatus === "active" ? (
+                  ) : subscriptionData.subscriptionStatus === "active" ? (
                     <FiTrendingUp size={24} />
                   ) : (
                     <FiPlay size={24} />
@@ -147,16 +141,16 @@ export default function SubscriptionDashboard({ user }) {
                 </div>
                 <div>
                   <h3 className="font-bold text-xl">
-                    {staticSubscriptionData.subscriptionStatus === "free_trial"
+                    {subscriptionData.subscriptionStatus === "free_trial"
                       ? "Free Trial Active"
-                      : staticSubscriptionData.subscriptionStatus === "active"
+                      : subscriptionData.subscriptionStatus === "active"
                       ? "Premium Membership"
                       : "Ad-Supported Access"}
                   </h3>
                   <p className="text-purple-100">
-                    {staticSubscriptionData.subscriptionStatus === "free_trial"
+                    {subscriptionData.subscriptionStatus === "free_trial"
                       ? "Unlimited contacts for 30 days"
-                      : staticSubscriptionData.subscriptionStatus === "active"
+                      : subscriptionData.subscriptionStatus === "active"
                       ? "Full access to premium features"
                       : "Watch ads to reveal contacts"}
                   </p>
@@ -164,13 +158,13 @@ export default function SubscriptionDashboard({ user }) {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold">
-                  {staticSubscriptionData.subscriptionStatus === "free_trial"
+                  {subscriptionData.subscriptionStatus === "free_trial"
                     ? `${trialDaysLeft} days`
-                    : staticSubscriptionData.subscriptionStatus === "active"
+                    : subscriptionData.subscriptionStatus === "active"
                     ? "Active"
                     : "Free"}
                 </div>
-                {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+                {subscriptionData.subscriptionStatus === "free_trial" && (
                   <div className="text-sm text-purple-200">trial remaining</div>
                 )}
               </div>
@@ -180,17 +174,17 @@ export default function SubscriptionDashboard({ user }) {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
               <div
                 className={`w-2 h-2 rounded-full ${
-                  staticSubscriptionData.subscriptionStatus === "active"
+                  subscriptionData.subscriptionStatus === "active"
                     ? "bg-green-400"
-                    : staticSubscriptionData.subscriptionStatus === "free_trial"
+                    : subscriptionData.subscriptionStatus === "free_trial"
                     ? "bg-blue-400"
                     : "bg-orange-400"
                 }`}
               ></div>
               <span className="text-sm font-medium">
-                {staticSubscriptionData.subscriptionStatus === "active"
+                {subscriptionData.subscriptionStatus === "active"
                   ? "Premium Plan"
-                  : staticSubscriptionData.subscriptionStatus === "free_trial"
+                  : subscriptionData.subscriptionStatus === "free_trial"
                   ? "30-Day Free Trial"
                   : "Ad-Supported"}
               </span>
@@ -247,7 +241,7 @@ export default function SubscriptionDashboard({ user }) {
                   animate={{ scale: 1, y: 0 }}
                   transition={{ delay: 0.8, type: "spring", stiffness: 300 }}
                 >
-                  {staticSubscriptionData.adUnlockCredits}
+                  {subscriptionData.adUnlockCredits}
                 </motion.div>
 
                 <motion.div
@@ -288,9 +282,9 @@ export default function SubscriptionDashboard({ user }) {
                   Plan Details
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {staticSubscriptionData.subscriptionStatus === "active"
+                  {subscriptionData.subscriptionStatus === "active"
                     ? "Your premium subscription details"
-                    : staticSubscriptionData.subscriptionStatus === "free_trial"
+                    : subscriptionData.subscriptionStatus === "free_trial"
                     ? "Trial period information"
                     : "Upgrade to unlock premium features"}
                 </p>
@@ -298,7 +292,7 @@ export default function SubscriptionDashboard({ user }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              {staticSubscriptionData.subscriptionStatus === "free_trial" && (
+              {subscriptionData.subscriptionStatus === "free_trial" && (
                 <>
                   <motion.div
                     className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
@@ -308,7 +302,7 @@ export default function SubscriptionDashboard({ user }) {
                   >
                     <span className="text-gray-600">Trial started:</span>
                     <span className="font-semibold text-gray-900">
-                      {formatDate(staticSubscriptionData.freeTrialStartDate)}
+                      {formatDate(subscriptionData.freeTrialStartDate)}
                     </span>
                   </motion.div>
                   <motion.div
@@ -319,12 +313,12 @@ export default function SubscriptionDashboard({ user }) {
                   >
                     <span className="text-gray-600">Trial expires:</span>
                     <span className="font-semibold text-orange-600">
-                      {formatDate(staticSubscriptionData.freeTrialEndDate)}
+                      {formatDate(subscriptionData.freeTrialEndDate)}
                     </span>
                   </motion.div>
                 </>
               )}
-              {staticSubscriptionData.subscriptionStatus === "active" && (
+              {subscriptionData.subscriptionStatus === "active" && (
                 <>
                   <motion.div
                     className="flex justify-between items-center p-3 bg-white/60 rounded-lg border border-blue-100"
@@ -334,7 +328,7 @@ export default function SubscriptionDashboard({ user }) {
                   >
                     <span className="text-gray-600">Active since:</span>
                     <span className="font-semibold text-gray-900">
-                      {formatDate(staticSubscriptionData.subscriptionStartDate)}
+                      {formatDate(subscriptionData.subscriptionStartDate)}
                     </span>
                   </motion.div>
                   <motion.div
@@ -345,12 +339,12 @@ export default function SubscriptionDashboard({ user }) {
                   >
                     <span className="text-gray-600">Expires:</span>
                     <span className="font-semibold text-gray-900">
-                      {formatDate(staticSubscriptionData.subscriptionEndDate)}
+                      {formatDate(subscriptionData.subscriptionEndDate)}
                     </span>
                   </motion.div>
                 </>
               )}
-              {staticSubscriptionData.subscriptionStatus === "none" && (
+              {subscriptionData.subscriptionStatus === "none" && (
                 <div className="col-span-2 text-center py-8">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -372,7 +366,7 @@ export default function SubscriptionDashboard({ user }) {
         </motion.div>
 
         {/* Trial Warning */}
-        {staticSubscriptionData.subscriptionStatus === "free_trial" &&
+        {subscriptionData.subscriptionStatus === "free_trial" &&
           trialDaysLeft <= 3 && (
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-center gap-3">
@@ -392,11 +386,11 @@ export default function SubscriptionDashboard({ user }) {
           )}
 
         {/* Upgrade CTA */}
-        {(staticSubscriptionData.subscriptionStatus === "free_trial" ||
-          staticSubscriptionData.subscriptionStatus === "none" ||
-          staticSubscriptionData.subscriptionStatus === "expired") && (
+        {(subscriptionData.subscriptionStatus === "free_trial" ||
+          subscriptionData.subscriptionStatus === "none" ||
+          subscriptionData.subscriptionStatus === "expired") && (
           <div className="mt-6 text-center">
-            {!staticSubscriptionData.freeTrialUsed ? (
+            {!subscriptionData.freeTrialUsed ? (
               // Show Free Trial button for new users
               <motion.button
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center gap-2 mx-auto"
@@ -424,7 +418,7 @@ export default function SubscriptionDashboard({ user }) {
               </motion.button>
             )}
             <p className="text-sm text-gray-600 mt-2">
-              {!staticSubscriptionData.freeTrialUsed
+              {!subscriptionData.freeTrialUsed
                 ? "Get 30 days free trial with unlimited contact reveals"
                 : "Get 30 direct contact reveals for ₹200/month"}
             </p>

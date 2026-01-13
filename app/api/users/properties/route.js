@@ -68,7 +68,7 @@ export async function GET(req) {
 
     // Get properties with search and sort
     const properties = await Property.find(query)
-      .select("title slug propertyType category price location status createdAt images bhk builtUpArea furnishing verified featured city state")
+      .select("title slug propertyType category price location status rejectionReason createdAt images bhk builtUpArea furnishing verified featured city state")
       .sort(sortOption)
       .lean();
 

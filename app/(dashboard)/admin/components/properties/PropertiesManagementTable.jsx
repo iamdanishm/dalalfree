@@ -230,13 +230,13 @@ export default function PropertiesManagementTable() {
     }
   };
 
-  const handleReject = async (propertyId) => {
+  const handleReject = async (propertyId, reason = "Rejected by admin") => {
     // Keep for backward compatibility with PropertyDetailModal
     try {
       const response = await fetch(`/api/admin/properties/${propertyId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected", rejectionReason: "Rejected by admin" }),
+        body: JSON.stringify({ status: "rejected", rejectionReason: reason }),
       });
 
       if (response.ok) {

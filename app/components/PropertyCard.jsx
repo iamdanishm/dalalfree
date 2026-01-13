@@ -17,6 +17,14 @@ export default function PropertyCard({
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Check if current user is the property owner
+  const isOwner = session?.user?.id && property?.ownerId &&
+    (String(session.user.id) === String(property.ownerId._id || property.ownerId) ||
+     String(session.user._id) === String(property.ownerId._id || property.ownerId));
+
+  // Show management actions if explicitly requested OR if user is the owner
+  const shouldShowManagementActions = showManagementActions || isOwner;
+
   const handleWishlistClick = (propertyId) => {
     if (status === "unauthenticated") {
       router.push(
@@ -81,18 +89,20 @@ export default function PropertyCard({
         </span>
 
         {/* Management Actions */}
-        {showManagementActions && (
+        {shouldShowManagementActions && (
           <div className="absolute top-3 right-3 flex gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onEdit) onEdit(property);
-              }}
-              className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
-              title="Edit Property"
-            >
-              <FiEdit3 className="text-blue-600" size={16} />
-            </button>
+            {property.status !== "rejected" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onEdit) onEdit(property);
+                }}
+                className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                title="Edit Property"
+              >
+                <FiEdit3 className="text-blue-600" size={16} />
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -107,7 +117,7 @@ export default function PropertyCard({
         )}
 
         {/* Wishlist button (only if not showing management actions) */}
-        {!showManagementActions && (
+        {!shouldShowManagementActions && (
           <button
             onClick={(e) => {
               e.stopPropagation();

@@ -1,22 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   FiLock,
   FiTrash2,
-  FiBell,
-  FiMail,
   FiEye,
   FiEyeOff,
+  FiCheck,
+  FiX,
 } from "react-icons/fi";
+import { useToast } from "@/app/lib/hooks/useToast";
+import ConfirmationModal from "@/app/components/ConfirmationModal";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function AccountSettings({ user, onProfileUpdate }) {
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    marketingEmails: false,
-  });
-
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -32,6 +30,8 @@ export default function AccountSettings({ user, onProfileUpdate }) {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const { success, error: showError, promise } = useToast();
 
   const handleSettingChange = (setting, value) => {
     setSettings((prev) => ({
@@ -78,67 +78,98 @@ export default function AccountSettings({ user, onProfileUpdate }) {
     return Object.keys(errors).length === 0;
   };
 
+  // Password strength calculation
+  const calculatePasswordStrength = (password) => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    return score;
+  };
+
+  const getPasswordStrengthLabel = (strength) => {
+    if (strength <= 1)
+      return { label: "Weak", color: "text-red-600", bgColor: "bg-red-100" };
+    if (strength <= 3)
+      return {
+        label: "Medium",
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-100",
+      };
+    return {
+      label: "Strong",
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+    };
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
     if (!validatePasswordForm()) return;
 
-    try {
-      setIsChangingPassword(true);
-
-      const response = await fetch("/api/users/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        }),
-      });
-
+    const changePasswordPromise = fetch("/api/users/change-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      }),
+    }).then(async (response) => {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to change password");
       }
+      return response.json();
+    });
 
-      // Reset form
+    try {
+      await promise(changePasswordPromise, {
+        loading: "Changing password...",
+        success: "Password changed successfully!",
+        error: (err) => err.message || "Failed to change password",
+      });
+
+      // Reset form on success
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-
-      alert("Password changed successfully!");
     } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
-      setIsChangingPassword(false);
+      // Error is already handled by the promise toast
+      console.error("Password change error:", error);
     }
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+    const deletePromise = fetch("/api/users/delete-account", {
+      method: "POST",
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete account");
+      }
+      return response.json();
+    });
 
     try {
-      const response = await fetch("/api/users/delete-account", {
-        method: "POST",
+      await promise(deletePromise, {
+        loading: "Deleting account...",
+        success:
+          "Account deletion request submitted. We'll contact you shortly.",
+        error: (err) => err.message || "Failed to delete account",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete account");
-      }
-
-      alert("Account deletion request submitted. We'll contact you shortly.");
       setShowDeleteConfirmation(false);
+      // Optionally redirect to home page or logout
     } catch (error) {
-      alert(`Error: ${error.message}`);
+      // Error is already handled by the promise toast
+      console.error("Account deletion error:", error);
     }
   };
 
@@ -166,58 +197,6 @@ export default function AccountSettings({ user, onProfileUpdate }) {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Email Notifications */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-              <FiBell className="text-blue-600" size={18} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-gray-900">Email Notifications</h3>
-              <p className="text-sm text-gray-600">
-                Receive updates about your property searches and matches
-              </p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={settings.emailNotifications}
-              onChange={(e) =>
-                handleSettingChange("emailNotifications", e.target.checked)
-              }
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-          </label>
-        </div>
-
-        {/* Marketing Emails */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-              <FiMail className="text-green-600" size={18} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-gray-900">Marketing Emails</h3>
-              <p className="text-sm text-gray-600">
-                Get tips, property insights, and promotional offers
-              </p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={settings.marketingEmails}
-              onChange={(e) =>
-                handleSettingChange("marketingEmails", e.target.checked)
-              }
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-          </label>
-        </div>
-
         {/* Change Password */}
         <div className="border-t border-gray-200 pt-6">
           <div className="flex items-center gap-3 mb-4">
@@ -236,18 +215,19 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                 Current Password
               </label>
               <div className="relative">
-                <input
+                <motion.input
                   type={showPasswords.current ? "text" : "password"}
                   value={passwordData.currentPassword}
                   onChange={(e) =>
                     handlePasswordChange("currentPassword", e.target.value)
                   }
-                  className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 ${
                     passwordErrors.currentPassword
                       ? "border-red-300"
                       : "border-gray-300"
                   }`}
                   placeholder="Enter current password"
+                  whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
                 />
                 <button
                   type="button"
@@ -260,17 +240,26 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPasswords.current ? (
-                    <FiEyeOff size={18} />
+                    <FaEyeSlash size={16} />
                   ) : (
-                    <FiEye size={18} />
+                    <FaEye size={16} />
                   )}
                 </button>
               </div>
-              {passwordErrors.currentPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {passwordErrors.currentPassword}
-                </p>
-              )}
+              <AnimatePresence>
+                {passwordErrors.currentPassword && (
+                  <motion.span
+                    key="current-password-error"
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-red-500 mt-1 block"
+                  >
+                    {passwordErrors.currentPassword}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* New Password */}
@@ -279,18 +268,19 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                 New Password
               </label>
               <div className="relative">
-                <input
+                <motion.input
                   type={showPasswords.new ? "text" : "password"}
                   value={passwordData.newPassword}
                   onChange={(e) =>
                     handlePasswordChange("newPassword", e.target.value)
                   }
-                  className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 ${
                     passwordErrors.newPassword
                       ? "border-red-300"
                       : "border-gray-300"
                   }`}
                   placeholder="Enter new password"
+                  whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
                 />
                 <button
                   type="button"
@@ -300,17 +290,77 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPasswords.new ? (
-                    <FiEyeOff size={18} />
+                    <FaEyeSlash size={16} />
                   ) : (
-                    <FiEye size={18} />
+                    <FaEye size={16} />
                   )}
                 </button>
               </div>
-              {passwordErrors.newPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {passwordErrors.newPassword}
-                </p>
+
+              {/* Password Strength Indicator */}
+              {passwordData.newPassword && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <motion.div
+                        className={`h-2 rounded-full ${
+                          getPasswordStrengthLabel(
+                            calculatePasswordStrength(passwordData.newPassword)
+                          ).bgColor
+                        }`}
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${
+                            (calculatePasswordStrength(
+                              passwordData.newPassword
+                            ) /
+                              5) *
+                            100
+                          }%`,
+                        }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                    <span
+                      className={`text-xs font-medium ${
+                        getPasswordStrengthLabel(
+                          calculatePasswordStrength(passwordData.newPassword)
+                        ).color
+                      }`}
+                    >
+                      {
+                        getPasswordStrengthLabel(
+                          calculatePasswordStrength(passwordData.newPassword)
+                        ).label
+                      }
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Password should include uppercase, lowercase, numbers, and
+                    special characters
+                  </div>
+                </motion.div>
               )}
+
+              <AnimatePresence>
+                {passwordErrors.newPassword && (
+                  <motion.span
+                    key="new-password-error"
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-red-500 mt-1 block"
+                  >
+                    {passwordErrors.newPassword}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Confirm Password */}
@@ -319,18 +369,19 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                 Confirm New Password
               </label>
               <div className="relative">
-                <input
+                <motion.input
                   type={showPasswords.confirm ? "text" : "password"}
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
                     handlePasswordChange("confirmPassword", e.target.value)
                   }
-                  className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 ${
                     passwordErrors.confirmPassword
                       ? "border-red-300"
                       : "border-gray-300"
                   }`}
                   placeholder="Confirm new password"
+                  whileFocus={{ scale: 1.01, transition: { duration: 0.2 } }}
                 />
                 <button
                   type="button"
@@ -343,26 +394,47 @@ export default function AccountSettings({ user, onProfileUpdate }) {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPasswords.confirm ? (
-                    <FiEyeOff size={18} />
+                    <FaEyeSlash size={16} />
                   ) : (
-                    <FiEye size={18} />
+                    <FaEye size={16} />
                   )}
                 </button>
               </div>
-              {passwordErrors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {passwordErrors.confirmPassword}
-                </p>
-              )}
+              <AnimatePresence>
+                {passwordErrors.confirmPassword && (
+                  <motion.span
+                    key="confirm-password-error"
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs text-red-500 mt-1 block"
+                  >
+                    {passwordErrors.confirmPassword}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={isChangingPassword}
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full bg-primary text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              animate={isChangingPassword ? "loading" : "idle"}
             >
-              {isChangingPassword ? "Changing Password..." : "Change Password"}
-            </button>
+              <motion.span
+                key={isChangingPassword ? "loading" : "idle"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isChangingPassword
+                  ? "Changing Password..."
+                  : "Change Password"}
+              </motion.span>
+            </motion.button>
           </form>
         </div>
 
@@ -382,32 +454,27 @@ export default function AccountSettings({ user, onProfileUpdate }) {
               action cannot be undone.
             </p>
 
-            {!showDeleteConfirmation ? (
-              <button
-                onClick={() => setShowDeleteConfirmation(true)}
-                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
-              >
-                Delete Account
-              </button>
-            ) : (
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDeleteAccount}
-                  className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
-                >
-                  Confirm Deletion
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirmation(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => setShowDeleteConfirmation(true)}
+              className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+            >
+              Delete Account
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data, properties, and account information."
+        confirmText="Delete Account"
+        cancelText="Cancel"
+        confirmButtonColor="bg-red-600 hover:bg-red-700"
+      />
     </motion.div>
   );
 }
