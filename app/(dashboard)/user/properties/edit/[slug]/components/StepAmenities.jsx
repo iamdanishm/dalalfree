@@ -39,16 +39,6 @@ const nearbyPlaceTypes = [
   { value: "supermarket", label: "Supermarket", icon: "🏪" },
 ];
 
-const distanceOptions = [
-  { value: "0.1", label: "Within 100m" },
-  { value: "0.2", label: "Within 200m" },
-  { value: "0.5", label: "Within 500m" },
-  { value: "1", label: "Within 1 km" },
-  { value: "2", label: "Within 2 km" },
-  { value: "5", label: "Within 5 km" },
-  { value: "10", label: "Within 10 km" },
-];
-
 // Validation function for nearby places
 const validateNearbyPlaces = (places) => {
   if (!places || places.length === 0) return null;
@@ -69,6 +59,8 @@ export default function StepAmenities({
   updateFormData,
   errors,
   setErrors,
+  originalProperty,
+  isEditing = false,
 }) {
   const [amenities, setAmenities] = useState([]);
 
@@ -95,54 +87,58 @@ export default function StepAmenities({
     fetchAmenities();
   }, []);
 
+  // Ensure societyAmenities contains only string IDs
+  useEffect(() => {
+    if (formData.societyAmenities && formData.societyAmenities.length > 0) {
+      const cleanedAmenities = formData.societyAmenities
+        .map((amenity) => (typeof amenity === "string" ? amenity : amenity._id))
+        .filter((id) => id); // Remove any falsy values
+
+      if (
+        cleanedAmenities.length !== formData.societyAmenities.length ||
+        !cleanedAmenities.every((id) => typeof id === "string")
+      ) {
+        updateFormData({ societyAmenities: cleanedAmenities });
+      }
+    }
+  }, [formData.societyAmenities, updateFormData]);
+
+  // Pre-populate form data from original property
+  useEffect(() => {
+    if (originalProperty && isEditing) {
+      // Pre-populate highlights
+      if (originalProperty.highlights && !formData.highlights) {
+        updateFormData({ highlights: originalProperty.highlights });
+      }
+
+      // Pre-populate society amenities - check both new and old data structures
+      if (!formData.societyAmenities) {
+        let societyAmenityIds = [];
+
+        // First try the new structure (array of IDs)
+        if (originalProperty.societyAmenities && Array.isArray(originalProperty.societyAmenities)) {
+          societyAmenityIds = originalProperty.societyAmenities;
+        }
+        // Fallback to old structure (objects in amenities.society)
+        else if (originalProperty.amenities?.society && Array.isArray(originalProperty.amenities.society)) {
+          societyAmenityIds = originalProperty.amenities.society.map(
+            (amenity) => (typeof amenity === "string" ? amenity : amenity._id)
+          ).filter(Boolean);
+        }
+
+        if (societyAmenityIds.length > 0) {
+          updateFormData({ societyAmenities: societyAmenityIds });
+        }
+      }
+    }
+  }, [originalProperty, isEditing, formData.highlights, formData.societyAmenities, updateFormData]);
+
   // Validate nearby places on formData change
   useEffect(() => {
     const validationError = validateNearbyPlaces(formData.nearbyPlaces);
     setErrors((prev) => ({ ...prev, nearbyPlaces: validationError }));
-  }, [formData.nearbyPlaces]);
-  // Development helper function to fill form with sample data
-  const fillSampleData = () => {
-    updateFormData({
-      nearbyPlaces: [
-        {
-          type: normalizeNearbyPlaceType("school"),
-          name: "City Public School",
-          distance: "1",
-          rating: 4.2,
-        },
-        {
-          type: normalizeNearbyPlaceType("hospital"),
-          name: "Apollo Hospital",
-          distance: "2",
-          rating: 4.5,
-        },
-        {
-          type: normalizeNearbyPlaceType("mall"),
-          name: "Phoenix Mall",
-          distance: "2",
-          rating: 4.0,
-        },
-        {
-          type: normalizeNearbyPlaceType("metro"),
-          name: "MG Road Metro Station",
-          distance: "0.5",
-          rating: 4.3,
-        },
-        {
-          type: normalizeNearbyPlaceType("restaurant"),
-          name: "Domino's Pizza",
-          distance: "0.5",
-          rating: 3.8,
-        },
-      ],
-      highlights: [
-        "Prime Location",
-        "Modern Amenities",
-        "24/7 Security",
-        "Covered Parking",
-      ],
-    });
-  };
+  }, [formData.nearbyPlaces, setErrors]);
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -170,15 +166,34 @@ export default function StepAmenities({
   // Handle amenity toggle
   const handleAmenityToggle = (amenityId) => {
     const currentAmenities = formData.societyAmenities || [];
-    const isSelected = currentAmenities.includes(amenityId);
+    // Extract ID if it's an object
+    const id =
+      typeof amenityId === "object" && amenityId !== null
+        ? amenityId._id || amenityId
+        : amenityId;
 
-    const newAmenities = isSelected
-      ? currentAmenities.filter((id) => id !== amenityId)
-      : [...currentAmenities, amenityId];
+    // Check if selected, handling both objects and strings
+    const isSelected = currentAmenities.some(
+      (amenity) =>
+        (typeof amenity === "object" ? amenity._id || amenity : amenity) === id
+    );
+
+    let newAmenities;
+    if (isSelected) {
+      newAmenities = currentAmenities.filter(
+        (amenity) =>
+          (typeof amenity === "object" ? amenity._id || amenity : amenity) !==
+          id
+      );
+    } else {
+      newAmenities = [...currentAmenities, id]; // Always store as ID
+    }
 
     console.log(
       "Toggling amenity:",
       amenityId,
+      "ID:",
+      id,
       "Current:",
       currentAmenities,
       "New:",
@@ -277,18 +292,6 @@ export default function StepAmenities({
       className="space-y-8"
       style={{ willChange: "transform" }}
     >
-      {/* Development Fill Data Button */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={fillSampleData}
-            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Fill Sample Data
-          </button>
-        </div>
-      )}
-
       {/* Page Header */}
       <motion.div variants={itemVariants} className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-heading mb-2">
@@ -332,17 +335,47 @@ export default function StepAmenities({
         {formData.societyAmenities && formData.societyAmenities.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {formData.societyAmenities.map((amenityId) => {
-              const amenity = amenities.find((a) => a.id === amenityId);
+              // Handle both string IDs and full amenity objects
+              const isObject =
+                typeof amenityId === "object" && amenityId !== null;
+
+              let amenityData;
+              let displayName = "Unknown Amenity";
+              let keyValue;
+
+              if (isObject) {
+                amenityData = amenityId;
+                displayName = amenityData?.name || amenityData?.title || "Unknown Amenity";
+                keyValue = amenityData._id || amenityData.title;
+              } else {
+                // First try to find in global amenities list
+                amenityData = amenities.find((a) => a.id === amenityId);
+
+                // If not found in global list, try to find in original property amenities
+                if (!amenityData && originalProperty?.amenities?.society) {
+                  amenityData = originalProperty.amenities.society.find(
+                    (a) => (a._id && a._id.toString() === amenityId) || a._id === amenityId
+                  );
+                }
+
+                displayName = amenityData?.name || amenityData?.title || "Unknown Amenity";
+                keyValue = amenityId;
+              }
+
               return (
                 <motion.div
-                  key={amenityId}
+                  key={String(keyValue)}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm"
                 >
-                  <span>{amenity?.name}</span>
+                  <span>{displayName}</span>
                   <button
-                    onClick={() => handleAmenityToggle(amenityId)}
+                    onClick={() =>
+                      handleAmenityToggle(
+                        isObject ? amenityId._id || amenityId : amenityId
+                      )
+                    }
                     className="text-primary hover:text-primary/70"
                   >
                     <FiX size={12} />
@@ -368,9 +401,6 @@ export default function StepAmenities({
           propertyCategory={formData.category}
         />
       </motion.div>
-
-      {/* Spacer */}
-      <div className="border-t border-gray-100 my-8"></div>
 
       {/* Nearby Places */}
       <motion.div variants={itemVariants} className="space-y-6">
@@ -440,14 +470,15 @@ export default function StepAmenities({
                   </label>
                   <Select
                     value={
-                      place.type
+                      (place.type || place.category)
                         ? nearbyPlaceTypes.find(
                             (opt) =>
                               opt.value.toLowerCase() ===
-                              String(place.type).toLowerCase()
+                              String(place.type || place.category).toLowerCase()
                           )
                         : null
                     }
+                    onFocus={() => {}}
                     onChange={(selectedOption) =>
                       handleNearbyPlaceChange(
                         index,

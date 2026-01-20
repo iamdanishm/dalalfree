@@ -15,8 +15,8 @@ export default function OwnerActions({ propertyId, propertySlug, property, onDel
   // console.log("Property rejectionReason:", property?.rejectionReason);
 
   const handleEdit = () => {
-    // Navigate to edit page - you can customize this route
-    router.push(`/dashboard/user/properties/edit/${propertySlug}`);
+    // Navigate to edit page
+    router.push(`/user/properties/edit/${propertySlug}`);
   };
 
 

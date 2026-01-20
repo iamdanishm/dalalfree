@@ -26,7 +26,9 @@ export function getNearbyPlaceIcon(type) {
  * @returns {Promise<Array<Object>>} Transformed amenities
  */
 export async function transformSocietyAmenities(amenityIds) {
-  if (!Array.isArray(amenityIds) || amenityIds.length === 0) return [];
+  if (!Array.isArray(amenityIds) || amenityIds.length === 0) {
+    return [];
+  }
 
   try {
     // Fetch amenities from database
@@ -38,6 +40,7 @@ export async function transformSocietyAmenities(amenityIds) {
       available: true,
       icon: amenity.icon,
       image: amenity.image,
+      _id: amenity._id, // Include the ID for reference
     }));
   } catch (error) {
     console.error("Error fetching society amenities:", error);

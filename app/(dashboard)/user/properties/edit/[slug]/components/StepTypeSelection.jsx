@@ -1,0 +1,486 @@
+"use client";
+
+import React from "react";
+import { motion } from "framer-motion";
+import { FiHome, FiTrendingUp, FiMapPin, FiLock } from "react-icons/fi";
+
+// Modern property types with dalal free theme
+const propertyTypes = [
+  {
+    id: "sell",
+    label: "Sell",
+    description: "List your property for sale",
+    icon: FiHome,
+    gradient: "from-primary to-red-600",
+    lightBg: "bg-red-50",
+    textColor: "text-primary",
+    shadow: "hover:shadow-red-100",
+  },
+  {
+    id: "rent",
+    label: "Rent",
+    description: "List your property for rent",
+    icon: FiTrendingUp,
+    gradient: "from-green-500 to-emerald-600",
+    lightBg: "bg-green-50",
+    textColor: "text-green-600",
+    shadow: "hover:shadow-green-100",
+  },
+];
+
+// Modern categories with better visual hierarchy
+const categories = [
+  {
+    id: "Residential",
+    label: "Residential",
+    description: "Houses, apartments & homes",
+    examples: ["1BHK", "2BHK", "3BHK", "Villa", "Apartment"],
+    gradient: "from-blue-500 to-blue-600",
+    icon: FiHome,
+    features: ["Family-friendly", "Living spaces", "Modern homes"],
+  },
+];
+
+export default function StepTypeSelection({
+  formData,
+  updateFormData,
+  errors,
+  originalProperty,
+  isEditing = false,
+}) {
+  const isApproved = originalProperty?.status === "approved";
+  const isReadOnly = isApproved && isEditing;
+
+  const handleTypeSelect = (propertyType) => {
+    if (!isReadOnly) {
+      updateFormData({ propertyType });
+    }
+  };
+
+  const handleCategorySelect = (category) => {
+    if (!isReadOnly) {
+      updateFormData({ category });
+    }
+  };
+
+  // Animation variants matching the project theme
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-8"
+      style={{ willChange: "transform" }}
+    >
+      {/* Page Header - Clear indication of what page they're on */}
+      <motion.div variants={itemVariants} className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-heading mb-2">
+          Edit Property Details
+        </h1>
+        <p className="text-muted text-lg">
+          Review and update your property information
+        </p>
+        {isReadOnly && (
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg inline-block">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <FiLock size={16} />
+              <span className="text-sm font-medium">
+                Property type cannot be changed (approved property)
+              </span>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Property Type Selection */}
+      <motion.div variants={itemVariants}>
+        <h2 className="text-xl font-semibold text-heading mb-6 flex items-center gap-2">
+          Property Purpose
+          {isReadOnly && <FiLock size={16} className="text-yellow-600" />}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {propertyTypes.map((type) => {
+            const Icon = type.icon;
+            const isSelected = formData.propertyType === type.id;
+            const isDisabled = isReadOnly && !isSelected;
+
+            return (
+              <motion.button
+                key={type.id}
+                whileHover={!isDisabled ? {
+                  scale: 1.01,
+                  transition: { duration: 0.2 },
+                } : {}}
+                whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                onClick={() => !isDisabled && handleTypeSelect(type.id)}
+                disabled={isDisabled}
+                className={`relative group p-6 rounded-2xl border-2 text-left transition-all duration-300 ${
+                  isDisabled
+                    ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                    : isSelected
+                    ? `border-primary bg-gradient-to-r ${type.lightBg} shadow-lg scale-105`
+                    : "border-border bg-background hover:border-primary/50 hover:shadow-lg"
+                }`}
+                style={{ willChange: "transform" }}
+              >
+                {isDisabled && (
+                  <div className="absolute top-3 right-3 z-10">
+                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center">
+                      <FiLock size={12} className="text-white" />
+                    </div>
+                  </div>
+                )}
+
+                {isSelected && (
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="flex items-start space-x-4">
+                  <div
+                    className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-r ${type.gradient} flex items-center justify-center shadow-lg ${
+                      isDisabled ? "opacity-50" : ""
+                    }`}
+                  >
+                    <Icon className="text-white" size={24} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3
+                      className={`text-lg sm:text-xl font-bold mb-1 ${
+                        isDisabled
+                          ? "text-gray-500"
+                          : isSelected
+                          ? "text-primary"
+                          : "text-heading"
+                      }`}
+                    >
+                      {type.label}
+                    </h3>
+                    <p className={`text-body text-sm sm:text-base mb-3 leading-relaxed ${
+                      isDisabled ? "text-gray-400" : ""
+                    }`}>
+                      {type.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {errors.propertyType && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+          >
+            <p className="text-red-600 text-sm font-medium">
+              {errors.propertyType}
+            </p>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Category Selection - Only show when property type is selected */}
+      {formData.propertyType && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <h2 className="text-xl font-semibold text-heading mb-6 flex items-center gap-2">
+            Property Category
+            {isReadOnly && <FiLock size={16} className="text-yellow-600" />}
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {categories.map((category, index) => {
+              const Icon = category.icon;
+              const isSelected = formData.category === category.id;
+              const isDisabled = isReadOnly && !isSelected;
+
+              return (
+                <motion.button
+                  key={category.id}
+                  whileHover={!isDisabled ? {
+                    scale: 1.01,
+                    transition: { duration: 0.2 },
+                  } : {}}
+                  whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  onClick={() => !isDisabled && handleCategorySelect(category.id)}
+                  disabled={isDisabled}
+                  className={`group relative p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all duration-300 touch-manipulation ${
+                    isDisabled
+                      ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                      : isSelected
+                      ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                      : "border-border bg-surface hover:border-primary/30 hover:shadow-lg hover:bg-background"
+                  }`}
+                  style={{ willChange: "transform" }}
+                >
+                  {isDisabled && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center">
+                        <FiLock size={12} className="text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
+                    >
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </motion.div>
+                  )}
+
+                  {/* Main content */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`p-2 rounded-lg bg-gradient-to-r ${category.gradient} text-white shadow-sm ${
+                          isDisabled ? "opacity-50" : ""
+                        }`}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div>
+                        <h3
+                          className={`text-lg font-semibold ${
+                            isDisabled
+                              ? "text-gray-500"
+                              : isSelected
+                              ? "text-primary"
+                              : "text-heading"
+                          }`}
+                        >
+                          {category.label}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <p className={`text-body text-sm leading-relaxed ${
+                      isDisabled ? "text-gray-400" : ""
+                    }`}>
+                      {category.description}
+                    </p>
+
+                    {/* Examples */}
+                    <div className="space-y-2">
+                      <p className={`text-sm font-medium ${
+                        isDisabled ? "text-gray-500" : "text-heading"
+                      }`}>
+                        Common examples:
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {category.examples.slice(0, 3).map((example, i) => (
+                          <span
+                            key={i}
+                            className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
+                              isDisabled
+                                ? "bg-gray-100 text-gray-400"
+                                : isSelected
+                                ? "bg-primary/10 text-primary"
+                                : "bg-white/90 text-heading shadow-sm border border-border/50"
+                            }`}
+                          >
+                            {example}
+                          </span>
+                        ))}
+                        {category.examples.length > 3 && (
+                          <span className={`px-2 py-1 text-xs rounded-full border ${
+                            isDisabled
+                              ? "bg-gray-100 text-gray-400 border-gray-200"
+                              : "bg-white/50 text-muted border-border/50"
+                          }`}>
+                            +{category.examples.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Key features */}
+                    <div className="flex flex-wrap gap-1">
+                      {category.features.map((feature, i) => (
+                        <span
+                          key={feature}
+                          className={`px-2 py-1 text-xs rounded-full border ${
+                            isDisabled
+                              ? "bg-gray-100 text-gray-400 border-gray-200"
+                              : "bg-white/50 text-muted border-border"
+                          }`}
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {errors.category && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+            >
+              <p className="text-red-600 text-sm font-medium">
+                {errors.category}
+              </p>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Selection Summary */}
+      {formData.propertyType && formData.category && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className={`border rounded-2xl p-6 shadow-sm ${
+            isReadOnly
+              ? "bg-gray-50 border-gray-200"
+              : "bg-gradient-to-r from-primary/5 to-blue-50 border-primary/20"
+          }`}
+        >
+          <div className="flex items-center space-x-3 mb-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              isReadOnly ? "bg-gray-400" : "bg-primary"
+            }`}>
+              <FiHome className={`${
+                isReadOnly ? "text-white" : "text-white"
+              }`} size={16} />
+            </div>
+            <h4 className="text-lg font-bold text-heading">
+              {isReadOnly ? "Current Property Type" : "Perfect Choice!"}
+            </h4>
+          </div>
+
+          <p className="text-body mb-2">
+            This property is listed as a{" "}
+            <span className="font-semibold text-primary">
+              {formData.category.toLowerCase()}
+            </span>{" "}
+            property{" "}
+            <span className="font-semibold text-primary">
+              for {formData.propertyType}
+            </span>
+          </p>
+
+          {isReadOnly ? (
+            <p className="text-sm text-muted">
+              Since this property has been approved, the type and category cannot be modified.
+              You can still update other details like pricing, description, and media.
+            </p>
+          ) : (
+            <p className="text-sm text-muted">
+              This helps us customize the listing form and show your property to
+              the right buyers in the Indian market.
+            </p>
+          )}
+        </motion.div>
+      )}
+
+      {/* Help Section - Only show for editable properties */}
+      {!isReadOnly && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-surface border border-border rounded-2xl p-6"
+        >
+          <h4 className="font-semibold text-heading mb-3 flex items-center">
+            <FiMapPin className="mr-2 text-primary" size={18} />
+            Not sure what to choose?
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-body">
+            <div>
+              <p className="font-medium text-heading mb-1">
+                Residential properties
+              </p>
+              <p>Houses, apartments, villas, and residential buildings</p>
+            </div>
+            <div>
+              <p className="font-medium text-heading mb-1">
+                Commercial properties
+              </p>
+              <p>Offices, shops, warehouses, and business spaces</p>
+            </div>
+            <div>
+              <p className="font-medium text-heading mb-1">
+                Industrial properties
+              </p>
+              <p>Factories, manufacturing spaces, and logistics centers</p>
+            </div>
+            <div>
+              <p className="font-medium text-heading mb-1">Land properties</p>
+              <p>Open plots, agricultural land, and development sites</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}

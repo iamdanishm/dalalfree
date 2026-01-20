@@ -274,14 +274,14 @@ export default function PropertyOwnerCard() {
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-100/50 shadow-lg">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg">
+        <div className="p-2 bg-linear-to-r from-green-100 to-blue-100 rounded-lg">
           <FiUser className="w-5 h-5 text-blue-600" />
         </div>
         <h3 className="text-xl font-semibold text-gray-900">Property Owner</h3>
       </div>
 
       <div className="flex items-center mb-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mr-4 flex items-center justify-center">
+        <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-full mr-4 flex items-center justify-center">
           <span className="text-white font-bold text-xl">
             {owner.name
               .split(" ")

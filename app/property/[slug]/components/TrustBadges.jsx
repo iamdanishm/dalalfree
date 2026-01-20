@@ -1,33 +1,65 @@
 import { FiCheck, FiHeart, FiHome, FiShield, FiAward } from "react-icons/fi";
 
-export default function TrustBadges() {
-  // Using mock data from original file - in production this would be from props or API
-  const trustBadges = [
-    {
+export default function TrustBadges({ property }) {
+  // Dynamic trust badges based on property data
+  const trustBadges = [];
+
+  // Verified badge
+  if (property?.verified) {
+    trustBadges.push({
       label: "Verified Listing",
       icon: FiCheck,
       color: "text-emerald-600",
       bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
       border: "border-emerald-200",
       description: "100% Verified Property",
-    },
-    {
-      label: "No Brokerage",
-      icon: FiHeart,
-      color: "text-rose-600",
-      bg: "bg-gradient-to-br from-rose-50 to-rose-100",
-      border: "border-rose-200",
-      description: "Direct Owner Deal",
-    },
-    {
-      label: "Ready to Move",
+    });
+  }
+
+  // Direct owner badge (assuming all listings are direct owner)
+  trustBadges.push({
+    label: "Direct Owner",
+    icon: FiHeart,
+    color: "text-rose-600",
+    bg: "bg-gradient-to-br from-rose-50 to-rose-100",
+    border: "border-rose-200",
+    description: "No Brokerage Involved",
+  });
+
+  // Property type specific badges
+  if (property?.propertyType === "sell") {
+    trustBadges.push({
+      label: "For Sale",
       icon: FiHome,
       color: "text-indigo-600",
       bg: "bg-gradient-to-br from-indigo-50 to-indigo-100",
       border: "border-indigo-200",
-      description: "Move In Today",
-    },
-  ];
+      description: property?.possessionStatus === "ready-to-move"
+        ? "Ready to Move"
+        : "Under Construction",
+    });
+  } else if (property?.propertyType === "rent") {
+    trustBadges.push({
+      label: "For Rent",
+      icon: FiHome,
+      color: "text-blue-600",
+      bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+      border: "border-blue-200",
+      description: "Available for Rent",
+    });
+  }
+
+  // Featured property badge
+  if (property?.featured) {
+    trustBadges.push({
+      label: "Featured Property",
+      icon: FiAward,
+      color: "text-amber-600",
+      bg: "bg-gradient-to-br from-amber-50 to-amber-100",
+      border: "border-amber-200",
+      description: "Premium Listing",
+    });
+  }
 
   return (
     <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 backdrop-blur-sm rounded-2xl p-6 border border-blue-100/50 shadow-xl relative overflow-hidden">
@@ -91,13 +123,15 @@ export default function TrustBadges() {
         ))}
       </div>
 
-      {/* Trust seal */}
-      <div className="relative mt-6 flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200/50">
-        <FiAward className="w-5 h-5 text-amber-600" />
-        <span className="font-semibold text-amber-800 text-sm">
-          Official Partner Property
-        </span>
-      </div>
+      {/* Trust seal - Only show for partner properties */}
+      {property?.ownerRole === "partner" && (
+        <div className="relative mt-6 flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200/50">
+          <FiAward className="w-5 h-5 text-amber-600" />
+          <span className="font-semibold text-amber-800 text-sm">
+            Official Partner Property
+          </span>
+        </div>
+      )}
     </div>
   );
 }

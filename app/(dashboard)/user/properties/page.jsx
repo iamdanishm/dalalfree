@@ -99,9 +99,8 @@ export default function UserPropertiesPage() {
 
   // Handle property edit
   const handleEditProperty = (property) => {
-    // For now, just navigate to property details
-    // In the future, this could open an edit modal or navigate to edit page
-    router.push(`/property/${property.slug || property._id}`);
+    // Navigate to the edit page
+    router.push(`/user/properties/edit/${property.slug || property._id}`);
   };
 
   // Handle property delete

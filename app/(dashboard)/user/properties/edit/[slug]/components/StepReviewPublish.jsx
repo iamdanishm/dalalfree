@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FiEye,
@@ -15,7 +15,6 @@ import {
   FiMapPin,
   FiCheck,
   FiSave,
-  FiChevronRight,
 } from "react-icons/fi";
 import Image from "next/image";
 
@@ -30,18 +29,6 @@ const getOrdinalSuffix = (num) => {
   return num + "th";
 };
 
-const imageCategories = [
-  { value: "exterior", label: "Exterior", icon: "🏠" },
-  { value: "interior", label: "Interior", icon: "🛋️" },
-  { value: "bedroom", label: "Bedroom", icon: "🛏️" },
-  { value: "kitchen", label: "Kitchen", icon: "👨‍🍳" },
-  { value: "bathroom", label: "Bathroom", icon: "🛁" },
-  { value: "living-room", label: "Living Room", icon: "🛋️" },
-  { value: "balcony", label: "Balcony", icon: "🌅" },
-  { value: "amenities", label: "Amenities", icon: "🏊" },
-  { value: "other", label: "Other", icon: "📷" },
-];
-
 export default function StepReviewPublish({
   formData,
   updateFormData,
@@ -52,8 +39,52 @@ export default function StepReviewPublish({
   isPublishing = false,
   acceptedTerms,
   setAcceptedTerms,
+  originalProperty,
 }) {
   const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+  const [amenitiesMap, setAmenitiesMap] = useState({});
+
+  // Fetch amenities for proper display
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const res = await fetch("/api/amenities");
+        if (res.ok) {
+          const data = await res.json();
+          const amenityMap = {};
+          data.amenities.forEach((amenity) => {
+            amenityMap[amenity._id] = amenity.title;
+          });
+          setAmenitiesMap(amenityMap);
+        }
+      } catch (error) {
+        console.error("Error fetching amenities:", error);
+      }
+    };
+    fetchAmenities();
+  }, []);
+
+  // Combine existing and new media for display in edit mode, filtering out removed items
+  const displayImages = [
+    ...(formData.existingImages || []).filter(
+      (img) =>
+        img &&
+        img.url &&
+        !(formData.removedImages || []).includes(img.url) &&
+        img.url.includes("/images/")
+    ),
+    ...(formData.images || []),
+  ];
+  const displayVideos = [
+    ...(formData.existingVideos || []).filter(
+      (vid) =>
+        vid &&
+        vid.url &&
+        !(formData.removedVideos || []).includes(vid.url) &&
+        vid.url.includes("/videos/")
+    ),
+    ...(formData.videos || []),
+  ];
 
   // Handle video click - pause previous video and start new one
   const handleVideoClick = (videoIndex, videoRef, event) => {
@@ -135,36 +166,7 @@ export default function StepReviewPublish({
 
   // Get amenity display names
   const getAmenityNames = (amenityIds) => {
-    const amenityMap = {
-      "24-7-security": "24/7 Security",
-      cctv: "CCTV Surveillance",
-      intercom: "Intercom",
-      "fire-safety": "Fire Safety",
-      "gated-community": "Gated Community",
-      "power-backup": "Power Backup",
-      "water-supply": "24/7 Water Supply",
-      lift: "Lift/Elevator",
-      parking: "Parking Space",
-      "waste-management": "Waste Management",
-      "swimming-pool": "Swimming Pool",
-      gym: "Gym/Fitness Center",
-      "children-play-area": "Children's Play Area",
-      garden: "Garden/Landscaped Area",
-      "club-house": "Club House",
-      "jogging-track": "Jogging Track",
-      "visitor-parking": "Visitor Parking",
-      "maintenance-staff": "Maintenance Staff",
-      laundry: "Laundry Service",
-      housekeeping: "Housekeeping",
-      wifi: "Wi-Fi Connectivity",
-      "ro-water": "RO Water System",
-      "solar-panels": "Solar Panels",
-      "rain-water-harvesting": "Rain Water Harvesting",
-      "senior-citizen-area": "Senior Citizen Area",
-      "meditation-area": "Meditation/Yoga Area",
-    };
-
-    return amenityIds?.map((id) => amenityMap[id]).filter(Boolean) || [];
+    return amenityIds?.map((id) => amenitiesMap[id]).filter(Boolean) || [];
   };
 
   const stepSections = [
@@ -283,11 +285,11 @@ export default function StepReviewPublish({
           <FiEye className="text-white" size={24} />
         </motion.div>
         <h1 className="text-4xl font-bold text-heading mb-3 bg-linear-to-r from-heading to-heading/80 bg-clip-text">
-          Review & Publish
+          Review Your Updates
         </h1>
         <p className="text-muted text-lg max-w-2xl mx-auto">
-          Your property is ready! Review all details below and publish when
-          you&apos;re satisfied
+          Your property updates are ready! Review all details below and update
+          when you&apos;re satisfied
         </p>
         <motion.div
           className="mt-4 inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
@@ -359,7 +361,7 @@ export default function StepReviewPublish({
                 className="text-3xl md:text-2xl font-bold text-primary mb-1"
                 whileHover={{ scale: 1.1 }}
               >
-                {formData.images?.length || 0}
+                {displayImages.length}
               </motion.div>
               <div className="text-base md:text-sm text-muted font-medium">
                 Photos
@@ -370,7 +372,7 @@ export default function StepReviewPublish({
                 className="text-3xl md:text-2xl font-bold text-blue-600 mb-1"
                 whileHover={{ scale: 1.1 }}
               >
-                {formData.videos?.length || 0}
+                {displayVideos.length}
               </motion.div>
               <div className="text-base md:text-sm text-muted font-medium">
                 Videos
@@ -422,13 +424,13 @@ export default function StepReviewPublish({
               {section.id === 5 ? (
                 <div className="mt-2 space-y-4">
                   {/* Images Section */}
-                  {formData.images && formData.images.length > 0 && (
+                  {displayImages && displayImages.length > 0 && (
                     <div>
                       <div className="text-sm font-medium text-muted mb-2">
-                        {formData.images.length} images uploaded
+                        {displayImages.length} images uploaded
                       </div>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-2">
-                        {formData.images.slice(0, 12).map((image, index) => (
+                        {displayImages.slice(0, 12).map((image, index) => (
                           <div
                             key={index}
                             className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity touch-manipulation min-h-[60px] md:min-h-20"
@@ -446,10 +448,10 @@ export default function StepReviewPublish({
                             />
                           </div>
                         ))}
-                        {formData.images.length > 12 && (
+                        {displayImages.length > 12 && (
                           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                             <span className="text-sm text-muted font-medium">
-                              +{formData.images.length - 12}
+                              +{displayImages.length - 12}
                             </span>
                           </div>
                         )}
@@ -458,13 +460,13 @@ export default function StepReviewPublish({
                   )}
 
                   {/* Videos Section */}
-                  {formData.videos && formData.videos.length > 0 && (
+                  {displayVideos && displayVideos.length > 0 && (
                     <div>
                       <div className="text-sm font-medium text-muted mb-2">
-                        {formData.videos.length} videos uploaded
+                        {displayVideos.length} videos uploaded
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {formData.videos.map((video, index) => {
+                        {displayVideos.map((video, index) => {
                           const videoRef = React.useRef(null);
                           const isPlaying = playingVideoIndex === index;
 
@@ -551,11 +553,11 @@ export default function StepReviewPublish({
               I agree to the Terms and Conditions
             </label>
             <p className="text-base md:text-sm text-muted mt-2 md:mt-1 leading-relaxed">
-              By publishing this property on DalalFree, you certify that all
+              By updating this property on DalalFree, you certify that all
               provided information is accurate, current, and complete. Your
-              listing will undergo our quality review process before becoming
-              visible to verified buyers and real estate professionals across
-              our platform.
+              updated listing will undergo our quality review process before
+              becoming visible to verified buyers and real estate professionals
+              across our platform.
             </p>
           </div>
         </div>

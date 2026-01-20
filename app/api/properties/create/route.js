@@ -204,7 +204,9 @@ export const POST = requireAuth(async function (req) {
       parking: textData.parking,
       facing: textData.facing,
       possessionStatus: textData.possessionStatus,
-      maintenance: textData.maintenance,
+      // Only save maintenance for rent properties or commercial properties
+      maintenance: ((textData.category === "Residential" && textData.propertyType === "rent") ||
+                   textData.category === "Commercial") ? textData.maintenance : undefined,
 
       // Location
       location: textData.location,

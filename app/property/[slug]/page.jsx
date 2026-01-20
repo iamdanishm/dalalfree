@@ -182,7 +182,7 @@ export default function PropertyDetails({ params }) {
         : null,
       negotiable: dbProperty.negotiable || "No",
       discount: dbProperty.discount,
-      propertyType: dbProperty.propertyType || "rent",
+      propertyType: dbProperty.propertyType || "sell",
       verified: dbProperty.verified || false,
       status: dbProperty.status,
       rejectionReason: dbProperty.rejectionReason,
@@ -293,6 +293,7 @@ export default function PropertyDetails({ params }) {
         response: "Responds within 24 hours",
       },
       ownerId: dbProperty.ownerId?._id || dbProperty.ownerId || null,
+      ownerRole: dbProperty.ownerId?.role || "user",
       trustBadges: [
         {
           label: "Verified Listing",
@@ -347,7 +348,11 @@ export default function PropertyDetails({ params }) {
               ? `${dbProperty.age} ${dbProperty.ageUnit}`
               : "N/A",
         },
-        { label: "Maintenance", value: dbProperty.maintenance || "N/A" },
+        // Only show Maintenance for rent properties
+        ...(dbProperty.propertyType === "rent" ? [{
+          label: "Maintenance",
+          value: dbProperty.maintenance || "N/A"
+        }] : []),
       ],
       neighborhood: {
         walkScore: 75,
@@ -646,7 +651,7 @@ export default function PropertyDetails({ params }) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 1.0 }}
               >
-                <TrustBadges />
+                <TrustBadges property={property} />
               </motion.div>
             </motion.div>
           </div>

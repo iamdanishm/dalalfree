@@ -48,7 +48,7 @@ export default function LocationNeighborhood({
 
       {/* Nearby Amenities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {amenities.slice(0, 3).map((amenity, index) => (
+        {amenities.map((amenity, index) => (
           <div
             key={index}
             className="flex items-center p-4 bg-linear-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/50 rounded-xl hover:shadow-md transition-all duration-200"
