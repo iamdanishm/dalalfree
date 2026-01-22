@@ -1,11 +1,12 @@
 "use client";
 import Image from "next/image";
 import { FiMapPin, FiHeart, FiEdit3, FiTrash2 } from "react-icons/fi";
-import { AiOutlineHeart } from "react-icons/ai";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { FaCheck } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useWishlist } from "@/app/lib/hooks/useWishlist";
 
 export default function PropertyCard({
   property,
@@ -16,6 +17,7 @@ export default function PropertyCard({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
 
   // Check if current user is the property owner
   const isOwner = session?.user?.id && property?.ownerId &&
@@ -25,7 +27,7 @@ export default function PropertyCard({
   // Show management actions if explicitly requested OR if user is the owner
   const shouldShowManagementActions = showManagementActions || isOwner;
 
-  const handleWishlistClick = (propertyId) => {
+  const handleWishlistClick = async (propertyId) => {
     if (status === "unauthenticated") {
       router.push(
         `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`
@@ -36,7 +38,7 @@ export default function PropertyCard({
     if (onWishlistClick) {
       onWishlistClick(propertyId);
     } else {
-      console.log(`Adding property ${propertyId} to wishlist`);
+      await toggleWishlist(propertyId);
     }
   };
 
@@ -123,12 +125,21 @@ export default function PropertyCard({
               e.stopPropagation();
               handleWishlistClick(property._id || property.id);
             }}
+            disabled={wishlistLoading}
             className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+            title={isInWishlist(property._id || property.id) ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <AiOutlineHeart
-              className="text-gray-600 hover:text-red-500 transition-colors"
-              size={16}
-            />
+            {isInWishlist(property._id || property.id) ? (
+              <AiFillHeart
+                className="text-red-500 transition-colors"
+                size={16}
+              />
+            ) : (
+              <AiOutlineHeart
+                className="text-gray-600 hover:text-red-500 transition-colors"
+                size={16}
+              />
+            )}
           </button>
         )}
       </div>

@@ -77,7 +77,7 @@ export default function Navbar() {
     const baseActions = [
       { href: "/profile", label: "Profile", icon: FiUser },
       {
-        href: "/wishlist",
+        href: "/user/wishlist",
         label: "Wishlist",
         icon: FiHeart,
         roles: ["user"],

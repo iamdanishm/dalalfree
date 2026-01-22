@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { FiMapPin, FiHeart, FiCheck } from "react-icons/fi";
-import { AiOutlineHeart } from "react-icons/ai";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { motion } from "framer-motion";
 import { FaCheck } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useWishlist } from "@/app/lib/hooks/useWishlist";
 
 export default function FeaturedGrid() {
   const { data: session, status } = useSession();
@@ -15,7 +16,9 @@ export default function FeaturedGrid() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const handleWishlistClick = (propertyId) => {
+  const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
+
+  const handleWishlistClick = async (propertyId) => {
     if (status === "unauthenticated") {
       // Redirect to login with callback URL
       router.push(
@@ -24,9 +27,7 @@ export default function FeaturedGrid() {
       return;
     }
 
-    // TODO: Add property to wishlist functionality
-    console.log(`Adding property ${propertyId} to wishlist`);
-    // You could show a toast notification here
+    await toggleWishlist(propertyId);
   };
 
   // Fetch latest properties from API
@@ -201,12 +202,20 @@ export default function FeaturedGrid() {
                     e.stopPropagation(); // Prevent card click
                     handleWishlistClick(property._id);
                   }}
+                  disabled={wishlistLoading}
                   className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
                 >
-                  <AiOutlineHeart
-                    className="text-gray-600 hover:text-red-500 transition-colors"
-                    size={16}
-                  />
+                  {isInWishlist(property._id) ? (
+                    <AiFillHeart
+                      className="text-red-500 transition-colors"
+                      size={16}
+                    />
+                  ) : (
+                    <AiOutlineHeart
+                      className="text-gray-600 hover:text-red-500 transition-colors"
+                      size={16}
+                    />
+                  )}
                 </motion.button>
               </div>
               {/* Bottom ribbon for Owner Listing */}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FiEye, FiEdit2, FiMapPin, FiHome, FiDollarSign, FiCalendar, FiAlertTriangle } from "react-icons/fi";
+import { FiHome, FiEdit2 } from "react-icons/fi";
+import PropertyCard from "@/app/components/PropertyCard";
 
 export default function MyProperties({ user, data, onRefresh }) {
   const [properties, setProperties] = useState(data?.properties || []);
@@ -42,34 +43,34 @@ export default function MyProperties({ user, data, onRefresh }) {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  const handleEdit = (property) => {
+    // Navigate to edit page
+    window.location.href = `/user/properties/edit/${property._id}`;
+  };
+
+  const handleDelete = async (property) => {
+    if (confirm(`Are you sure you want to delete "${property.title}"?`)) {
+      try {
+        const response = await fetch(`/api/properties/${property._id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Refresh the properties list
+          if (onRefresh) {
+            onRefresh();
+          } else {
+            // Remove from local state
+            setProperties(prev => prev.filter(p => p._id !== property._id));
+          }
+        } else {
+          alert('Failed to delete property');
+        }
+      } catch (error) {
+        console.error('Error deleting property:', error);
+        alert('Failed to delete property');
+      }
     }
-  };
-
-  const formatPrice = (price) => {
-    if (!price) return "Price not set";
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
   };
 
   if (!properties || properties.length === 0) {
@@ -100,107 +101,16 @@ export default function MyProperties({ user, data, onRefresh }) {
         {properties.map((property, index) => (
           <motion.div
             key={property._id || property.slug}
-            className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
-            whileHover={{ y: -4 }}
           >
-            {/* Property Image */}
-            <div className="relative h-48 bg-gray-200">
-              {property.images && property.images.length > 0 ? (
-                <img
-                  src={property.images[0].url}
-                  alt={property.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                  <FiHome size={32} className="text-gray-400" />
-                </div>
-              )}
-
-              {/* Status Badge */}
-              <div className="absolute top-3 right-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(property.status)}`}>
-                  {property.status?.charAt(0).toUpperCase() + property.status?.slice(1)}
-                </span>
-              </div>
-
-              {/* Property Type Badge - Positioned based on rejection reason */}
-              <div className={`absolute top-3 left-3 ${property.status === "rejected" && property.rejectionReason ? 'top-12' : ''}`}>
-                <span className="px-3 py-1 bg-black/60 text-white rounded-full text-xs font-medium backdrop-blur-sm">
-                  {property.propertyType} • {property.category}
-                </span>
-              </div>
-
-              {/* Rejection Reason Badge */}
-              {property.status === "rejected" && property.rejectionReason && (
-                <div className="absolute top-3 left-3 bg-red-50 border border-red-200 rounded-lg px-2 py-1 max-w-[200px]">
-                  <div className="flex items-center gap-1">
-                    <FiAlertTriangle className="w-3 h-3 text-red-600 flex-shrink-0" />
-                    <span className="text-xs text-red-800 truncate" title={property.rejectionReason}>
-                      {property.rejectionReason}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Property Details */}
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                {property.title}
-              </h3>
-
-              <div className="space-y-2 mb-4">
-                {/* Location */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <FiMapPin size={14} />
-                  <span className="truncate">
-                    {property.city}, {property.state}
-                  </span>
-                </div>
-
-                {/* Price */}
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                  <FiDollarSign size={14} />
-                  <span>{formatPrice(property.price)}</span>
-                </div>
-
-                {/* Property Details */}
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  {property.bhk && <span>{property.bhk} BHK</span>}
-                  {property.builtUpArea && <span>{property.builtUpArea} sqft</span>}
-                </div>
-
-                {/* Date */}
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <FiCalendar size={12} />
-                  <span>Posted {formatDate(property.createdAt)}</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Link
-                  href={`/property/${property.slug}`}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                >
-                  <FiEye size={14} />
-                  View
-                </Link>
-                {property.status !== "rejected" && (
-                  <Link
-                    href={`/user/properties/edit/${property._id}`}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                  >
-                    <FiEdit2 size={14} />
-                    Edit
-                  </Link>
-                )}
-              </div>
-            </div>
+            <PropertyCard
+              property={property}
+              showManagementActions={true}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </motion.div>
         ))}
       </div>

@@ -3,11 +3,24 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FiHeart, FiMapPin, FiDollarSign, FiCalendar, FiTrash2, FiExternalLink } from "react-icons/fi";
+import { FiHeart, FiExternalLink, FiMapPin, FiCheck } from "react-icons/fi";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import { FaCheck } from "react-icons/fa";
+import Image from "next/image";
+import { useWishlist } from "@/app/lib/hooks/useWishlist";
+import { useRouter } from "next/navigation";
 
 export default function WishlistSection({ user, data, onRefresh }) {
+  const router = useRouter();
+  const {
+    toggleWishlist,
+    isInWishlist,
+    loading: wishlistLoading,
+  } = useWishlist();
   const [favorites, setFavorites] = useState(data?.favorites?.favorites || []);
-  const [totalCount, setTotalCount] = useState(data?.favorites?.totalCount || 0);
+  const [totalCount, setTotalCount] = useState(
+    data?.favorites?.totalCount || 0,
+  );
   const [loading, setLoading] = useState(false);
   const [removingId, setRemovingId] = useState(null);
 
@@ -18,19 +31,28 @@ export default function WishlistSection({ user, data, onRefresh }) {
     }
   }, [data]);
 
+  const handleWishlistClick = async (propertyId) => {
+    await toggleWishlist(propertyId);
+    // Refresh parent data to update counts
+    onRefresh();
+  };
+
   const removeFromWishlist = async (propertyId, favoriteId) => {
     if (removingId) return;
 
     try {
       setRemovingId(favoriteId);
-      const response = await fetch(`/api/users/favorites?propertyId=${propertyId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/users/favorites?propertyId=${propertyId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (response.ok) {
         // Update local state
-        setFavorites(prev => prev.filter(fav => fav._id !== favoriteId));
-        setTotalCount(prev => prev - 1);
+        setFavorites((prev) => prev.filter((fav) => fav._id !== favoriteId));
+        setTotalCount((prev) => prev - 1);
 
         // Refresh parent data
         onRefresh();
@@ -69,7 +91,8 @@ export default function WishlistSection({ user, data, onRefresh }) {
           Your Wishlist is Empty
         </h3>
         <p className="text-gray-600 mb-6">
-          Start exploring properties and add them to your wishlist to keep track of properties you're interested in.
+          Start exploring properties and add them to your wishlist to keep track
+          of properties you&apos;re interested in.
         </p>
         <Link
           href="/search"
@@ -85,128 +108,182 @@ export default function WishlistSection({ user, data, onRefresh }) {
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="bg-gradient-to-r from-pink-50 to-red-50 rounded-xl p-4 border border-pink-200">
+      <div className="bg-linear-to-r from-pink-50 to-red-50 rounded-xl p-4 border border-pink-200">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-pink-100 rounded-lg">
             <FiHeart className="text-pink-600" size={20} />
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">
-              {totalCount} Saved Propert{totalCount !== 1 ? 'ies' : 'y'}
+              {totalCount} Saved Propert{totalCount !== 1 ? "ies" : "y"}
             </h3>
             <p className="text-sm text-gray-600">
-              Properties you've saved for later
+              Properties you&apos;ve saved for later
             </p>
           </div>
         </div>
       </div>
 
-      {/* Favorites Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {favorites.map((favorite, index) => {
+      {/* Properties Grid - Same design as FeaturedGrid */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8"
+      >
+        {favorites.map((favorite) => {
           const property = favorite.propertyId;
           if (!property) return null;
+
+          // Transform property data to match FeaturedGrid format exactly
+          const transformedProperty = {
+            _id: property._id,
+            slug: property.slug,
+            price: property.price
+              ? `₹${property.price.toLocaleString()}`
+              : "Price not available",
+            title: property.title,
+            location:
+              property.location || `${property.city}, ${property.state}`,
+            bhk: property.category || "N/A", // Use category since bhk is missing
+            size: property.builtUpArea?.toString() || "N/A",
+            furnishing: property.furnishing || "Not specified",
+            verified: property.verified || false,
+            noBrokerage: property.noBrokerage || false,
+            ownerListing: property.ownerId ? true : false,
+            image: property.images?.[0]?.url || "/images/home-lifestyle.png",
+          };
 
           return (
             <motion.div
               key={favorite._id}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group relative"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ y: -4 }}
+              whileHover={{
+                y: -5,
+                transition: {
+                  duration: 0.2,
+                  ease: "easeOut",
+                },
+              }}
+              onClick={() =>
+                router.push(
+                  `/property/${transformedProperty.slug || transformedProperty._id}`,
+                )
+              }
+              className="bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden border border-gray-100 flex flex-col group cursor-pointer"
+              style={{ willChange: "transform" }}
             >
-              {/* Remove Button */}
-              <button
-                onClick={() => removeFromWishlist(property._id || property.slug, favorite._id)}
-                disabled={removingId === favorite._id}
-                className="absolute top-3 right-3 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-red-50 hover:text-red-600 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                title="Remove from wishlist"
-              >
-                <FiTrash2 size={16} />
-              </button>
-
-              {/* Property Image */}
-              <div className="relative h-48 bg-gray-200">
-                {property.images && property.images.length > 0 ? (
-                  <img
-                    src={property.images[0].url}
-                    alt={property.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <FiHeart size={32} className="text-gray-400" />
-                  </div>
-                )}
-
-                {/* Property Type Badge */}
-                <div className="absolute top-3 left-3">
-                  <span className="px-3 py-1 bg-black/60 text-white rounded-full text-xs font-medium backdrop-blur-sm">
-                    {property.propertyType} • {property.category}
-                  </span>
-                </div>
-
-                {/* Saved Date */}
-                <div className="absolute bottom-3 right-3">
-                  <span className="px-2 py-1 bg-black/60 text-white rounded-full text-xs backdrop-blur-sm">
-                    Saved {formatDate(favorite.addedAt)}
-                  </span>
-                </div>
+              {/* Image */}
+              <div className="relative w-full h-48 overflow-hidden">
+                <Image
+                  src={transformedProperty.image}
+                  alt={transformedProperty.title}
+                  fill
+                  className="object-cover rounded-t-2xl transition-transform duration-300 group-hover:scale-105"
+                />
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    delay: 0.3,
+                    duration: 0.4,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm border"
+                >
+                  {transformedProperty.bhk}
+                </motion.span>
+                {/* Heart icon for saving */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    handleWishlistClick(transformedProperty._id);
+                  }}
+                  disabled={wishlistLoading}
+                  className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+                >
+                  {isInWishlist(transformedProperty._id) ? (
+                    <AiFillHeart
+                      className="text-red-500 transition-colors"
+                      size={16}
+                    />
+                  ) : (
+                    <AiOutlineHeart
+                      className="text-gray-600 hover:text-red-500 transition-colors"
+                      size={16}
+                    />
+                  )}
+                </motion.button>
               </div>
+              {/* Bottom ribbon for Owner Listing */}
+              {transformedProperty.ownerListing && (
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-sm z-10">
+                  Owner Listing
+                </div>
+              )}
 
-              {/* Property Details */}
-              <div className="p-4">
-                <Link href={`/property/${property.slug}`}>
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer">
-                    {property.title}
-                  </h3>
-                </Link>
-
-                <div className="space-y-2 mb-4">
-                  {/* Location */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FiMapPin size={14} />
-                    <span className="truncate">
-                      {property.city}, {property.state}
-                    </span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                    <FiDollarSign size={14} />
-                    <span>{formatPrice(property.price)}</span>
-                  </div>
-
-                  {/* Property Details */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    {property.bhk && <span>{property.bhk} BHK</span>}
-                    {property.builtUpArea && <span>{property.builtUpArea} sqft</span>}
-                  </div>
-
-                  {/* Notes */}
-                  {favorite.notes && (
-                    <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                      <strong>Note:</strong> {favorite.notes}
+              {/* Content */}
+              <div className="p-6 flex-1 flex flex-col">
+                {/* USP Badges */}
+                <div className="flex items-center gap-2 mb-3">
+                  {transformedProperty.verified && (
+                    <div className="flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                      <FaCheck size={10} />
+                      Verified
+                    </div>
+                  )}
+                  {transformedProperty.noBrokerage && (
+                    <div className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      No Brokerage
                     </div>
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Link
-                    href={`/property/${property.slug}`}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                {/* Price */}
+                <div className="mb-2">
+                  <p className="text-xl font-bold text-gray-900 leading-tight">
+                    {transformedProperty.price}
+                  </p>
+                </div>
+
+                {/* Society/Project Name */}
+                <div className="mb-3">
+                  <p className="text-base font-medium text-gray-800 leading-tight">
+                    {transformedProperty.title}
+                  </p>
+                </div>
+
+                {/* Location Row */}
+                <div className="mb-auto">
+                  <p className="text-sm text-gray-500 flex items-center gap-1.5 leading-tight">
+                    <FiMapPin className="shrink-0" size={14} />
+                    {transformedProperty.location}
+                  </p>
+                </div>
+
+                {/* CTA Button */}
+                <div className="mt-5 pt-3 border-t border-gray-100">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent double navigation
+                      router.push(
+                        `/property/${transformedProperty.slug || transformedProperty._id}`,
+                      );
+                    }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full bg-primary text-white text-sm font-semibold py-3 px-4 rounded-xl hover:shadow-sm transition-shadow"
+                    suppressHydrationWarning
                   >
-                    <FiExternalLink size={14} />
                     View Details
-                  </Link>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Load More or View All */}
       {totalCount > favorites.length && (
@@ -223,7 +300,9 @@ export default function WishlistSection({ user, data, onRefresh }) {
 
       {/* Quick Actions */}
       <div className="bg-gray-50 rounded-xl p-6 text-center">
-        <h3 className="font-semibold text-gray-900 mb-2">Find More Properties to Save</h3>
+        <h3 className="font-semibold text-gray-900 mb-2">
+          Find More Properties to Save
+        </h3>
         <p className="text-gray-600 mb-4">
           Discover new properties that match your preferences
         </p>

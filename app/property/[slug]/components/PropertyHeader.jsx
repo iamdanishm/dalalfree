@@ -5,11 +5,15 @@ import {
   FiHome,
   FiTag,
   FiAlertTriangle,
+  FiHeart,
 } from "react-icons/fi";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { useSession } from "next-auth/react";
+import { useWishlist } from "@/app/lib/hooks/useWishlist";
 
 export default function PropertyHeader({ property, id }) {
   const { data: session } = useSession();
+  const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
   const isRent = property.propertyType?.toLowerCase() === "rent";
   const isNegotiable = property.negotiable === "Yes";
 
@@ -17,6 +21,15 @@ export default function PropertyHeader({ property, id }) {
   const isOwner = session?.user?.id && property?.ownerId &&
     (String(session.user.id) === String(property.ownerId._id || property.ownerId) ||
      String(session.user._id) === String(property.ownerId._id || property.ownerId));
+
+  const handleWishlistClick = async () => {
+    if (!session?.user) {
+      // This should be handled by the hook, but just in case
+      return;
+    }
+
+    await toggleWishlist(id || property.id);
+  };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -97,6 +110,22 @@ export default function PropertyHeader({ property, id }) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Wishlist Button - Only show for non-owners */}
+          {!isOwner && (
+            <button
+              onClick={handleWishlistClick}
+              disabled={wishlistLoading}
+              className="flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-all duration-200 border border-gray-200"
+              title={isInWishlist(id || property.id) ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              {isInWishlist(id || property.id) ? (
+                <AiFillHeart className="text-red-500 text-xl" />
+              ) : (
+                <AiOutlineHeart className="text-gray-600 hover:text-red-500 text-xl transition-colors" />
+              )}
+            </button>
+          )}
+
           <div className="text-right">
             <div className="text-2xl lg:text-3xl font-bold text-green-600">
               {property.price}

@@ -180,7 +180,8 @@ function SearchPageContent() {
   };
 
   const handleWishlistClick = (propertyId) => {
-    console.log(`Adding property ${propertyId} to wishlist`);
+    // PropertyCard component now handles wishlist internally via the useWishlist hook
+    // This function is kept for backward compatibility but PropertyCard handles the logic
   };
 
   const cardVariants = {

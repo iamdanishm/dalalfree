@@ -18,14 +18,20 @@ export async function GET(req) {
     }
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
     const sortBy = searchParams.get("sortBy") || "newest";
 
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 10;
+
+    console.log("API params:", { pageParam, limitParam, page, limit, sortBy });
+
     // Validate pagination parameters
-    if (page < 1 || limit < 1 || limit > 50) {
+    if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1 || limit > 50) {
+      console.log("Invalid pagination parameters:", { page, limit });
       return NextResponse.json(
-        { error: "Invalid pagination parameters" },
+        { error: `Invalid pagination parameters: page=${page}, limit=${limit}` },
         { status: 400 }
       );
     }
