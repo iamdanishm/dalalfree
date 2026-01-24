@@ -14,15 +14,18 @@ import {
   FiSearch,
   FiPlus,
   FiList,
+  FiUsers,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut, signIn } from "next-auth/react";
 import { useUserProperties } from "@/app/lib/hooks/useUserProperties";
+import PartnerRequestModal from "./PartnerRequestModal";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [partnerModalOpen, setPartnerModalOpen] = useState(false);
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const { data: session } = useSession();
@@ -60,6 +63,7 @@ export default function Navbar() {
       if (event.key === "Escape") {
         setUserDropdownOpen(false);
         setLoginPromptOpen(false);
+        setPartnerModalOpen(false);
         setOpen(false);
       }
     }
@@ -69,6 +73,30 @@ export default function Navbar() {
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, []);
+
+  // Handle partner request
+  const handlePartnerRequest = async () => {
+    try {
+      // TODO: Implement API call to submit partner request
+      console.log("Partner request submitted");
+      setPartnerModalOpen(false);
+      // TODO: Show success toast
+    } catch (error) {
+      console.error("Partner request failed:", error);
+      // TODO: Show error toast
+    }
+  };
+
+  // Handle become partner button click
+  const handleBecomePartnerClick = () => {
+    if (!session) {
+      // Redirect to login if not logged in
+      signIn();
+    } else {
+      // Show partner modal if logged in
+      setPartnerModalOpen(true);
+    }
+  };
 
   // Get user-specific actions based on role
   const getUserActions = () => {
@@ -100,7 +128,7 @@ export default function Navbar() {
           label: "My Properties",
           icon: FiSettings,
         },
-        { href: "/partner/post", label: "Add Property", icon: FiPlus }
+        { href: "/partner/post", label: "Add Property", icon: FiPlus },
       );
     }
 
@@ -164,6 +192,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             {/* Right-side actions */}
             <div className="flex items-center gap-6">
+              <button
+                onClick={handleBecomePartnerClick}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/5 border border-primary/20 rounded-md transition-all duration-200"
+              >
+                <FiUsers className="mr-2" size={16} />
+                Become a Partner
+              </button>
               <button
                 onClick={() => {
                   if (!session) {
@@ -248,7 +283,7 @@ export default function Navbar() {
                             .filter(
                               (action) =>
                                 !action.roles ||
-                                action.roles.includes(session.user.role)
+                                action.roles.includes(session.user.role),
                             )
                             .map((action) => {
                               const IconComponent = action.icon;
@@ -344,7 +379,17 @@ export default function Navbar() {
               )}
 
               {/* Action buttons */}
-              <div className="pt-4">
+              <div className="pt-4 space-y-3">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    handleBecomePartnerClick();
+                  }}
+                  className="flex items-center justify-center w-full px-4 py-3 text-primary font-medium rounded-lg border border-primary/20 hover:bg-primary/5 transition-colors duration-150 touch-manipulation"
+                >
+                  <FiUsers className="mr-2" size={20} />
+                  Become a Partner
+                </button>
                 <button
                   onClick={() => {
                     if (!session) {
@@ -385,7 +430,7 @@ export default function Navbar() {
                       .filter(
                         (action) =>
                           !action.roles ||
-                          action.roles.includes(session.user.role)
+                          action.roles.includes(session.user.role),
                       )
                       .map((action) => {
                         const IconComponent = action.icon;
@@ -549,6 +594,13 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Partner Request Modal */}
+      <PartnerRequestModal
+        isOpen={partnerModalOpen}
+        onClose={() => setPartnerModalOpen(false)}
+        onSubmitRequest={handlePartnerRequest}
+      />
     </motion.header>
   );
 }

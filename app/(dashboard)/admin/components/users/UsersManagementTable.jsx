@@ -619,8 +619,8 @@ export default function UsersManagementTable() {
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
-                      {/* Only show suspend button for other users, not for current admin */}
-                      {user._id !== session?.user?.id && (
+                      {/* Only show suspend button for other users, not for current admin, and not for suspended users */}
+                      {user._id !== session?.user?.id && user.status !== "Suspended" && (
                         <button
                           className="text-red-600 hover:text-red-800 p-1"
                           onClick={(e) => {
