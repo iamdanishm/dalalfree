@@ -8,40 +8,12 @@ import PropertyCard from "@/app/components/PropertyCard";
 
 export default function MyProperties({ user, data, onRefresh }) {
   const [properties, setProperties] = useState(data?.properties || []);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (data?.properties) {
       setProperties(data.properties);
     }
   }, [data]);
-
-  const loadMoreProperties = async () => {
-    if (loading || !hasMore) return;
-
-    try {
-      setLoading(true);
-      const nextPage = page + 1;
-      const response = await fetch(`/api/users/properties?page=${nextPage}&limit=6`);
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.properties && result.properties.length > 0) {
-          setProperties(prev => [...prev, ...result.properties]);
-          setPage(nextPage);
-          setHasMore(result.properties.length === 6); // Assuming limit is 6
-        } else {
-          setHasMore(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading more properties:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEdit = (property) => {
     // Navigate to edit page
@@ -114,21 +86,6 @@ export default function MyProperties({ user, data, onRefresh }) {
           </motion.div>
         ))}
       </div>
-
-      {/* Load More Button */}
-      {hasMore && (
-        <div className="text-center pt-6">
-          <motion.button
-            onClick={loadMoreProperties}
-            disabled={loading}
-            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {loading ? "Loading..." : "Load More Properties"}
-          </motion.button>
-        </div>
-      )}
 
       {/* Quick Actions */}
       <div className="bg-gray-50 rounded-xl p-6 text-center">

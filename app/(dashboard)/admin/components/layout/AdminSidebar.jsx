@@ -65,22 +65,20 @@ export default function AdminSidebar({ isOpen, onClose }) {
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-                    isActive
+                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
                       ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
                       : "text-body hover:bg-surface hover:text-heading hover:shadow-md"
-                  }`}
+                    }`}
                 >
                   <motion.div
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <item.icon
-                      className={`mr-3 flex-shrink-0 w-5 h-5 ${
-                        isActive
+                      className={`mr-3 flex-shrink-0 w-5 h-5 ${isActive
                           ? "text-primary"
                           : "text-muted group-hover:text-heading"
-                      }`}
+                        }`}
                     />
                   </motion.div>
                   <span>{item.name}</span>

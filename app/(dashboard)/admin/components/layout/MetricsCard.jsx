@@ -55,9 +55,8 @@ export default function MetricsCard({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: delay + 0.2, duration: 0.3 }}
-            className={`flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full ${
-              positive ? "bg-white/20" : "bg-red-500/20"
-            }`}
+            className={`flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full ${positive ? "bg-white/20" : "bg-red-500/20"
+              }`}
           >
             {positive ? (
               <FiTrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
