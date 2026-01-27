@@ -1,9 +1,18 @@
 "use client";
-import { useSession, signOut } from "next-auth/react";
+
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import {
+  FiMapPin,
+  FiDollarSign,
+  FiCheckCircle,
+  FiXCircle,
+} from "react-icons/fi";
+import MetricsCard from "../admin/components/layout/MetricsCard";
+import SimpleBarChart from "./components/charts/SimpleBarChart";
+import StatusDistributionChart from "./components/charts/StatusDistributionChart";
 
 export default function PartnerDashboard() {
   const { data: session, status } = useSession();
@@ -28,7 +37,6 @@ export default function PartnerDashboard() {
             router.push("/user");
             break;
           default:
-            // If role is not recognized, redirect to home
             router.push("/");
             break;
         }
@@ -59,339 +67,139 @@ export default function PartnerDashboard() {
     return null;
   }
 
-  // Sample data for placeholders
-  const partnershipMetrics = [
-    { title: "Active Partnerships", value: "24", change: "+2", positive: true },
+  // Static placeholder data for MVP
+  const metrics = [
     {
-      title: "Total Revenue",
+      title: "Total Properties",
+      value: "24",
+      change: "+2",
+      positive: true,
+    },
+    {
+      title: "Sold Properties",
+      value: "8",
+      change: "+1",
+      positive: true,
+    },
+    {
+      title: "Rejected Properties",
+      value: "3",
+      change: "-1",
+      positive: false,
+    },
+    {
+      title: "Total Earnings",
       value: "$45,320",
       change: "+15%",
       positive: true,
     },
-    {
-      title: "Commission Earned",
-      value: "$4,532",
-      change: "+12%",
-      positive: true,
-    },
-    { title: "Properties Listed", value: "156", change: "+8", positive: true },
   ];
 
-  const recentPartnerships = [
-    {
-      name: "Prime Properties LLC",
-      type: "Real Estate",
-      status: "Active",
-      joined: "Jan 2024",
-    },
-    {
-      name: "Urban Developers",
-      type: "Development",
-      status: "Active",
-      joined: "Dec 2023",
-    },
-    {
-      name: "Skyline Realtors",
-      type: "Brokerage",
-      status: "Pending",
-      joined: "Feb 2024",
-    },
-    {
-      name: "Metro Estates",
-      type: "Investment",
-      status: "Active",
-      joined: "Nov 2023",
-    },
+  const monthlyEarningsData = [
+    { label: "Oct", value: 3200, prefix: "$" },
+    { label: "Nov", value: 4100, prefix: "$" },
+    { label: "Dec", value: 3800, prefix: "$" },
+    { label: "Jan", value: 4532, prefix: "$" },
   ];
 
-  const collaborationProjects = [
-    {
-      name: "Downtown Complex",
-      progress: 75,
-      value: "$2.1M",
-      deadline: "Mar 2024",
-    },
-    {
-      name: "Riverside Towers",
-      progress: 45,
-      value: "$3.5M",
-      deadline: "Jun 2024",
-    },
-    {
-      name: "Garden Villas",
-      progress: 90,
-      value: "$1.8M",
-      deadline: "Feb 2024",
-    },
-    {
-      name: "Business Park",
-      progress: 25,
-      value: "$5.2M",
-      deadline: "Aug 2024",
-    },
-  ];
-
-  const monthlyEarnings = [
-    { month: "Oct", amount: 3200 },
-    { month: "Nov", amount: 4100 },
-    { month: "Dec", amount: 3800 },
-    { month: "Jan", amount: 4532 },
+  const statusDistributionData = [
+    { label: "Active", value: 15, color: "bg-green-500" },
+    { label: "Pending", value: 6, color: "bg-yellow-500" },
+    { label: "Sold", value: 8, color: "bg-blue-500" },
+    { label: "Rejected", value: 3, color: "bg-red-500" },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
       {/* Header */}
-      <header className="bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-heading">
-              Partner Dashboard
-            </h1>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
-            >
-              Logout
-            </button>
-          </div>
+      <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-heading">
+            Welcome back, {session?.user?.name || "Partner"}!
+          </h1>
+          <p className="text-body mt-1">
+            Here&apos;s what&apos;s happening with your properties today.
+          </p>
         </div>
-      </header>
+      </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Partnership Metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        >
-          {partnershipMetrics.map((metric, index) => (
-            <div
+      {/* KPI Cards */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+        role="region"
+        aria-label="Key performance indicators"
+      >
+        {metrics.map((metric, index) => {
+          const delay = 0.1 * index;
+          return (
+            <MetricsCard
               key={metric.title}
-              className="bg-white rounded-lg shadow-soft p-6 border border-border"
-            >
-              <h3 className="text-sm font-medium text-muted">{metric.title}</h3>
-              <p className="text-2xl font-bold text-heading mt-2">
-                {metric.value}
-              </p>
-              <div className="flex items-center mt-2">
-                <span
-                  className={`text-sm font-medium ${
-                    metric.positive ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {metric.change}
-                </span>
-                <span className="text-sm text-muted ml-1">this month</span>
-              </div>
-            </div>
-          ))}
-        </motion.div>
+              title={metric.title}
+              value={metric.value}
+              change={metric.change}
+              icon={
+                metric.title === "Total Properties"
+                  ? FiMapPin
+                  : metric.title === "Sold Properties"
+                  ? FiCheckCircle
+                  : metric.title === "Rejected Properties"
+                  ? FiXCircle
+                  : FiDollarSign
+              }
+              positive={metric.positive}
+              color={
+                metric.title === "Total Properties"
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                  : metric.title === "Sold Properties"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600"
+                  : metric.title === "Rejected Properties"
+                  ? "bg-gradient-to-r from-red-500 to-red-600"
+                  : "bg-gradient-to-r from-purple-500 to-pink-600"
+              }
+              delay={delay}
+            />
+          );
+        })}
+      </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Recent Partnerships */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-lg shadow-soft border border-border"
-          >
-            <div className="p-6 border-b border-border">
-              <h2 className="text-lg font-semibold text-heading">
-                Recent Partnerships
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-surface">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Partner
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {recentPartnerships.map((partnership, index) => (
-                    <tr key={index} className="hover:bg-surface">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-heading">
-                            {partnership.name}
-                          </div>
-                          <div className="text-sm text-muted">
-                            Joined {partnership.joined}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-body">
-                        {partnership.type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            partnership.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {partnership.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-
-          {/* Monthly Earnings Chart */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="bg-white rounded-lg shadow-soft border border-border"
-          >
-            <div className="p-6 border-b border-border">
-              <h2 className="text-lg font-semibold text-heading">
-                Monthly Earnings
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="flex items-end justify-between h-32">
-                {monthlyEarnings.map((data, index) => {
-                  const maxAmount = Math.max(
-                    ...monthlyEarnings.map((d) => d.amount)
-                  );
-                  const height = (data.amount / maxAmount) * 100;
-
-                  return (
-                    <div
-                      key={data.month}
-                      className="flex flex-col items-center"
-                    >
-                      <div
-                        className="bg-primary rounded-t"
-                        style={{
-                          height: `${height}%`,
-                          width: "40px",
-                        }}
-                      ></div>
-                      <span className="text-xs text-muted mt-2">
-                        {data.month}
-                      </span>
-                      <span className="text-xs font-medium text-heading">
-                        ${data.amount}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Collaboration Projects */}
+      {/* Charts */}
+      <motion.div 
+        className="grid grid-cols-1 xl:grid-cols-2 gap-6"
+        role="region"
+        aria-label="Analytics charts"
+      >
+        {/* Monthly Earnings Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-white rounded-lg shadow-soft border border-border mb-8"
+          transition={{ delay: 0.8, duration: 0.4 }}
         >
-          <div className="p-6 border-b border-border">
-            <h2 className="text-lg font-semibold text-heading">
-              Active Collaborations
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {collaborationProjects.map((project, index) => (
-                <div
-                  key={project.name}
-                  className="border border-border rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-medium text-heading">{project.name}</h3>
-                    <span className="text-sm text-muted">
-                      {project.deadline}
-                    </span>
-                  </div>
-                  <div className="mb-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm text-body">Progress</span>
-                      <span className="text-sm text-muted">
-                        {project.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-accent rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted">Project Value</span>
-                    <span className="text-sm font-medium text-heading">
-                      {project.value}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SimpleBarChart 
+            data={monthlyEarningsData} 
+            title="Monthly Earnings" 
+          />
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Status Distribution Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="bg-white rounded-lg shadow-soft border border-border p-6"
+          transition={{ delay: 1.0, duration: 0.4 }}
         >
-          <h2 className="text-lg font-semibold text-heading mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                title: "New Partnership",
-                icon: "🤝",
-                action: "Invite new partner",
-              },
-              {
-                title: "List Property",
-                icon: "🏠",
-                action: "Add new property",
-              },
-              {
-                title: "Generate Report",
-                icon: "📊",
-                action: "Create partnership report",
-              },
-              {
-                title: "Track Commissions",
-                icon: "💰",
-                action: "View earnings details",
-              },
-            ].map((action, index) => (
-              <button
-                key={action.title}
-                className="p-4 border border-border rounded-lg hover:bg-surface transition-colors text-left"
-              >
-                <div className="text-2xl mb-2">{action.icon}</div>
-                <h3 className="font-medium text-heading">{action.title}</h3>
-                <p className="text-sm text-muted mt-1">{action.action}</p>
-              </button>
-            ))}
-          </div>
+          <StatusDistributionChart 
+            data={statusDistributionData} 
+            title="Property Status Distribution" 
+          />
         </motion.div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
