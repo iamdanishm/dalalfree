@@ -32,7 +32,7 @@ export async function GET(req) {
   const skip = (page - 1) * limit;
   const users = await User.find(query)
     .select(
-      "name email phone role accountStatus accountStatusReason reraNumber subscription createdAt"
+      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings subscription createdAt"
     )
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -46,12 +46,12 @@ export async function GET(req) {
       user.role === "user"
         ? "User"
         : user.role === "partner"
-        ? "Partner"
-        : user.role === "admin"
-        ? "Admin"
-        : user.role === "sub-admin"
-        ? "Sub-Admin"
-        : user.role,
+          ? "Partner"
+          : user.role === "admin"
+            ? "Admin"
+            : user.role === "sub-admin"
+              ? "Sub-Admin"
+              : user.role,
     accountStatus:
       user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
     status:
@@ -81,7 +81,7 @@ export async function POST(req) {
       { status: 403 }
     );
 
-  const { name, email, password, phone, role = "user", reraNumber } = await req.json();
+  const { name, email, password, phone, role = "user", reraNumber, partnerCommissionRate } = await req.json();
 
   // Validate required fields
   const fieldErrors = {};
@@ -138,6 +138,7 @@ export async function POST(req) {
     phone,
     role,
     reraNumber,
+    partnerCommissionRate: partnerCommissionRate || (role === "partner" ? 0.9 : undefined),
     accountStatus: "active",
   });
 
@@ -149,6 +150,7 @@ export async function POST(req) {
       role: newUser.role,
       phone: newUser.phone,
       reraNumber: newUser.reraNumber,
+      partnerCommissionRate: newUser.partnerCommissionRate,
       accountStatus: newUser.accountStatus,
       subscription: newUser.subscription, // Include nested subscription object (only for users)
       createdAt: newUser.createdAt,

@@ -56,6 +56,14 @@ export const PUT = requireAuth(async (request) => {
       freeTrialStartDate: updatedUser.freeTrialStartDate,
       freeTrialEndDate: updatedUser.freeTrialEndDate,
       adUnlockCredits: updatedUser.adUnlockCredits,
+      // Partner specific fields
+      ...(updatedUser.role === "partner" && {
+        partnerCommissionRate: updatedUser.partnerCommissionRate,
+        totalEarnings: updatedUser.totalEarnings,
+        pendingWithdrawals: updatedUser.pendingWithdrawals,
+        withdrawnAmount: updatedUser.withdrawnAmount,
+        lastWithdrawalDate: updatedUser.lastWithdrawalDate,
+      }),
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
     };
@@ -115,6 +123,14 @@ export const GET = requireAuth(async (request) => {
       freeTrialStartDate: user.freeTrialStartDate,
       freeTrialEndDate: user.freeTrialEndDate,
       adUnlockCredits: user.adUnlockCredits,
+      // Partner specific fields
+      ...(user.role === "partner" && {
+        partnerCommissionRate: user.partnerCommissionRate,
+        totalEarnings: user.totalEarnings,
+        pendingWithdrawals: user.pendingWithdrawals,
+        withdrawnAmount: user.withdrawnAmount,
+        lastWithdrawalDate: user.lastWithdrawalDate,
+      }),
       // Metadata
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

@@ -108,9 +108,8 @@ export default function PartnerNavbar({ onMenuClick }) {
                   {session?.user?.name || "Partner"}
                 </span>
                 <FiChevronDown
-                  className={`w-4 h-4 text-muted transition-transform ${
-                    userDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-muted transition-transform ${userDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -139,6 +138,17 @@ export default function PartnerNavbar({ onMenuClick }) {
                           </p>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="py-2">
+                      <Link
+                        href="/user/profile"
+                        className="flex items-center px-4 py-3 text-sm text-heading hover:bg-surface transition-colors"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <FiUser className="w-4 h-4 mr-3" />
+                        My Profile
+                      </Link>
                     </div>
 
                     <div className="border-t border-border pt-2">

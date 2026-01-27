@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
         },
         message: 'Invalid email format'
@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema(
     phone: {
       type: String,
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
         },
         message: 'Invalid phone number format'
@@ -71,6 +71,32 @@ const UserSchema = new mongoose.Schema(
       required: false, // Only required for users, not admins/partners
     },
 
+    // Partner specific fields - only for role: "partner"
+    partnerCommissionRate: {
+      type: Number,
+      default: 0.9, // 90% commission rate
+      min: 0,
+      max: 1
+    },
+    totalEarnings: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    pendingWithdrawals: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    withdrawnAmount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    lastWithdrawalDate: {
+      type: Date
+    },
+
     // Password reset OTP fields
     resetPasswordOtp: { type: String },
     resetPasswordOtpExpiry: { type: Date },
@@ -78,8 +104,8 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre-save middleware to conditionally set subscription for regular users only
-UserSchema.pre('save', function(next) {
+// Pre-save middleware to conditionally set data based on roles
+UserSchema.pre('save', function (next) {
   // Only regular users (role: "user") should have subscription data
   if (this.role === 'user') {
     // Ensure subscription object exists for regular users
@@ -93,6 +119,23 @@ UserSchema.pre('save', function(next) {
   } else {
     // Remove subscription data for non-user roles
     this.subscription = undefined;
+  }
+
+  // Only partners (role: "partner") should have earnings data
+  if (this.role === 'partner') {
+    // Initialize partner fields if they are missing
+    if (this.partnerCommissionRate === undefined) this.partnerCommissionRate = 0.9;
+    if (this.totalEarnings === undefined) this.totalEarnings = 0;
+    if (this.pendingWithdrawals === undefined) this.pendingWithdrawals = 0;
+    if (this.withdrawnAmount === undefined) this.withdrawnAmount = 0;
+  } else {
+    // Remove partner data for non-partner roles
+    this.partnerCommissionRate = undefined;
+    this.totalEarnings = undefined;
+    this.pendingWithdrawals = undefined;
+    this.withdrawnAmount = undefined;
+    this.lastWithdrawalDate = undefined;
+    this.reraNumber = undefined;
   }
   next();
 });

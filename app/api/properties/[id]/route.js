@@ -37,18 +37,22 @@ export async function GET(_, { params }) {
     let property;
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
       // If it's a valid MongoDB ObjectId format
-      property = await Property.findById(id).populate({
-        path: "amenities.society",
-        model: "Amenity",
-        select: "title",
-      });
+      property = await Property.findById(id)
+        .populate({
+          path: "amenities.society",
+          model: "Amenity",
+          select: "title",
+        })
+        .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId");
     } else {
       // Otherwise, try to find by slug
-      property = await Property.findOne({ slug: id }).populate({
-        path: "amenities.society",
-        model: "Amenity",
-        select: "title",
-      });
+      property = await Property.findOne({ slug: id })
+        .populate({
+          path: "amenities.society",
+          model: "Amenity",
+          select: "title",
+        })
+        .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId");
     }
 
     if (!property) {

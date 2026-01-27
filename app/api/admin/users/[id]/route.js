@@ -18,7 +18,7 @@ export async function GET(req, { params }) {
   try {
     // Fetch user details
     const user = await User.findById(id).select(
-      "name email phone role accountStatus accountStatusReason reraNumber subscription createdAt updatedAt"
+      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings pendingWithdrawals withdrawnAmount lastWithdrawalDate subscription createdAt updatedAt"
     ).lean();
 
     if (!user) {
@@ -54,9 +54,9 @@ export async function GET(req, { params }) {
       ...user,
       role: user.role, // Keep raw role value for form compatibility
       displayRole: user.role === "user" ? "User" :
-                   user.role === "partner" ? "Partner" :
-                   user.role === "sub-admin" ? "Sub-Admin" :
-                   user.role === "admin" ? "Admin" : user.role,
+        user.role === "partner" ? "Partner" :
+          user.role === "sub-admin" ? "Sub-Admin" :
+            user.role === "admin" ? "Admin" : user.role,
       status: user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
       accountStatus: user.accountStatus,
       createdAt: user.createdAt,
@@ -86,7 +86,7 @@ export async function PUT(req, { params }) {
   // Await params in Next.js 15+
   const { id } = await params;
 
-  const { name, email, phone, role, accountStatus, accountStatusReason, reraNumber } =
+  const { name, email, phone, role, accountStatus, accountStatusReason, reraNumber, partnerCommissionRate } =
     await req.json();
 
   // Validate required fields
@@ -154,6 +154,7 @@ export async function PUT(req, { params }) {
   if (accountStatusReason !== undefined)
     updateData.accountStatusReason = accountStatusReason;
   if (reraNumber !== undefined) updateData.reraNumber = reraNumber?.trim() || undefined;
+  if (partnerCommissionRate !== undefined) updateData.partnerCommissionRate = partnerCommissionRate;
 
   const updated = await User.findByIdAndUpdate(id, updateData, {
     new: true,

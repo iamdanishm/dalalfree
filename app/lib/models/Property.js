@@ -176,6 +176,22 @@ const propertySchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    // Partner commission fields
+    partnerCommission: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    commissionPaid: {
+      type: Boolean,
+      default: false
+    },
+    commissionPaidDate: {
+      type: Date
+    },
+    commissionTransactionId: {
+      type: String
+    },
   },
   { timestamps: true }
 );

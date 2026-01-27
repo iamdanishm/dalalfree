@@ -53,8 +53,8 @@ export const requireAuth = (handler) => {
           const decoded = jwt.verify(
             token,
             process.env.NEXTAUTH_SECRET ||
-              process.env.JWT_SECRET ||
-              "fallback-secret"
+            process.env.JWT_SECRET ||
+            "fallback-secret"
           );
 
           // Get user from database using token payload
@@ -111,3 +111,17 @@ export const requireAuth = (handler) => {
     }
   };
 };
+
+// Require Partner role middleware
+export const requirePartner = (handler) => {
+  return requireAuth(async (request, ...args) => {
+    if (request.user.role !== "partner") {
+      return new Response(JSON.stringify({ error: "Partner access required" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return handler(request, ...args);
+  });
+};
+

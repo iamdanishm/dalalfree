@@ -13,8 +13,7 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/partner", icon: FiHome },
   { name: "My Properties", href: "/partner/properties", icon: FiMapPin },
-  { name: "Earnings", href: "/partner/earnings", icon: FiDollarSign },
-  { name: "Analytics", href: "/partner/analytics", icon: FiBarChart2 },
+  // { name: "Earnings", href: "/partner/earnings", icon: FiDollarSign },
 ];
 
 export default function PartnerSidebar({ isOpen, onClose }) {
@@ -65,11 +64,10 @@ export default function PartnerSidebar({ isOpen, onClose }) {
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                      : "text-body hover:bg-surface hover:text-heading hover:shadow-md"
-                  }`}
+                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
+                    ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                    : "text-body hover:bg-surface hover:text-heading hover:shadow-md"
+                    }`}
                   aria-current={isActive ? "page" : undefined}
                 >
                   <motion.div
@@ -77,11 +75,10 @@ export default function PartnerSidebar({ isOpen, onClose }) {
                     whileTap={{ scale: 0.95 }}
                   >
                     <item.icon
-                      className={`mr-3 flex-shrink-0 w-5 h-5 ${
-                        isActive
-                          ? "text-primary"
-                          : "text-muted group-hover:text-heading"
-                      }`}
+                      className={`mr-3 flex-shrink-0 w-5 h-5 ${isActive
+                        ? "text-primary"
+                        : "text-muted group-hover:text-heading"
+                        }`}
                     />
                   </motion.div>
                   <span>{item.name}</span>
