@@ -9,7 +9,7 @@ import PartnerNavbar from "./components/layout/PartnerNavbar";
 import PartnerSidebar from "./components/layout/PartnerSidebar";
 
 export default function PartnerLayout({ children }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -23,6 +23,39 @@ export default function PartnerLayout({ children }) {
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
+  // Poll for role changes to handle admin demotions in real-time
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/user/status?t=${Date.now()}`, { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+
+            // If they are no longer a partner, update session and kick them out
+            if (data.user.role !== "partner") {
+              console.log(`[PartnerLayout] Role changed to ${data.user.role}. Updating session...`);
+              await updateSession({
+                role: data.user.role,
+                partnerRequestStatus: data.user.partnerRequestStatus
+              });
+
+              if (data.user.role === "admin") {
+                router.push("/admin");
+              } else {
+                router.push("/user");
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error polling user status in partner layout:", err);
+        }
+      }, 10000); // Check every 10 seconds
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [status, session?.user?.role, updateSession, router]);
 
   useEffect(() => {
     // Check if user is authenticated

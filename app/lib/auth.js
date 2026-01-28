@@ -90,7 +90,7 @@ export const requireAuth = (handler) => {
       }
 
       // Check if account is active
-      if (user.accountStatus !== "active") {
+      if (user.accountStatus?.toLowerCase() !== "active") {
         return new Response(JSON.stringify({ error: "Account not active" }), {
           status: 401,
           headers: { "Content-Type": "application/json" },

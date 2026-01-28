@@ -52,7 +52,7 @@ export async function POST(req) {
     }
 
     // Check if account is active
-    if (user.accountStatus !== "active") {
+    if (user.accountStatus?.toLowerCase() !== "active") {
       return NextResponse.json(
         { error: "Account is not active. Please contact support." },
         { status: 403 }

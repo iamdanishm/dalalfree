@@ -74,8 +74,8 @@ export async function POST(req) {
       decodedToken = jwt.verify(
         resetToken,
         process.env.NEXTAUTH_SECRET ||
-          process.env.JWT_SECRET ||
-          "fallback-secret"
+        process.env.JWT_SECRET ||
+        "fallback-secret"
       );
     } catch (tokenError) {
       if (tokenError.name === "TokenExpiredError") {
@@ -110,7 +110,7 @@ export async function POST(req) {
     }
 
     // Check if account is active
-    if (user.accountStatus !== "active") {
+    if (user.accountStatus?.toLowerCase() !== "active") {
       return NextResponse.json(
         { error: "Account is not active. Please contact support." },
         { status: 403 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Select from "react-select";
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -10,7 +11,6 @@ import {
     FiSearch,
     FiEdit,
     FiTrash2,
-    FiEye,
     FiChevronLeft,
     FiChevronRight,
     FiX,
@@ -41,6 +41,7 @@ export default function UsersManagementTable() {
         value: "",
         label: "All Status",
     });
+    const [showPartnerRequests, setShowPartnerRequests] = useState(false);
 
     // Modal states
     const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -60,7 +61,8 @@ export default function UsersManagementTable() {
         search = "",
         role = "",
         status = "",
-        showLoading = false
+        showLoading = false,
+        overridePartnerRequest = null
     ) => {
         try {
             if (showLoading) setLoading(true);
@@ -74,6 +76,9 @@ export default function UsersManagementTable() {
             if (search) params.append("search", search);
             if (role) params.append("role", role);
             if (status) params.append("status", status);
+
+            const isPartnerRequest = overridePartnerRequest !== null ? overridePartnerRequest : showPartnerRequests;
+            if (isPartnerRequest) params.append("partnerRequest", "true");
 
             const response = await fetch(`/api/admin/users?${params}`);
             const data = await response.json();
@@ -105,16 +110,26 @@ export default function UsersManagementTable() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Trigger search when debounced term changes
+    // Trigger search when debounced term changes or filters change
     useEffect(() => {
         if (!initialLoad) {
             fetchUsers(1, debouncedSearchTerm, roleFilter?.value || "", statusFilter?.value || "");
         }
-    }, [debouncedSearchTerm, roleFilter, statusFilter]);
+    }, [debouncedSearchTerm, roleFilter, statusFilter, showPartnerRequests]);
+
+    const searchParams = useSearchParams();
 
     useEffect(() => {
-        fetchUsers(1, "", "", "", true); // Show loading on initial load
-    }, []);
+        const filterParam = searchParams.get("filter");
+        let partnerReq = false;
+        if (filterParam === "partner-requests") {
+            partnerReq = true;
+            setShowPartnerRequests(true);
+        } else if (filterParam === "pending-kyc") {
+            // Logic for pending KYC filter if needed
+        }
+        fetchUsers(1, "", "", "", true, partnerReq); // Pass partnerReq explicitly to avoid state race
+    }, [searchParams]);
 
     const handlePageChange = (page) => {
         fetchUsers(
@@ -517,6 +532,24 @@ export default function UsersManagementTable() {
                             }}
                         />
                     </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.7, duration: 0.4 }}
+                        className="relative"
+                    >
+                        <button
+                            onClick={() => setShowPartnerRequests(!showPartnerRequests)}
+                            className={`flex items-center justify-center px-4 h-[48px] rounded-lg border transition-colors w-full sm:w-auto text-sm font-medium ${showPartnerRequests
+                                ? "bg-orange-100 border-orange-200 text-orange-800"
+                                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                                }`}
+                        >
+                            <FiUsers className={`mr-2 ${showPartnerRequests ? "text-orange-600" : "text-gray-500"}`} />
+                            Partner Requests
+                        </button>
+                    </motion.div>
                 </motion.div>
             </div>
 
@@ -574,21 +607,24 @@ export default function UsersManagementTable() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span
-                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(
-                                                user.role
-                                            )}`}
-                                        >
-                                            {user.role === "user"
-                                                ? "User"
-                                                : user.role === "partner"
-                                                    ? "Partner"
-                                                    : user.role === "sub-admin"
-                                                        ? "Sub-Admin"
-                                                        : user.role === "admin"
-                                                            ? "Admin"
-                                                            : user.role}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getRoleColor(user.role)}`}>
+                                                {user.role === "user" ? "User" :
+                                                    user.role === "partner" ? "Partner" :
+                                                        user.role === "sub-admin" ? "Sub-Admin" :
+                                                            user.role === "admin" ? "Admin" : user.role}
+                                            </span>
+                                            {user.reraNumber && (
+                                                <span className="text-[10px] text-muted mt-1 font-medium">
+                                                    RERA: {user.reraNumber}
+                                                </span>
+                                            )}
+                                            {user.partnerRequestStatus === 'pending' && (
+                                                <div className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 uppercase tracking-wider">
+                                                    Pending Request
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span
@@ -679,8 +715,8 @@ export default function UsersManagementTable() {
                                         key={i}
                                         onClick={() => handlePageChange(i)}
                                         className={`px-3 py-1 border border-border rounded-md ${i === currentPage
-                                                ? "bg-primary text-white border-primary"
-                                                : "hover:bg-white"
+                                            ? "bg-primary text-white border-primary"
+                                            : "hover:bg-white"
                                             }`}
                                     >
                                         {i}
@@ -735,26 +771,24 @@ export default function UsersManagementTable() {
                     setShowUserDetailModal(false);
                     setSelectedUserId(null);
                 }}
-                onEdit={handleEditUser}
                 userId={selectedUserId}
+                onEdit={(user) => {
+                    setShowUserDetailModal(false);
+                    handleEditUser(user);
+                }}
+                onUpdate={() => fetchUsers(currentPage)}
             />
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete/Suspend Confirmation Modal */}
             <ConfirmationModal
                 isOpen={showDeleteModal}
-                onClose={() => {
-                    setShowDeleteModal(false);
-                    setSelectedUserToDelete(null);
-                }}
+                onClose={() => !deleteLoading && setShowDeleteModal(false)}
                 onConfirm={confirmDeleteUser}
                 title="Suspend User"
-                message={`Are you sure you want to suspend "${selectedUserToDelete?.name}"? This action will change their account status to suspended.`}
-                confirmText="Suspend"
-                cancelText="Cancel"
-                confirmButtonColor="bg-red-600 hover:bg-red-700"
-                loading={deleteLoading}
+                message={`Are you sure you want to suspend "${selectedUserToDelete?.name}"? They will no longer be able to log in.`}
+                confirmText={deleteLoading ? "Suspending..." : "Suspend User"}
+                type="danger"
             />
         </motion.div>
     );
 }
-<FiChevronRight className="w-4 h-4" />

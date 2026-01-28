@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const revalidate = 0;
 import { connectDB } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -20,6 +21,8 @@ export async function GET() {
 
     const verified = await User.countDocuments({ isVerified: true });
     const suspended = await User.countDocuments({ accountStatus: "suspended" });
+    const pendingPartnerRequests = await User.countDocuments({ partnerRequestStatus: "pending" });
+    console.log(`[Analytics] Pending partner requests count: ${pendingPartnerRequests}`);
 
     // Registration growth - last 7 days
     const sevenDaysAgo = new Date();
@@ -140,6 +143,12 @@ export async function GET() {
           value: rejectedToday.toString(),
           change: rejectedGrowth.change,
           positive: rejectedGrowth.positive,
+        },
+        {
+          title: "Partner Requests",
+          value: pendingPartnerRequests.toString(),
+          change: "New",
+          positive: pendingPartnerRequests > 0,
         },
       ],
       detailedStats: {

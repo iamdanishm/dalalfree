@@ -9,9 +9,11 @@ export default function MetricsCard({
   positive,
   color = "bg-gradient-to-r from-primary to-primary/80",
   delay = 0,
+  onClick,
 }) {
   return (
     <motion.div
+      onClick={onClick}
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{

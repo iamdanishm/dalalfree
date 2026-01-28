@@ -52,7 +52,7 @@ export async function POST(req) {
     }
 
     // Check if account is active
-    if (user.accountStatus !== "active") {
+    if (user.accountStatus?.toLowerCase() !== "active") {
       return NextResponse.json(
         { error: "Account is not active. Please contact support." },
         { status: 403 }
@@ -88,8 +88,8 @@ export async function POST(req) {
         type: "password_reset",
       },
       process.env.NEXTAUTH_SECRET ||
-        process.env.JWT_SECRET ||
-        "fallback-secret",
+      process.env.JWT_SECRET ||
+      "fallback-secret",
       { expiresIn: "30m" } // 30 minutes to complete password reset
     );
 

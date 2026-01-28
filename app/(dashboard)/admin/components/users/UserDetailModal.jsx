@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiUser, FiMail, FiPhone, FiShield, FiEdit, FiHome, FiCheckCircle, FiClock, FiXCircle, FiTrendingUp } from "react-icons/fi";
+import { FiX, FiUser, FiMail, FiPhone, FiShield, FiEdit, FiHome, FiCheckCircle, FiClock, FiXCircle, FiTrendingUp, FiCheck, FiSlash, FiAlertCircle } from "react-icons/fi";
+import { useToast } from "@/app/lib/hooks/useToast";
 
-export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
+export default function UserDetailModal({ isOpen, onClose, onEdit, onUpdate, userId }) {
+    const { success, error: showError } = useToast();
     const handleEditClick = (user) => {
         onClose(); // Close the detail modal first
         onEdit(user); // Then open the edit modal
@@ -11,7 +13,13 @@ export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
     const [user, setUser] = useState(null);
     const [propertyStats, setPropertyStats] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Approval flow states
+    const [showApproveForm, setShowApproveForm] = useState(false);
+    const [approveReraNumber, setApproveReraNumber] = useState("");
+    const [approveError, setApproveError] = useState("");
 
     // Fetch user details when modal opens
     useEffect(() => {
@@ -25,6 +33,8 @@ export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
 
         setLoading(true);
         setError(null);
+        setShowApproveForm(false);
+        setApproveReraNumber("");
 
         try {
             const response = await fetch(`/api/admin/users/${userId}`);
@@ -41,6 +51,55 @@ export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
             console.error("Error fetching user details:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePartnerRequest = async (action) => {
+        if (action === 'approve' && !showApproveForm) {
+            setShowApproveForm(true);
+            return;
+        }
+
+        if (action === 'approve' && !approveReraNumber.trim()) {
+            setApproveError("RERA number is required to approve a partner");
+            return;
+        }
+
+        setActionLoading(true);
+        setApproveError("");
+
+        try {
+            const updates = {
+                partnerRequestStatus: action === 'approve' ? 'approved' : 'rejected'
+            };
+
+            if (action === 'approve') {
+                updates.role = 'partner';
+                updates.reraNumber = approveReraNumber.trim();
+                updates.partnerCommissionRate = 0.9; // Default commission
+            }
+
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updates),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                success(`Partner request ${action}d successfully`);
+                setShowApproveForm(false);
+                fetchUserDetails(); // Refresh local details
+                if (onUpdate) onUpdate(); // Refresh parent table
+            } else {
+                showError(data.error || `Failed to ${action} partner request`);
+            }
+        } catch (err) {
+            console.error(`Error ${action}ing partner request:`, err);
+            showError(`Failed to ${action} partner request`);
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -144,6 +203,78 @@ export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
                             </div>
                         ) : user ? (
                             <div className="p-6 space-y-8">
+                                {/* Partner Request Section */}
+                                {user.partnerRequestStatus === 'pending' && (
+                                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold text-orange-800 mb-2 flex items-center">
+                                            <FiShield className="w-5 h-5 mr-2" />
+                                            Pending Partner Request
+                                        </h3>
+                                        <p className="text-orange-700 text-sm mb-4">
+                                            This user has requested to become a partner. Review their details and approve or reject the request.
+                                            {showApproveForm ? " Please enter the RERA number to complete the approval." : " On approval, you will be asked to provide their RERA number and their role will be updated to \"Partner\"."}
+                                        </p>
+
+                                        {showApproveForm ? (
+                                            <div className="mb-4 space-y-3">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-orange-800 mb-1">
+                                                        RERA registration number
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={approveReraNumber}
+                                                        onChange={(e) => setApproveReraNumber(e.target.value)}
+                                                        placeholder="Enter RERA number"
+                                                        className={`w-full max-w-md px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${approveError ? 'border-red-500' : 'border-gray-300'}`}
+                                                    />
+                                                    {approveError && (
+                                                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                                                            <FiAlertCircle className="mr-1" /> {approveError}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handlePartnerRequest('approve')}
+                                                        disabled={actionLoading}
+                                                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {actionLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <FiCheck className="mr-2" />}
+                                                        Confirm Approval
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowApproveForm(false)}
+                                                        disabled={actionLoading}
+                                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => handlePartnerRequest('approve')}
+                                                    disabled={actionLoading}
+                                                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                                >
+                                                    <FiCheck className="mr-2" />
+                                                    Approve Request
+                                                </button>
+                                                <button
+                                                    onClick={() => handlePartnerRequest('reject')}
+                                                    disabled={actionLoading}
+                                                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                                                >
+                                                    {actionLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div> : <FiSlash className="mr-2" />}
+                                                    Reject Request
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* User Profile Section */}
                                 <div className="bg-gray-50 rounded-xl p-6">
                                     <h3 className="text-lg font-semibold text-heading mb-4 flex items-center">
@@ -248,6 +379,39 @@ export default function UserDetailModal({ isOpen, onClose, onEdit, userId }) {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Partner Financial Overview - Only for Partner Role */}
+                                {user.role === "partner" && (
+                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                                            <FiTrendingUp className="w-5 h-5 mr-2" />
+                                            Partner Financial Overview
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">
+                                                <div className="text-xs text-muted mb-1 uppercase tracking-wider font-semibold">Commission Rate</div>
+                                                <div className="text-xl font-bold text-blue-900">{(user.partnerCommissionRate ? user.partnerCommissionRate * 100 : 90).toFixed(0)}%</div>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">
+                                                <div className="text-xs text-muted mb-1 uppercase tracking-wider font-semibold">Total Earnings</div>
+                                                <div className="text-xl font-bold text-green-600">₹{(user.totalEarnings || 0).toLocaleString()}</div>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">
+                                                <div className="text-xs text-muted mb-1 uppercase tracking-wider font-semibold">Withdrawn</div>
+                                                <div className="text-xl font-bold text-gray-700">₹{(user.withdrawnAmount || 0).toLocaleString()}</div>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">
+                                                <div className="text-xs text-muted mb-1 uppercase tracking-wider font-semibold">Pending</div>
+                                                <div className="text-xl font-bold text-orange-600">₹{(user.pendingWithdrawals || 0).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        {user.lastWithdrawalDate && (
+                                            <p className="mt-4 text-xs text-blue-700 font-medium">
+                                                Last withdrawal on {formatDate(user.lastWithdrawalDate)}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Property Statistics Section */}
                                 <div className="bg-gray-50 rounded-xl p-6">

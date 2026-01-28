@@ -18,7 +18,7 @@ export async function GET(req, { params }) {
   try {
     // Fetch user details
     const user = await User.findById(id).select(
-      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings pendingWithdrawals withdrawnAmount lastWithdrawalDate subscription createdAt updatedAt"
+      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings pendingWithdrawals withdrawnAmount lastWithdrawalDate subscription createdAt updatedAt partnerRequestStatus partnerRequestDate"
     ).lean();
 
     if (!user) {
@@ -60,7 +60,9 @@ export async function GET(req, { params }) {
       status: user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
       accountStatus: user.accountStatus,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
+      partnerRequestStatus: user.partnerRequestStatus,
+      partnerRequestDate: user.partnerRequestDate,
     };
 
     return NextResponse.json({
@@ -86,7 +88,7 @@ export async function PUT(req, { params }) {
   // Await params in Next.js 15+
   const { id } = await params;
 
-  const { name, email, phone, role, accountStatus, accountStatusReason, reraNumber, partnerCommissionRate } =
+  const { name, email, phone, role, accountStatus, accountStatusReason, reraNumber, partnerCommissionRate, partnerRequestStatus } =
     await req.json();
 
   // Validate required fields
@@ -155,10 +157,16 @@ export async function PUT(req, { params }) {
     updateData.accountStatusReason = accountStatusReason;
   if (reraNumber !== undefined) updateData.reraNumber = reraNumber?.trim() || undefined;
   if (partnerCommissionRate !== undefined) updateData.partnerCommissionRate = partnerCommissionRate;
+  if (partnerRequestStatus !== undefined) updateData.partnerRequestStatus = partnerRequestStatus;
 
-  const updated = await User.findByIdAndUpdate(id, updateData, {
-    new: true,
-  });
+  // Use .save() instead of findByIdAndUpdate to trigger pre-save middleware for cleanup
+  const userToUpdate = await User.findById(id);
+  if (!userToUpdate) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  Object.assign(userToUpdate, updateData);
+  const updated = await userToUpdate.save();
 
   // Send email notifications for account status changes
   if (accountStatus && updated) {

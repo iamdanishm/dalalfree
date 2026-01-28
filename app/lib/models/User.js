@@ -100,12 +100,27 @@ const UserSchema = new mongoose.Schema(
     // Password reset OTP fields
     resetPasswordOtp: { type: String },
     resetPasswordOtpExpiry: { type: Date },
+
+    // Partner Request
+    partnerRequestStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none"
+    },
+    partnerRequestDate: { type: Date },
   },
   { timestamps: true }
 );
 
 // Pre-save middleware to conditionally set data based on roles
 UserSchema.pre('save', function (next) {
+  console.log(`[UserModel] Pre-save for user ${this.email}, role: ${this.role}, status: ${this.partnerRequestStatus}`);
+
+  // Ensure accountStatus is lowercase
+  if (this.accountStatus) {
+    this.accountStatus = this.accountStatus.toLowerCase();
+  }
+
   // Only regular users (role: "user") should have subscription data
   if (this.role === 'user') {
     // Ensure subscription object exists for regular users
@@ -121,7 +136,8 @@ UserSchema.pre('save', function (next) {
     this.subscription = undefined;
   }
 
-  // Only partners (role: "partner") should have earnings data
+  // Only partners (role: "partner") should have earnings data. 
+  // RERA number is also preserved if there is a pending partner request.
   if (this.role === 'partner') {
     // Initialize partner fields if they are missing
     if (this.partnerCommissionRate === undefined) this.partnerCommissionRate = 0.9;
@@ -136,6 +152,12 @@ UserSchema.pre('save', function (next) {
     this.withdrawnAmount = undefined;
     this.lastWithdrawalDate = undefined;
     this.reraNumber = undefined;
+
+    // Also clear request status if they are no longer a partner
+    if (this.role !== 'partner' && this.partnerRequestStatus === 'approved') {
+      this.partnerRequestStatus = 'none';
+      this.partnerRequestDate = undefined;
+    }
   }
   next();
 });
@@ -147,5 +169,11 @@ UserSchema.index({ accountStatus: 1 });
 // Compound index for admin user queries: role + accountStatus + createdAt
 // Used in /api/admin/users for filtering and sorting admin user lists
 UserSchema.index({ role: 1, accountStatus: 1, createdAt: -1 });
+
+// In Next.js development, models can sometimes be cached with old schemas.
+// This check ensures the model is re-compiled if the schema has changed.
+if (mongoose.models.User && !mongoose.models.User.schema.paths.partnerRequestStatus) {
+  delete mongoose.models.User;
+}
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

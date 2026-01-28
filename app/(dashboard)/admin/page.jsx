@@ -14,6 +14,7 @@ import {
     FiClock,
     FiActivity,
     FiRefreshCw,
+    FiShield,
 } from "react-icons/fi";
 import MetricsCard from "./components/layout/MetricsCard";
 import RecentPropertiesChart from "./components/analytics/RecentPropertiesChart";
@@ -66,6 +67,7 @@ export default function AdminDashboard() {
                     status:
                         user.accountStatus.charAt(0).toUpperCase() +
                         user.accountStatus.slice(1),
+                    partnerRequestStatus: user.partnerRequestStatus,
                 }));
 
             setMetrics(transformedMetrics);
@@ -110,7 +112,6 @@ export default function AdminDashboard() {
     // Fetch data when authenticated as admin
     useEffect(() => {
         if (status === "authenticated" && session?.user?.role === "admin") {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchDashboardData();
 
             // Auto-refresh every 30 seconds
@@ -140,8 +141,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Loading Metrics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {[1, 2, 3, 4].map((i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+                    {[1, 2, 3, 4, 5].map((i) => (
                         <motion.div
                             key={i}
                             className="bg-white rounded-xl shadow-soft border border-border p-6"
@@ -199,18 +200,6 @@ export default function AdminDashboard() {
         );
     }
 
-    if (status === "unauthenticated") {
-        return null;
-    }
-
-    if (
-        status === "authenticated" &&
-        session?.user &&
-        session.user.role !== "admin"
-    ) {
-        return null;
-    }
-
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-screen text-center">
@@ -265,12 +254,12 @@ export default function AdminDashboard() {
                 </div>
             </motion.div>
 
-            {/* Metrics Cards */}
+            {/* Metrics Overview */}
             <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
             >
                 {metrics.map((metric, index) => {
                     const delay = 0.1 * index;
@@ -280,6 +269,19 @@ export default function AdminDashboard() {
                             title={metric.title}
                             value={metric.value}
                             change={metric.change}
+                            onClick={() => {
+                                if (metric.title === "Partner Requests") {
+                                    router.push("/admin/users?filter=partner-requests");
+                                } else if (metric.title === "Total Users") {
+                                    router.push("/admin/users");
+                                } else if (metric.title === "Active Properties") {
+                                    router.push("/admin/properties?status=approved");
+                                } else if (metric.title === "Pending KYC") {
+                                    router.push("/admin/users?filter=pending-kyc");
+                                } else if (metric.title === "Rejected Today") {
+                                    router.push("/admin/properties?status=rejected");
+                                }
+                            }}
                             icon={
                                 metric.title === "Total Users"
                                     ? FiUsers
@@ -289,7 +291,9 @@ export default function AdminDashboard() {
                                             ? FiCheckCircle
                                             : metric.title === "Rejected Today"
                                                 ? FiXCircle
-                                                : FiDollarSign
+                                                : metric.title === "Partner Requests"
+                                                    ? FiShield
+                                                    : FiDollarSign
                             }
                             positive={metric.positive}
                             color={
@@ -301,7 +305,9 @@ export default function AdminDashboard() {
                                             ? "bg-gradient-to-r from-orange-500 to-amber-600"
                                             : metric.title === "Rejected Today"
                                                 ? "bg-gradient-to-r from-red-500 to-red-600"
-                                                : "bg-gradient-to-r from-purple-500 to-pink-600"
+                                                : metric.title === "Partner Requests"
+                                                    ? "bg-gradient-to-r from-indigo-500 to-purple-600"
+                                                    : "bg-gradient-to-r from-purple-500 to-pink-600"
                             }
                             delay={delay}
                         />
@@ -310,14 +316,23 @@ export default function AdminDashboard() {
             </motion.div>
 
             {/* Charts and Tables */}
-            <motion.div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* Property Chart with Real Data */}
-                <motion.div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                >
                     <RecentPropertiesChart propertyData={propertyData} />
                 </motion.div>
 
                 {/* Recent Users Table */}
-                <div className="bg-white rounded-xl shadow-soft border border-border overflow-hidden">
+                <motion.div
+                    className="bg-white rounded-xl shadow-soft border border-border overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.5 }}
+                >
                     <div className="p-6 border-b border-border flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-heading flex items-center">
                             <FiUsers className="w-5 h-5 mr-2 text-primary" />
@@ -347,10 +362,10 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {recentUsers.map((user, index) => (
-                                    <tr key={index} className="hover:bg-surface">
+                                    <tr key={user.email || index} className="hover:bg-surface transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
-                                                <div className="w-10 h-10 bg-linear-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                                                <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center text-white font-medium text-sm">
                                                     {user.name?.charAt(0)?.toUpperCase() || "U"}
                                                 </div>
                                                 <div className="ml-3">
@@ -358,10 +373,17 @@ export default function AdminDashboard() {
                                                         {user.name}
                                                     </div>
                                                     <div className="text-sm text-muted">{user.email}</div>
+                                                    {user.partnerRequestStatus === 'pending' && (
+                                                        <div className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 uppercase tracking-wider">
+                                                            Pending Partner Request
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-body">{user.role}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-sm text-body">{user.role}</span>
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`px-2 py-1 text-xs font-semibold rounded-full ${user.status === "Active"
@@ -372,17 +394,28 @@ export default function AdminDashboard() {
                                                 {user.status}
                                             </span>
                                         </td>
-
                                     </tr>
                                 ))}
+                                {recentUsers.length === 0 && (
+                                    <tr>
+                                        <td colSpan="3" className="px-6 py-8 text-center text-muted">
+                                            No recent users found
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </motion.div>
+                </motion.div>
+            </div>
 
             {/* Quick Actions */}
-            <motion.div className="bg-linear-to-r from-surface to-surface/80 rounded-xl shadow-soft border border-border p-6">
+            <motion.div
+                className="bg-gradient-to-r from-surface to-surface/80 rounded-xl shadow-soft border border-border p-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+            >
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-heading flex items-center">
                         <FiActivity className="w-5 h-5 mr-2 text-primary" />
@@ -395,29 +428,36 @@ export default function AdminDashboard() {
                             title: "Add User",
                             icon: FiUsers,
                             action: "Create new user account",
+                            link: "/admin/users",
                         },
                         {
                             title: "Property Review",
                             icon: FiMapPin,
                             action: "Review pending properties",
+                            link: "/admin/properties",
                         },
                         {
                             title: "KYC Approval",
                             icon: FiCheckCircle,
                             action: "Process KYC applications",
+                            link: "/admin/kyc",
                         },
                         {
                             title: "Generate Report",
                             icon: FiTrendingUp,
                             action: "Create platform report",
+                            link: "/admin/reports",
                         },
                     ].map((action, index) => (
                         <motion.button
                             key={action.title}
-                            className={`p-4 rounded-xl border border-border/50 text-left hover:bg-surface/50`}
+                            onClick={() => router.push(action.link)}
+                            className="p-4 rounded-xl border border-border/50 text-left hover:bg-white hover:shadow-soft transition-all duration-200 group"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            <div className="w-6 h-6 mb-2">
-                                <action.icon />
+                            <div className="w-10 h-10 mb-3 bg-surface rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                                <action.icon className="w-5 h-5" />
                             </div>
                             <h3 className="font-semibold text-heading text-sm">
                                 {action.title}

@@ -15,10 +15,12 @@ import {
     FiPlus,
     FiList,
     FiUsers,
+    FiClock,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, signOut, signIn } from "next-auth/react";
 import { useUserProperties } from "@/app/lib/hooks/useUserProperties";
+import { useToast } from "@/app/lib/hooks/useToast";
 import PartnerRequestModal from "./PartnerRequestModal";
 
 export default function Navbar() {
@@ -26,11 +28,54 @@ export default function Navbar() {
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
     const [loginPromptOpen, setLoginPromptOpen] = useState(false);
     const [partnerModalOpen, setPartnerModalOpen] = useState(false);
+    const [partnerRequestLoading, setPartnerRequestLoading] = useState(false);
     const dropdownRef = useRef(null);
     const mobileMenuRef = useRef(null);
-    const { data: session } = useSession();
+    const { data: session, update: updateSession } = useSession();
     const router = useRouter();
     const { hasProperties } = useUserProperties();
+    const { success, error: showError } = useToast();
+
+    // Check for partner status updates if request is pending
+    useEffect(() => {
+        let pollInterval;
+
+        // Start polling if we're pending, or just poll occasionally to keep session fresh
+        const isPending = session?.user?.partnerRequestStatus === "pending";
+        const pollTime = isPending ? 5000 : 30000; // Poll every 5s if pending, 30s otherwise
+
+        if (session?.user) {
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/user/status?t=${Date.now()}`, { cache: "no-store" });
+                    if (res.ok) {
+                        const data = await res.json();
+
+                        // Check if status changed from what we have in session
+                        if (data.user.role !== session.user.role ||
+                            data.user.partnerRequestStatus !== session.user.partnerRequestStatus) {
+
+                            console.log(`[Navbar] Status change detected: ${session.user.role}->${data.user.role}, ${session.user.partnerRequestStatus}->${data.user.partnerRequestStatus}`);
+
+                            await updateSession({
+                                role: data.user.role,
+                                partnerRequestStatus: data.user.partnerRequestStatus
+                            });
+
+                            // If they just became a partner, send them to dashboard
+                            if (data.user.role === "partner" && session.user.role !== "partner") {
+                                router.push("/partner/dashboard");
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error polling user status:", err);
+                }
+            }, pollTime);
+
+            return () => clearInterval(pollInterval);
+        }
+    }, [session?.user?.role, session?.user?.partnerRequestStatus, updateSession, router]);
 
     // Get user initials for avatar
     const getInitials = (name) => {
@@ -76,14 +121,31 @@ export default function Navbar() {
 
     // Handle partner request
     const handlePartnerRequest = async () => {
+        console.log("[Navbar] Starting partner request submission");
+        setPartnerRequestLoading(true);
         try {
-            // TODO: Implement API call to submit partner request
-            console.log("Partner request submitted");
-            setPartnerModalOpen(false);
-            // TODO: Show success toast
+            const response = await fetch("/api/user/partner-request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+            console.log("[Navbar] Partner request response status:", response.status);
+            const data = await response.json();
+
+            if (response.ok) {
+                success(data.message || "Partner request submitted successfully!");
+                setPartnerModalOpen(false);
+                // Update local session immediately to show "Approval Pending"
+                await updateSession({
+                    partnerRequestStatus: "pending"
+                });
+            } else {
+                showError(data.error || "Failed to submit partner request");
+            }
         } catch (error) {
-            console.error("Partner request failed:", error);
-            // TODO: Show error toast
+            console.error("[Navbar] Partner request failed:", error);
+            showError("An error occurred while submitting the request");
+        } finally {
+            setPartnerRequestLoading(false);
         }
     };
 
@@ -192,13 +254,28 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center gap-6">
                         {/* Right-side actions */}
                         <div className="flex items-center gap-6">
-                            <button
-                                onClick={handleBecomePartnerClick}
-                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/5 border border-primary/20 rounded-md transition-all duration-200"
-                            >
-                                <FiUsers className="mr-2" size={16} />
-                                Become a Partner
-                            </button>
+                            {session?.user.role !== "partner" && session?.user.role !== "admin" && (
+                                <button
+                                    onClick={handleBecomePartnerClick}
+                                    disabled={session?.user.partnerRequestStatus === "pending"}
+                                    className={`inline-flex items-center px-4 py-2 text-sm font-medium border rounded-md transition-all duration-200 ${session?.user.partnerRequestStatus === "pending"
+                                        ? "text-orange-600 bg-orange-50 border-orange-200 cursor-not-allowed"
+                                        : "text-primary hover:text-primary/80 hover:bg-primary/5 border-primary/20"
+                                        }`}
+                                >
+                                    {session?.user.partnerRequestStatus === "pending" ? (
+                                        <>
+                                            <FiClock className="mr-2" size={16} />
+                                            Approval Pending
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiUsers className="mr-2" size={16} />
+                                            Become a Partner
+                                        </>
+                                    )}
+                                </button>
+                            )}
                             <button
                                 onClick={() => {
                                     if (!session) {
@@ -379,16 +456,33 @@ export default function Navbar() {
 
                             {/* Action buttons */}
                             <div className="pt-4 space-y-3">
-                                <button
-                                    onClick={() => {
-                                        setOpen(false);
-                                        handleBecomePartnerClick();
-                                    }}
-                                    className="flex items-center justify-center w-full px-4 py-3 text-primary font-medium rounded-lg border border-primary/20 hover:bg-primary/5 transition-colors duration-150 touch-manipulation"
-                                >
-                                    <FiUsers className="mr-2" size={20} />
-                                    Become a Partner
-                                </button>
+                                {session?.user.role !== "partner" && session?.user.role !== "admin" && (
+                                    <button
+                                        onClick={() => {
+                                            if (session?.user.partnerRequestStatus !== "pending") {
+                                                setOpen(false);
+                                                handleBecomePartnerClick();
+                                            }
+                                        }}
+                                        disabled={session?.user.partnerRequestStatus === "pending"}
+                                        className={`flex items-center justify-center w-full px-4 py-3 rounded-lg font-medium transition-colors duration-150 touch-manipulation ${session?.user.partnerRequestStatus === "pending"
+                                            ? "bg-orange-50 text-orange-600 border border-orange-100 cursor-not-allowed"
+                                            : "text-primary border border-primary/20 hover:bg-primary/5"
+                                            }`}
+                                    >
+                                        {session?.user.partnerRequestStatus === "pending" ? (
+                                            <>
+                                                <FiClock className="mr-2" size={20} />
+                                                Approval Pending
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiUsers className="mr-2" size={20} />
+                                                Become a Partner
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => {
                                         if (!session) {
@@ -599,6 +693,7 @@ export default function Navbar() {
                 isOpen={partnerModalOpen}
                 onClose={() => setPartnerModalOpen(false)}
                 onSubmitRequest={handlePartnerRequest}
+                loading={partnerRequestLoading}
             />
         </motion.header>
     );

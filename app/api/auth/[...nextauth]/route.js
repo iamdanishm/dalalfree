@@ -21,6 +21,7 @@ export const authOptions = {
           email: user.email,
           name: user.name,
           role: user.role || "user",
+          partnerRequestStatus: user.partnerRequestStatus || "none",
         };
       },
     }),
@@ -46,17 +47,27 @@ export const authOptions = {
       return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Fetch latest role and status from DB if it's a new session or a forced update
       if (user) {
         token.id = user.id || user._id;
         token.role = user.role || "user";
+        token.partnerRequestStatus = user.partnerRequestStatus || "none";
       }
+
+      // Handle session update trigger
+      if (trigger === "update" && session) {
+        if (session.role) token.role = session.role;
+        if (session.partnerRequestStatus) token.partnerRequestStatus = session.partnerRequestStatus;
+      }
+
       return token;
     },
 
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.role = token.role;
+      session.user.partnerRequestStatus = token.partnerRequestStatus;
       return session;
     },
   },

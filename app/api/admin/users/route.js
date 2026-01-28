@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const revalidate = 0;
 import { connectDB } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -16,11 +17,15 @@ export async function GET(req) {
   const limit = parseInt(searchParams.get("limit")) || 10;
   const role = searchParams.get("role");
   const status = searchParams.get("status");
+  const partnerRequest = searchParams.get("partnerRequest");
   const search = searchParams.get("search");
 
   const query = {};
   if (role) query.role = role;
   if (status) query.accountStatus = status;
+  if (partnerRequest === "true") {
+    query.partnerRequestStatus = "pending";
+  }
   if (search) {
     query.$or = [
       { name: { $regex: search, $options: "i" } },
@@ -29,15 +34,19 @@ export async function GET(req) {
     ];
   }
 
+  console.log(`[AdminUsers] Query:`, JSON.stringify(query));
+
   const skip = (page - 1) * limit;
   const users = await User.find(query)
     .select(
-      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings subscription createdAt"
+      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings subscription createdAt updatedAt partnerRequestStatus partnerRequestDate"
     )
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
+
+  console.log(`[AdminUsers] Found ${users.length} users`);
 
   // Map API data to UI format
   const formattedUsers = users.map((user) => ({
@@ -56,6 +65,8 @@ export async function GET(req) {
       user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
     status:
       user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1), // Add status field for UI
+    partnerRequestStatus: user.partnerRequestStatus,
+    partnerRequestDate: user.partnerRequestDate,
   }));
 
   const total = await User.countDocuments(query);
