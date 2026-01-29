@@ -15,14 +15,17 @@ import {
   FiLock,
 } from "react-icons/fi";
 import ContactRevealModal from "./ContactRevealModal";
+import { useToast } from "@/app/lib/hooks/useToast";
 
-export default function PropertyOwnerCard() {
+export default function PropertyOwnerCard({ property }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showRevealModal, setShowRevealModal] = useState(false);
   const [revealMethod, setRevealMethod] = useState(null);
+  const [revealedOwner, setRevealedOwner] = useState(null);
+  const { success, error } = useToast();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -36,8 +39,6 @@ export default function PropertyOwnerCard() {
         } catch (error) {
           console.error("Failed to fetch user profile:", error);
         }
-      } else if (status !== "loading") {
-        setLoading(false);
       }
       setLoading(false);
     };
@@ -45,52 +46,51 @@ export default function PropertyOwnerCard() {
     fetchUserProfile();
   }, [status]);
 
-  // Using the mock data from original file - in production this would be from props or API
-  const owner = {
-    name: "Rajesh Sharma",
+  // Use property owner data or fallbacks
+  const ownerData = property?.owner || {
+    name: "Property Owner",
     role: "Verified Owner",
     avatar: "/images/home-lifestyle.png",
-    contact: "+91 98765 43210",
-    email: "rajesh.sharma@example.com",
-    rating: 4.8,
-    completedDeals: 25,
-    memberSince: "2019",
-    response: "Responds within 2 hours",
+    contact: "Contact for details",
+    email: "contact@example.com",
+    memberSince: "2024",
+    response: "Responds within 24 hours"
   };
-
-  const calculateTrialDaysLeft = () => {
-    if (!userProfile?.freeTrialEndDate) return 0;
-    const now = new Date();
-    const endDate = new Date(userProfile.freeTrialEndDate);
-    const diffTime = endDate - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-  };
-
-  const trialDaysLeft = calculateTrialDaysLeft();
 
   const handleContactReveal = (method) => {
-    // For free users, show the reveal modal
     if (method !== "schedule_visit") {
       setRevealMethod(method);
       setShowRevealModal(true);
     } else {
-      // Handle schedule visit - placeholder
       console.log("Schedule visit clicked");
     }
   };
 
-  const handleRevealSuccess = (method) => {
-    // Handle successful contact reveal - update state, deduct credits, etc.
-    console.log(`Successfully revealed contact via: ${method}`);
-    setShowRevealModal(false);
-    setRevealMethod(null);
+  const handleRevealSuccess = async (method) => {
+    try {
+      const response = await fetch(`/api/properties/${property.id}/reveal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          method,
+          contactType: 'phone' // Default 
+        })
+      });
 
-    // In production:
-    // 1. Deduct credits if applicable
-    // 2. Update user profile state
-    // 3. Call contact reveal API
-    // 4. Show contact details
+      const data = await response.json();
+
+      if (data.success) {
+        setRevealedOwner(data.contact);
+        setShowRevealModal(false);
+        setRevealMethod(null);
+        success("Contact details revealed!");
+      } else {
+        error(data.error || "Failed to reveal contact");
+      }
+    } catch (err) {
+      console.error(err);
+      error("An error occurred");
+    }
   };
 
   const handleStartTrial = () => {
@@ -123,69 +123,58 @@ export default function PropertyOwnerCard() {
       );
     }
 
-    const subscriptionStatus = userProfile?.subscriptionStatus || "none";
-
-    // Free Trial Users - Full Access
-    if (subscriptionStatus === "free_trial") {
+    // If contact is already revealed
+    if (revealedOwner) {
       return (
-        <>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-              <FiStar size={12} />
-              Trial Active: {trialDaysLeft} days left
-            </div>
-            <button
-              onClick={() => handleContactReveal("schedule_visit")}
-              className="px-3 py-1 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Schedule Visit
-            </button>
+        <div className="space-y-3 bg-green-50 p-4 rounded-lg border border-green-100">
+          <div className="flex items-center text-gray-800">
+            <FiPhone className="mr-3 flex-shrink-0 text-green-600" size={16} />
+            <span className="text-sm font-bold">{revealedOwner.phone}</span>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center text-gray-700">
-              <FiPhone
-                className="mr-3 flex-shrink-0 text-green-600"
-                size={16}
-              />
-              <span className="text-sm font-medium">{owner.contact}</span>
-            </div>
-            <div className="flex items-center text-gray-700">
-              <FiMail className="mr-3 flex-shrink-0 text-green-600" size={16} />
-              <span className="text-sm font-medium">{owner.email}</span>
-            </div>
+          <div className="flex items-center text-gray-800">
+            <FiMail className="mr-3 flex-shrink-0 text-green-600" size={16} />
+            <span className="text-sm font-medium">{revealedOwner.email}</span>
           </div>
-        </>
+          <p className="text-xs text-green-700 text-center mt-2">Contact Revealed</p>
+        </div>
       );
     }
 
-    // Paid Users - Premium Access
-    if (subscriptionStatus === "active") {
+    const subscriptionStatus = userProfile?.subscriptionStatus || "none";
+
+    // Free Trial Users - Full Access
+    if (subscriptionStatus === "free_trial" || subscriptionStatus === "active") {
+      // Logic adjustment: Even active users might need to "Click to Reveal" to log it as a lead.
+      // But for UX, maybe we auto-reveal? 
+      // The requirement creates a "Lead" when revealed. 
+      // Let's keep the "Reveal" button even for premium but make it free/instant?
+      // Or better, premium users see it directly?
+      // If they see directly, we must log the view.
+      // For now, I'll stick to the "Click to view" pattern or check if already viewed.
+      // Simplification: Show "Click to View Contact" button for premium users that auto-fires or behaves like 0-cost.
+      // Actually, let's reuse the blurred UI but with a "View Contact" button that calls ID/reveal immediately.
       return (
-        <>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-xs font-medium">
-              <FiAward size={12} />
-              Premium Member
+        <div className="relative mb-4">
+          <div className="space-y-3 filter blur-sm">
+            <div className="flex items-center text-gray-300">
+              <FiPhone className="mr-3 flex-shrink-0" size={16} />
+              <span className="text-sm">XXX XXX XXXX</span>
             </div>
+            <div className="flex items-center text-gray-300">
+              <FiMail className="mr-3 flex-shrink-0" size={16} />
+              <span className="text-sm">owner@example.com</span>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
             <button
-              onClick={() => handleContactReveal("schedule_visit")}
-              className="px-3 py-1 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 transition-colors"
+              onClick={() => handleRevealSuccess('premium_view')}
+              className="bg-primary text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
             >
-              Schedule Visit
+              <FiUser /> View Contact Details
             </button>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center text-gray-700">
-              <FiPhone className="mr-3 flex-shrink-0 text-primary" size={16} />
-              <span className="text-sm font-medium">{owner.contact}</span>
-            </div>
-            <div className="flex items-center text-gray-700">
-              <FiMail className="mr-3 flex-shrink-0 text-primary" size={16} />
-              <span className="text-sm font-medium">{owner.email}</span>
-            </div>
-          </div>
-        </>
-      );
+        </div>
+      )
     }
 
     // Expired Users
@@ -195,9 +184,6 @@ export default function PropertyOwnerCard() {
           <FiClock className="mx-auto mb-2 text-orange-500" size={24} />
           <p className="text-sm text-orange-800 font-medium mb-2">
             Access Expired
-          </p>
-          <p className="text-xs text-orange-600 mb-4">
-            Renew your subscription to contact owners
           </p>
           <button
             onClick={handleStartTrial}
@@ -239,7 +225,6 @@ export default function PropertyOwnerCard() {
             <FiPlay size={18} />
             <div className="text-left">
               <div className="text-sm font-medium">Watch Ad (1 credit)</div>
-              <div className="text-xs opacity-75">Reveal contact instantly</div>
             </div>
           </button>
 
@@ -250,20 +235,7 @@ export default function PropertyOwnerCard() {
           >
             <FiCreditCard size={18} />
             <div className="text-left">
-              <div className="text-sm font-medium">₹200 - 30 contacts</div>
-              <div className="text-xs opacity-75">Lifetime access</div>
-            </div>
-          </button>
-
-          {/* Free Trial Option */}
-          <button
-            onClick={handleStartTrial}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors border border-purple-200"
-          >
-            <FiAward size={18} />
-            <div className="text-left">
-              <div className="text-sm font-medium">Start Free Trial</div>
-              <div className="text-xs opacity-75">30 days unlimited</div>
+              <div className="text-sm font-medium">Buy Credits</div>
             </div>
           </button>
         </div>
@@ -277,23 +249,25 @@ export default function PropertyOwnerCard() {
         <div className="p-2 bg-linear-to-r from-green-100 to-blue-100 rounded-lg">
           <FiUser className="w-5 h-5 text-blue-600" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-900">Property Owner</h3>
+        <h3 className="text-xl font-semibold text-gray-900">
+          {ownerData.role === "Verified Partner" ? "Professional Partner" : "Property Owner"}
+        </h3>
       </div>
 
       <div className="flex items-center mb-4">
-        <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-full mr-4 flex items-center justify-center">
-          <span className="text-white font-bold text-xl">
-            {owner.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()}
-          </span>
+        <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 rounded-full mr-4 flex items-center justify-center overflow-hidden">
+          {ownerData.avatar && ownerData.avatar !== "/images/home-lifestyle.png" ? (
+            <img src={ownerData.avatar} alt={ownerData.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white font-bold text-xl">
+              {ownerData.name?.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-900 text-lg">{owner.name}</h4>
-          <p className="text-green-600 text-sm font-medium">{owner.role}</p>
-          <p className="text-gray-500 text-xs">{owner.response}</p>
+          <h4 className="font-semibold text-gray-900 text-lg">{ownerData.name}</h4>
+          <p className="text-green-600 text-sm font-medium">{ownerData.role}</p>
+          <p className="text-gray-500 text-xs">{ownerData.response}</p>
         </div>
       </div>
 
@@ -301,9 +275,8 @@ export default function PropertyOwnerCard() {
       <div className="text-center p-3 bg-blue-50 rounded-lg mb-4">
         <FiClock className="mx-auto mb-1 text-blue-600" size={18} />
         <div className="text-sm font-medium text-gray-900">
-          Member since {owner.memberSince}
+          Member since {ownerData.memberSince}
         </div>
-        <div className="text-xs text-gray-600">{owner.response}</div>
       </div>
 
       {/* Subscription-Based Contact Logic */}
@@ -316,7 +289,7 @@ export default function PropertyOwnerCard() {
           setShowRevealModal(false);
           setRevealMethod(null);
         }}
-        owner={owner}
+        owner={ownerData}
         revealMethod={revealMethod}
         onReveal={handleRevealSuccess}
         userSubscription={userProfile}

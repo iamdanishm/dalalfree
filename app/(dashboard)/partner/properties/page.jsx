@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiSearch, FiFilter, FiRefreshCw, FiAlertCircle } from "react-icons/fi";
+import { FiPlus, FiSearch, FiRefreshCw, FiAlertCircle } from "react-icons/fi";
 import PartnerPropertyCard from "../components/PartnerPropertyCard";
+import ConfirmationModal from "@/app/components/ConfirmationModal";
+import { useToast } from "@/app/lib/hooks/useToast";
 
 export default function PartnerPropertiesPage() {
     const { data: session } = useSession();
@@ -18,16 +20,24 @@ export default function PartnerPropertiesPage() {
         totalEarnings: 0
     });
 
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedPropertyForDelete, setSelectedPropertyForDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { success, error: toastError } = useToast();
+
     const fetchProperties = async () => {
         setLoading(true);
         try {
             const res = await fetch(`/api/partner/properties${filter !== 'all' ? `?status=${filter}` : ''}`);
             const data = await res.json();
             if (data.success) {
-                setProperties(data.properties);
+                // Filter out archived properties if API doesn't do it
+                const activeProperties = data.properties.filter(p => !p.isArchived);
+                setProperties(activeProperties);
 
                 // Calculate stats
-                const newStats = data.properties.reduce((acc, prop) => {
+                const newStats = activeProperties.reduce((acc, prop) => {
                     acc.total++;
                     if (prop.status === 'approved') acc.approved++;
                     if (prop.status === 'pending') acc.pending++;
@@ -52,6 +62,40 @@ export default function PartnerPropertiesPage() {
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.location?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleDeleteClick = (property) => {
+        setSelectedPropertyForDelete(property);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedPropertyForDelete) return;
+
+        setIsDeleting(true);
+        try {
+            // Soft delete (archive)
+            const response = await fetch(`/api/properties/${selectedPropertyForDelete._id}`, {
+                method: "PUT", // Using PUT to update isArchived flag instead of DELETE
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isArchived: true })
+            });
+
+            if (response.ok) {
+                success("Property deleted successfully");
+                // Remove from local state
+                setProperties(prev => prev.filter(p => p._id !== selectedPropertyForDelete._id));
+                setShowDeleteModal(false);
+                setSelectedPropertyForDelete(null);
+            } else {
+                toastError("Failed to delete property");
+            }
+        } catch (err) {
+            console.error(err);
+            toastError("An error occurred");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
@@ -102,8 +146,8 @@ export default function PartnerPropertiesPage() {
                             key={s}
                             onClick={() => setFilter(s)}
                             className={`px-5 py-2 rounded-lg text-sm font-bold capitalize transition-all ${filter === s
-                                    ? 'bg-gray-900 text-white shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-900 hover:bg-surface'
+                                ? 'bg-gray-900 text-white shadow-lg'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-surface'
                                 }`}
                         >
                             {s}
@@ -150,8 +194,7 @@ export default function PartnerPropertiesPage() {
                                 key={property._id}
                                 property={property}
                                 onEdit={(p) => window.location.href = `/partner/properties/edit/${p._id}`}
-                                onArchive={(p) => alert(`Archive logic for ${p.title}`)}
-                                onBoost={(p) => alert(`Boost logic for ${p.title}`)}
+                                onDelete={handleDeleteClick}
                             />
                         ))}
                     </AnimatePresence>
@@ -179,6 +222,19 @@ export default function PartnerPropertiesPage() {
                     )}
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Property"
+                message={`Are you sure you want to delete "${selectedPropertyForDelete?.title}"? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                isLoading={isDeleting}
+                confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+            />
         </div>
     );
 }

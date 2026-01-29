@@ -35,7 +35,7 @@ UserFavoritesSchema.index({ userId: 1, addedAt: -1 });
 UserFavoritesSchema.index({ propertyId: 1 });
 
 // Static method to add favorite with duplicate prevention
-UserFavoritesSchema.statics.addFavorite = async function(userId, propertyId, notes = "") {
+UserFavoritesSchema.statics.addFavorite = async function (userId, propertyId, notes = "") {
   try {
     // Check if favorite already exists
     const existingFavorite = await this.findOne({ userId, propertyId });
@@ -68,26 +68,30 @@ UserFavoritesSchema.statics.addFavorite = async function(userId, propertyId, not
 };
 
 // Static method to remove favorite
-UserFavoritesSchema.statics.removeFavorite = async function(userId, propertyId) {
+UserFavoritesSchema.statics.removeFavorite = async function (userId, propertyId) {
   return await this.findOneAndDelete({ userId, propertyId });
 };
 
 // Static method to check if property is favorited by user
-UserFavoritesSchema.statics.isFavorited = async function(userId, propertyId) {
+UserFavoritesSchema.statics.isFavorited = async function (userId, propertyId) {
   const favorite = await this.findOne({ userId, propertyId });
   return !!favorite;
 };
 
 // Instance method to populate property details
-UserFavoritesSchema.methods.populateProperty = function() {
+UserFavoritesSchema.methods.populateProperty = function () {
   return this.populate({
     path: "propertyId",
-    select: "title slug propertyType category price location status images city state createdAt"
+    select: "title slug propertyType category price location status images city state createdAt ownerId",
+    populate: {
+      path: "ownerId",
+      select: "name role"
+    }
   });
 };
 
 // Static method to get user's favorites with populated property details
-UserFavoritesSchema.statics.getUserFavorites = async function(userId, options = {}) {
+UserFavoritesSchema.statics.getUserFavorites = async function (userId, options = {}) {
   const { page = 1, limit = 10, sortBy = "newest" } = options;
 
   let sortOption = { addedAt: -1 }; // default: newest first
@@ -106,7 +110,11 @@ UserFavoritesSchema.statics.getUserFavorites = async function(userId, options = 
 
   const query = this.find({ userId }).populate({
     path: "propertyId",
-    select: "title slug propertyType category price location status images city state createdAt",
+    select: "title slug propertyType category price location status images city state createdAt ownerId",
+    populate: {
+      path: "ownerId",
+      select: "name role"
+    },
     match: { isArchived: { $ne: true } } // Only show non-archived properties
   });
 
@@ -143,7 +151,7 @@ UserFavoritesSchema.statics.getUserFavorites = async function(userId, options = 
 };
 
 // Pre-save middleware to validate property exists
-UserFavoritesSchema.pre('save', async function(next) {
+UserFavoritesSchema.pre('save', async function (next) {
   try {
     const Property = mongoose.model("Property");
     const property = await Property.findById(this.propertyId);

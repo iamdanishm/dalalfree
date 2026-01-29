@@ -14,7 +14,7 @@ export const GET = requirePartner(async (request) => {
         const limit = parseInt(searchParams.get("limit")) || 50;
         const page = parseInt(searchParams.get("page")) || 1;
 
-        const query = { ownerId: request.user._id };
+        const query = { ownerId: request.user._id, isArchived: { $ne: true } };
         if (status) query.status = status;
 
         const skip = (page - 1) * limit;

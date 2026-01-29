@@ -97,7 +97,7 @@ export async function GET(request) {
     // Execute query with pagination
     const skip = (page - 1) * limit;
     const properties = await Property.find(query)
-      .populate("ownerId", "name email")
+      .populate("ownerId", "name email role")
       .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId")
       .sort(sortOptions)
       .skip(skip)

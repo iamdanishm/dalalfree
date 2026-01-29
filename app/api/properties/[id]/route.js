@@ -43,6 +43,10 @@ export async function GET(_, { params }) {
           model: "Amenity",
           select: "title",
         })
+        .populate({
+          path: "ownerId",
+          select: "name email role avatar rating completedDeals createdAt",
+        })
         .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId");
     } else {
       // Otherwise, try to find by slug
@@ -51,6 +55,10 @@ export async function GET(_, { params }) {
           path: "amenities.society",
           model: "Amenity",
           select: "title",
+        })
+        .populate({
+          path: "ownerId",
+          select: "name email role avatar rating completedDeals createdAt",
         })
         .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId");
     }
@@ -198,15 +206,21 @@ export const PUT = requireAuth(async function (req, { params }) {
       id
     );
     if (fileProcessingResults.files) {
-      // Handle images and videos - replace existing with new uploads (same as KYC)
+      // Handle images and videos - append new uploads to existing media
       if (fileProcessingResults.files.images?.length > 0) {
-        // Replace all existing images with new uploads
-        updateData.images = fileProcessingResults.files.images;
+        // Append new images to existing ones (after removals were processed)
+        updateData.images = [
+          ...(updateData.images || []),
+          ...fileProcessingResults.files.images
+        ];
       }
 
       if (fileProcessingResults.files.videos?.length > 0) {
-        // Replace all existing videos with new uploads
-        updateData.videos = fileProcessingResults.files.videos;
+        // Append new videos to existing ones (after removals were processed)
+        updateData.videos = [
+          ...(updateData.videos || []),
+          ...fileProcessingResults.files.videos
+        ];
       }
 
       // Handle KYC files - merge intelligently with existing files

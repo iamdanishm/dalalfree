@@ -230,6 +230,41 @@ export default function Navbar() {
         },
     };
 
+    // Show minimal header for partners - only logo and dashboard link
+    if (session?.user?.role === "partner") {
+        return (
+            <motion.header
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="bg-background border-b border-gray-100 sticky top-0 z-50"
+            >
+                <div className="container mx-auto px-4 md:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        {/* Logo - Links to partner dashboard */}
+                        <Link href="/partner" className="flex items-center gap-3">
+                            <Image
+                                src="/t-logo2.png"
+                                alt="Dalal Free"
+                                width={120}
+                                height={30}
+                                className="object-cover"
+                            />
+                        </Link>
+
+                        {/* Go to Dashboard button */}
+                        <Link
+                            href="/partner"
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/5 border border-primary/20 rounded-md transition-all duration-200"
+                        >
+                            Go to Dashboard
+                        </Link>
+                    </div>
+                </div>
+            </motion.header>
+        );
+    }
+
     return (
         <motion.header
             variants={containerVariants}

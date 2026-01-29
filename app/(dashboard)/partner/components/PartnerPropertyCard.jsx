@@ -1,10 +1,11 @@
 "use client";
 import Image from "next/image";
-import { FiMapPin, FiEdit3, FiEye, FiArchive, FiZap, FiDollarSign } from "react-icons/fi";
+import { FiMapPin, FiEdit3, FiEye, FiTrash2, FiZap } from "react-icons/fi";
+import { FaRupeeSign } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-export default function PartnerPropertyCard({ property, onEdit, onArchive, onBoost }) {
+export default function PartnerPropertyCard({ property, onEdit, onDelete }) {
     const router = useRouter();
 
     const getStatusColor = (status) => {
@@ -34,12 +35,17 @@ export default function PartnerPropertyCard({ property, onEdit, onArchive, onBoo
         }).format(amount);
     };
 
+    const handleCardClick = () => {
+        router.push(`/partner/properties/${property._id}`);
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -4 }}
-            className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-border group overflow-hidden"
+            className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-border group overflow-hidden cursor-pointer"
+            onClick={handleCardClick}
         >
             {/* Property Image & Status Badges */}
             <div className="relative h-48 w-full overflow-hidden">
@@ -64,7 +70,7 @@ export default function PartnerPropertyCard({ property, onEdit, onArchive, onBoo
                 </div>
 
                 {/* Quick Actions Overlay */}
-                <div className="absolute bottom-3 right-3 flex gap-2 translate-y-12 group-hover:translate-y-0 transition-transform duration-300">
+                <div className="absolute bottom-3 right-3 flex gap-2 translate-y-12 group-hover:translate-y-0 transition-transform duration-300" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={() => router.push(`/property/${property.slug}`)}
                         className="p-2 bg-white/90 hover:bg-white text-gray-700 rounded-lg shadow-lg backdrop-blur-sm transition-colors"
@@ -110,23 +116,17 @@ export default function PartnerPropertyCard({ property, onEdit, onArchive, onBoo
                         <span className="text-xl font-bold text-emerald-600">{formatCurrency(property.partnerCommission)}</span>
                         <span className="text-[10px] text-gray-400 font-medium">(90% Share)</span>
                     </div>
-                    <FiDollarSign className="absolute -right-2 -bottom-2 text-emerald-500/10 w-12 h-12 rotate-12 transition-transform group-hover/comm:scale-125" />
+                    {/* Replaced Dollar Sign with simple Rupee text for decoration as FaRupeeSign might not map directly to same visual style easily, utilizing text-emerald-500/10 */}
+                    <span className="absolute -right-4 -bottom-4 text-emerald-500/10 text-6xl font-bold select-none rotate-12 transition-transform group-hover/comm:scale-125">₹</span>
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
                     <button
-                        onClick={() => onBoost(property)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-colors shadow-sm"
+                        onClick={() => onDelete(property)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors border border-red-100"
                     >
-                        <FiZap className="text-yellow-400" /> Boost
-                    </button>
-                    <button
-                        onClick={() => onArchive(property)}
-                        className="px-3 flex items-center justify-center bg-gray-100 text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100"
-                        title="Archive Property"
-                    >
-                        <FiArchive size={18} />
+                        <FiTrash2 /> Delete
                     </button>
                 </div>
             </div>

@@ -22,7 +22,7 @@ export default function PropertyCard({
   // Check if current user is the property owner
   const isOwner = session?.user?.id && property?.ownerId &&
     (String(session.user.id) === String(property.ownerId._id || property.ownerId) ||
-     String(session.user._id) === String(property.ownerId._id || property.ownerId));
+      String(session.user._id) === String(property.ownerId._id || property.ownerId));
 
   // Show management actions if explicitly requested OR if user is the owner
   const shouldShowManagementActions = showManagementActions || isOwner;
@@ -141,6 +141,13 @@ export default function PropertyCard({
               />
             )}
           </button>
+        )}
+
+        {/* Bottom ribbon for Owner/Partner Listing */}
+        {property.ownerId && (
+          <div className={`absolute bottom-2 left-1/2 transform -translate-x-1/2 ${(property.ownerRole || property.ownerId?.role) === "partner" ? "bg-amber-500" : "bg-green-500"} text-white text-xs px-3 py-1 rounded-full shadow-sm z-10 whitespace-nowrap`}>
+            {(property.ownerRole || property.ownerId?.role) === "partner" ? "Partner Listing" : "Owner Listing"}
+          </div>
         )}
       </div>
 

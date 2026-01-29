@@ -70,8 +70,14 @@ export default function PropertyDetails({ params }) {
   const { data: session, status: authStatus } = useSession();
 
   // Check if current user is the property owner using session data
+  // Note: Partners should manage their properties from the partner dashboard, not the public page
   const isOwner = useMemo(() => {
     if (authStatus !== "authenticated" || !session?.user?.id || !property?.ownerId) {
+      return false;
+    }
+
+    // Partners should not see owner actions on the public page
+    if (session?.user?.role === "partner") {
       return false;
     }
 
@@ -79,7 +85,7 @@ export default function PropertyDetails({ params }) {
     const propertyOwnerId = String(property.ownerId._id || property.ownerId);
 
     return sessionUserId === propertyOwnerId;
-  }, [authStatus, session?.user?.id, session?.user?._id, property?.ownerId]);
+  }, [authStatus, session?.user?.id, session?.user?._id, session?.user?.role, property?.ownerId]);
 
   const openGalleryModal = (startIndex = 0) => {
     setModalImageIndex(startIndex);
@@ -195,9 +201,8 @@ export default function PropertyDetails({ params }) {
           ? `${dbProperty.builtUpArea.toLocaleString()}`
           : "N/A",
         floor: dbProperty.floor
-          ? `${getOrdinalSuffix(dbProperty.floor)}${
-              dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
-            }`
+          ? `${getOrdinalSuffix(dbProperty.floor)}${dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
+          }`
           : "N/A",
         age:
           dbProperty.age && dbProperty.ageUnit
@@ -205,7 +210,7 @@ export default function PropertyDetails({ params }) {
             : "N/A",
         furnishing: dbProperty.furnishing
           ? dbProperty.furnishing.charAt(0).toUpperCase() +
-            dbProperty.furnishing.slice(1)
+          dbProperty.furnishing.slice(1)
           : "Unfurnished",
         parking: dbProperty.parking || "No parking",
         bathrooms: dbProperty.bathrooms || "N/A",
@@ -219,54 +224,54 @@ export default function PropertyDetails({ params }) {
       amenities: {
         society:
           dbProperty.amenities?.society &&
-          Array.isArray(dbProperty.amenities.society) &&
-          dbProperty.amenities.society.length > 0
+            Array.isArray(dbProperty.amenities.society) &&
+            dbProperty.amenities.society.length > 0
             ? dbProperty.amenities.society
-                .filter((amenity) => amenity && typeof amenity === "object")
-                .map((amenity, index) => {
-                  const defaultNames = [
-                    "Swimming Pool",
-                    "Gym",
-                    "24/7 Security",
-                    "Power Backup",
-                    "Parking",
-                    "Garden",
-                    "Play Area",
-                    "Intercom",
-                    "Lift",
-                    "Water Supply",
-                  ];
-                  return {
-                    name:
-                      amenity.title ||
-                      amenity.name ||
-                      defaultNames[index] ||
-                      "Society Amenity",
-                    available:
-                      amenity.available !== undefined
-                        ? amenity.available
-                        : true,
-                    image: amenity.image || "/images/home-lifestyle.png",
-                  };
-                })
+              .filter((amenity) => amenity && typeof amenity === "object")
+              .map((amenity, index) => {
+                const defaultNames = [
+                  "Swimming Pool",
+                  "Gym",
+                  "24/7 Security",
+                  "Power Backup",
+                  "Parking",
+                  "Garden",
+                  "Play Area",
+                  "Intercom",
+                  "Lift",
+                  "Water Supply",
+                ];
+                return {
+                  name:
+                    amenity.title ||
+                    amenity.name ||
+                    defaultNames[index] ||
+                    "Society Amenity",
+                  available:
+                    amenity.available !== undefined
+                      ? amenity.available
+                      : true,
+                  image: amenity.image || "/images/home-lifestyle.png",
+                };
+              })
             : [
-                // Default amenities if none are specified
-                {
-                  name: "24/7 Security",
-                  available: true,
-                  image: "/images/home-lifestyle.png",
-                },
-                {
-                  name: "Power Backup",
-                  available: true,
-                  image: "/images/home-lifestyle.png",
-                },
-                {
-                  name: "Parking",
-                  available: true,
-                  image: "/images/home-lifestyle.png",
-                },
-              ],
+              // Default amenities if none are specified
+              {
+                name: "24/7 Security",
+                available: true,
+                image: "/images/home-lifestyle.png",
+              },
+              {
+                name: "Power Backup",
+                available: true,
+                image: "/images/home-lifestyle.png",
+              },
+              {
+                name: "Parking",
+                available: true,
+                image: "/images/home-lifestyle.png",
+              },
+            ],
         nearby: (
           dbProperty.amenities?.nearby ||
           dbProperty.nearbyPlaces ||
@@ -281,7 +286,7 @@ export default function PropertyDetails({ params }) {
       description: dbProperty.description || "No description available.",
       owner: {
         name: dbProperty.ownerId?.name || "Property Owner",
-        role: "Verified Owner",
+        role: dbProperty.ownerId?.role === "partner" ? "Verified Partner" : "Verified Owner",
         avatar: dbProperty.ownerId?.avatar || "/images/home-lifestyle.png",
         contact: "Contact for details",
         email: dbProperty.ownerId?.email || "contact@example.com",
@@ -319,8 +324,8 @@ export default function PropertyDetails({ params }) {
           label: "Possession Status",
           value: dbProperty.possessionStatus
             ? dbProperty.possessionStatus
-                .replace("-", " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())
+              .replace("-", " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase())
             : "Ready to Move",
         },
         { label: "Parking", value: dbProperty.parking || "No parking" },
@@ -328,7 +333,7 @@ export default function PropertyDetails({ params }) {
           label: "Facing",
           value: dbProperty.facing
             ? dbProperty.facing.charAt(0).toUpperCase() +
-              dbProperty.facing.slice(1)
+            dbProperty.facing.slice(1)
             : "N/A",
         },
         { label: "Bathrooms", value: dbProperty.bathrooms || "N/A" },
@@ -336,9 +341,8 @@ export default function PropertyDetails({ params }) {
         {
           label: "Floor",
           value: dbProperty.floor
-            ? `${getOrdinalSuffix(dbProperty.floor)}${
-                dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
-              }`
+            ? `${getOrdinalSuffix(dbProperty.floor)}${dbProperty.totalFloors ? ` of ${dbProperty.totalFloors}` : ""
+            }`
             : "N/A",
         },
         {
@@ -538,7 +542,7 @@ export default function PropertyDetails({ params }) {
             <ImageGallery
               property={property}
               showAllImages={false}
-              setShowAllImages={() => {}}
+              setShowAllImages={() => { }}
               onOpenGalleryModal={openGalleryModal}
             />
             {/* Quick Overview Overlay positioned on bottom half of image */}
@@ -640,7 +644,7 @@ export default function PropertyDetails({ params }) {
                   variants={itemVariants}
                   whileHover={hoverVariants.hover}
                 >
-                  <PropertyOwnerCard />
+                  <PropertyOwnerCard property={property} />
                 </motion.div>
               )}
 

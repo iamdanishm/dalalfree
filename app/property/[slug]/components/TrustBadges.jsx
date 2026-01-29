@@ -15,16 +15,26 @@ export default function TrustBadges({ property }) {
       description: "100% Verified Property",
     });
   }
-
-  // Direct owner badge (assuming all listings are direct owner)
-  trustBadges.push({
-    label: "Direct Owner",
-    icon: FiHeart,
-    color: "text-rose-600",
-    bg: "bg-gradient-to-br from-rose-50 to-rose-100",
-    border: "border-rose-200",
-    description: "No Brokerage Involved",
-  });
+  // Owner/Partner badge based on who listed the property
+  if (property?.ownerRole === "partner") {
+    trustBadges.push({
+      label: "Partner Listing",
+      icon: FiAward,
+      color: "text-amber-600",
+      bg: "bg-gradient-to-br from-amber-50 to-amber-100",
+      border: "border-amber-200",
+      description: "Official DalalFree Partner",
+    });
+  } else {
+    trustBadges.push({
+      label: "Direct Owner",
+      icon: FiHeart,
+      color: "text-rose-600",
+      bg: "bg-gradient-to-br from-rose-50 to-rose-100",
+      border: "border-rose-200",
+      description: "No Brokerage Involved",
+    });
+  }
 
   // Property type specific badges
   if (property?.propertyType === "sell") {
@@ -122,16 +132,6 @@ export default function TrustBadges({ property }) {
           </div>
         ))}
       </div>
-
-      {/* Trust seal - Only show for partner properties */}
-      {property?.ownerRole === "partner" && (
-        <div className="relative mt-6 flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200/50">
-          <FiAward className="w-5 h-5 text-amber-600" />
-          <span className="font-semibold text-amber-800 text-sm">
-            Official Partner Property
-          </span>
-        </div>
-      )}
     </div>
   );
 }

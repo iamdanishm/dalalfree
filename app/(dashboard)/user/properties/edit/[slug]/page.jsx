@@ -573,9 +573,9 @@ export default function PropertyEditWizard() {
     if (original.status !== "approved") {
       const hasNewKycFiles = updated.kycFiles &&
         (updated.kycFiles.aadhaar?.length > 0 ||
-         updated.kycFiles.pan ||
-         updated.kycFiles.agreement ||
-         updated.kycFiles.video);
+          updated.kycFiles.pan ||
+          updated.kycFiles.agreement ||
+          updated.kycFiles.video);
 
       if (hasNewKycFiles) {
         changes.kycFiles = "Updated KYC documents";
@@ -627,12 +627,12 @@ export default function PropertyEditWizard() {
 
       // Handle file uploads if any new files are added
       const hasNewFiles = (formData.images?.length > 0) ||
-                         (formData.videos?.length > 0) ||
-                         (formData.kycFiles &&
-                          (formData.kycFiles.aadhaar?.length > 0 ||
-                           formData.kycFiles.pan ||
-                           formData.kycFiles.agreement ||
-                           formData.kycFiles.video));
+        (formData.videos?.length > 0) ||
+        (formData.kycFiles &&
+          (formData.kycFiles.aadhaar?.length > 0 ||
+            formData.kycFiles.pan ||
+            formData.kycFiles.agreement ||
+            formData.kycFiles.video));
 
       let result;
 
@@ -757,8 +757,9 @@ export default function PropertyEditWizard() {
     );
   }
 
-  // Don't render if not authenticated or not a user
-  if (status === "unauthenticated" || session?.user?.role !== "user") {
+  // Don't render if not authenticated or not an allowed role
+  const allowedRoles = ["user", "partner"];
+  if (status === "unauthenticated" || !allowedRoles.includes(session?.user?.role)) {
     return null;
   }
 
@@ -773,7 +774,7 @@ export default function PropertyEditWizard() {
           </h2>
           <p className="text-muted mb-6">{permissionError}</p>
           <button
-            onClick={() => router.push("/user/properties")}
+            onClick={() => router.push(session?.user?.role === 'partner' ? "/partner/properties" : "/user/properties")}
             className="bg-primary text-white px-6 py-3 rounded-lg hover:opacity-90"
           >
             Back to My Properties
@@ -817,13 +818,12 @@ export default function PropertyEditWizard() {
               Edit Property: {originalProperty.title}
             </h1>
             <div className="flex items-center gap-4 text-sm text-muted">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                originalProperty.status === "approved"
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${originalProperty.status === "approved"
                   ? "bg-green-100 text-green-800"
                   : originalProperty.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-              }`}>
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
+                }`}>
                 {originalProperty.status.charAt(0).toUpperCase() + originalProperty.status.slice(1)}
               </span>
               <span>Listed on {new Date(originalProperty.createdAt).toLocaleDateString()}</span>
@@ -897,15 +897,14 @@ export default function PropertyEditWizard() {
                     >
                       {/* Step Circle - Touch-friendly on mobile */}
                       <motion.div
-                        className={`relative w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all duration-200 ${
-                          isReadOnly
+                        className={`relative w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all duration-200 ${isReadOnly
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : isCompleted
-                            ? "bg-green-500 text-white"
-                            : isCurrent
-                            ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4"
-                            : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
-                        }`}
+                              ? "bg-green-500 text-white"
+                              : isCurrent
+                                ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4"
+                                : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
+                          }`}
                         whileHover={!isReadOnly ? { scale: 1.1 } : {}}
                         whileTap={!isReadOnly ? { scale: 0.95 } : {}}
                       >
@@ -944,15 +943,14 @@ export default function PropertyEditWizard() {
                         transition={{ delay: index * 0.05 + 0.1 }}
                       >
                         <div
-                          className={`text-xs sm:text-sm font-medium leading-tight ${
-                            isReadOnly
+                          className={`text-xs sm:text-sm font-medium leading-tight ${isReadOnly
                               ? "text-gray-500"
                               : isCompleted
-                              ? "text-green-600"
-                              : isCurrent
-                              ? "text-primary font-semibold"
-                              : "text-gray-500"
-                          }`}
+                                ? "text-green-600"
+                                : isCurrent
+                                  ? "text-primary font-semibold"
+                                  : "text-gray-500"
+                            }`}
                         >
                           {step.title}
                           {isReadOnly && (
@@ -969,15 +967,14 @@ export default function PropertyEditWizard() {
                         transition={{ delay: index * 0.05 + 0.1 }}
                       >
                         <div
-                          className={`text-[10px] font-medium leading-tight whitespace-nowrap ${
-                            isReadOnly
+                          className={`text-[10px] font-medium leading-tight whitespace-nowrap ${isReadOnly
                               ? "text-gray-500"
                               : isCompleted
-                              ? "text-green-600"
-                              : isCurrent
-                              ? "text-primary font-semibold"
-                              : "text-gray-500"
-                          }`}
+                                ? "text-green-600"
+                                : isCurrent
+                                  ? "text-primary font-semibold"
+                                  : "text-gray-500"
+                            }`}
                         >
                           {step.title.split(" ")[0]}
                           {isReadOnly && "*"}
@@ -1043,11 +1040,10 @@ export default function PropertyEditWizard() {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                    isSubmitting
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${isSubmitting
                       ? "bg-muted text-muted cursor-not-allowed"
                       : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
-                  }`}
+                    }`}
                 >
                   {isSubmitting ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
@@ -1091,11 +1087,10 @@ export default function PropertyEditWizard() {
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   whileTap={{ scale: 0.98 }}
-                  className={`btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 rounded-mobile-lg font-bold text-lg animate-mobile touch-feedback ${
-                    isSubmitting
+                  className={`btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 rounded-mobile-lg font-bold text-lg animate-mobile touch-feedback ${isSubmitting
                       ? "bg-muted text-muted cursor-not-allowed"
                       : "bg-linear-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
-                  }`}
+                    }`}
                 >
                   {isSubmitting ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2"></div>

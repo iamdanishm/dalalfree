@@ -40,14 +40,13 @@ UserContactHistorySchema.index({ userId: 1, contactRevealedAt: -1 });
 // Index for property-specific contact history
 UserContactHistorySchema.index({ userId: 1, propertyId: 1 });
 
-// Index for date range queries
-UserContactHistorySchema.index({ userId: 1, contactRevealedAt: -1 });
+
 
 // Index for property-based queries (to get all contacts for a property)
 UserContactHistorySchema.index({ propertyId: 1 });
 
 // Static method to log contact reveal
-UserContactHistorySchema.statics.logContact = async function(userId, propertyId, contactType, contactValue, creditsUsed = 1) {
+UserContactHistorySchema.statics.logContact = async function (userId, propertyId, contactType, contactValue, creditsUsed = 1) {
   try {
     // Validate credits used
     if (creditsUsed < 1) {
@@ -91,7 +90,7 @@ UserContactHistorySchema.statics.logContact = async function(userId, propertyId,
 };
 
 // Static method to get user's contact history
-UserContactHistorySchema.statics.getUserContactHistory = async function(userId, options = {}) {
+UserContactHistorySchema.statics.getUserContactHistory = async function (userId, options = {}) {
   const { page = 1, limit = 10, dateFrom, dateTo, contactType } = options;
 
   // Build query
@@ -134,13 +133,13 @@ UserContactHistorySchema.statics.getUserContactHistory = async function(userId, 
 };
 
 // Static method to check if user has contacted property
-UserContactHistorySchema.statics.hasContactedProperty = async function(userId, propertyId) {
+UserContactHistorySchema.statics.hasContactedProperty = async function (userId, propertyId) {
   const contact = await this.findOne({ userId, propertyId });
   return !!contact;
 };
 
 // Instance method to get masked contact value for privacy
-UserContactHistorySchema.methods.getMaskedContact = function() {
+UserContactHistorySchema.methods.getMaskedContact = function () {
   const value = this.contactValue;
 
   switch (this.contactType) {
@@ -169,7 +168,7 @@ UserContactHistorySchema.methods.getMaskedContact = function() {
 };
 
 // Instance method to populate property details
-UserContactHistorySchema.methods.populateProperty = function() {
+UserContactHistorySchema.methods.populateProperty = function () {
   return this.populate({
     path: "propertyId",
     select: "title slug propertyType category price location images city state"
@@ -177,7 +176,7 @@ UserContactHistorySchema.methods.populateProperty = function() {
 };
 
 // Static method to get contact statistics for user
-UserContactHistorySchema.statics.getUserContactStats = async function(userId) {
+UserContactHistorySchema.statics.getUserContactStats = async function (userId) {
   const stats = await this.aggregate([
     { $match: { userId: mongoose.Types.ObjectId(userId) } },
     {
@@ -230,7 +229,7 @@ UserContactHistorySchema.statics.getUserContactStats = async function(userId) {
 };
 
 // Pre-save middleware to validate property exists
-UserContactHistorySchema.pre('save', async function(next) {
+UserContactHistorySchema.pre('save', async function (next) {
   try {
     const Property = mongoose.model("Property");
     const property = await Property.findById(this.propertyId);

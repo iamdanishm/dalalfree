@@ -150,6 +150,7 @@ export default function WishlistSection({ user, data, onRefresh }) {
             verified: property.verified || false,
             noBrokerage: property.noBrokerage || false,
             ownerListing: property.ownerId ? true : false,
+            ownerRole: property.ownerId?.role || "user",
             image: property.images?.[0]?.url || "/images/home-lifestyle.png",
           };
 
@@ -215,10 +216,10 @@ export default function WishlistSection({ user, data, onRefresh }) {
                   )}
                 </motion.button>
               </div>
-              {/* Bottom ribbon for Owner Listing */}
+              {/* Bottom ribbon for Owner/Partner Listing */}
               {transformedProperty.ownerListing && (
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-sm z-10">
-                  Owner Listing
+                <div className={`absolute bottom-2 left-1/2 transform -translate-x-1/2 ${transformedProperty.ownerRole === "partner" ? "bg-amber-500" : "bg-green-500"} text-white text-xs px-3 py-1 rounded-full shadow-sm z-10`}>
+                  {transformedProperty.ownerRole === "partner" ? "Partner Listing" : "Owner Listing"}
                 </div>
               )}
 
