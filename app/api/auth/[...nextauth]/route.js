@@ -20,6 +20,7 @@ export const authOptions = {
           id: user._id,
           email: user.email,
           name: user.name,
+          phone: user.phone,
           role: user.role || "user",
           partnerRequestStatus: user.partnerRequestStatus || "none",
         };
@@ -52,11 +53,14 @@ export const authOptions = {
       if (user) {
         token.id = user.id || user._id;
         token.role = user.role || "user";
+        token.phone = user.phone;
         token.partnerRequestStatus = user.partnerRequestStatus || "none";
       }
 
       // Handle session update trigger
       if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.phone) token.phone = session.phone;
         if (session.role) token.role = session.role;
         if (session.partnerRequestStatus) token.partnerRequestStatus = session.partnerRequestStatus;
       }
@@ -67,6 +71,7 @@ export const authOptions = {
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.role = token.role;
+      session.user.phone = token.phone;
       session.user.partnerRequestStatus = token.partnerRequestStatus;
       return session;
     },
