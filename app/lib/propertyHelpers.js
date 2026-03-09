@@ -41,7 +41,7 @@ export function transformPropertyDataForAPI(formData) {
   // Specifications
   apiData.append("bhk", formData.bhk || "");
   apiData.append("bathrooms", String(formData.bathrooms || ""));
-  apiData.append("balcony", String(formData.balcony || ""));
+  apiData.append("balcony", formData.balcony !== undefined && formData.balcony !== null ? String(formData.balcony) : "");
   apiData.append("furnishing", formData.furnishing || "");
   apiData.append("builtUpArea", String(formData.builtUpArea || ""));
   apiData.append("carpetArea", String(formData.carpetArea || ""));
@@ -53,6 +53,13 @@ export function transformPropertyDataForAPI(formData) {
   apiData.append("facing", formData.facing || "");
   apiData.append("possessionStatus", formData.possessionStatus || "");
   apiData.append("maintenance", formData.maintenance || "");
+
+  // Rent specific fields
+  if (formData.propertyType === "rent") {
+    apiData.append("deposit", String(formData.deposit || ""));
+    apiData.append("preferredTenants", formData.preferredTenants || "");
+    apiData.append("availableFrom", formData.availableFrom || "");
+  }
 
   // Arrays and objects
   if (formData.highlights && Array.isArray(formData.highlights)) {
@@ -103,29 +110,53 @@ export function addFilesToFormData(formData, files) {
   }
 
   // Add KYC files with specific field names
+  // We use the same field name 'kycFiles' but prefix filenames to help categorization
   if (files.kycFiles) {
     // Aadhaar files (can be multiple)
     if (files.kycFiles.aadhaar && Array.isArray(files.kycFiles.aadhaar)) {
-      files.kycFiles.aadhaar.forEach((fileObj) => {
+      files.kycFiles.aadhaar.forEach((fileObj, index) => {
         if (fileObj.file) {
-          formData.append("kycFiles", fileObj.file);
+          const renamedFile = new File(
+            [fileObj.file],
+            `aadhaar_${index}_${fileObj.file.name}`,
+            { type: fileObj.file.type }
+          );
+          formData.append("kycFiles", renamedFile);
         }
       });
     }
 
     // PAN file (single)
     if (files.kycFiles.pan && files.kycFiles.pan.file) {
-      formData.append("kycFiles", files.kycFiles.pan.file);
+      const panFile = files.kycFiles.pan.file;
+      const renamedFile = new File(
+        [panFile],
+        `pancard_${panFile.name}`,
+        { type: panFile.type }
+      );
+      formData.append("kycFiles", renamedFile);
     }
 
     // Agreement file (single)
     if (files.kycFiles.agreement && files.kycFiles.agreement.file) {
-      formData.append("kycFiles", files.kycFiles.agreement.file);
+      const agreementFile = files.kycFiles.agreement.file;
+      const renamedFile = new File(
+        [agreementFile],
+        `agreement_${agreementFile.name}`,
+        { type: agreementFile.type }
+      );
+      formData.append("kycFiles", renamedFile);
     }
 
     // KYC verification video (single)
     if (files.kycFiles.video && files.kycFiles.video.file) {
-      formData.append("kycFiles", files.kycFiles.video.file);
+      const videoFile = files.kycFiles.video.file;
+      const renamedFile = new File(
+        [videoFile],
+        `video_${videoFile.name}`,
+        { type: videoFile.type }
+      );
+      formData.append("kycFiles", renamedFile);
     }
   }
 
@@ -157,23 +188,35 @@ export function validatePropertyData(formData) {
     "age",
     "parking",
     "facing",
-    "possessionStatus",
   ];
+
+  // Possession status is only for sales
+  if (formData.propertyType !== "rent") {
+    requiredFields.push("possessionStatus");
+  }
+
+  // Additional required fields for rent
+  if (formData.propertyType === "rent") {
+    requiredFields.push("deposit", "preferredTenants", "availableFrom");
+  }
 
   requiredFields.forEach((field) => {
     if (
       !formData[field] ||
       (typeof formData[field] === "string" && formData[field].trim() === "")
     ) {
-      errors[field] = `${
-        field.charAt(0).toUpperCase() + field.slice(1)
-      } is required`;
+      errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)
+        } is required`;
     }
   });
 
   // Numeric validations
   if (formData.price && (isNaN(formData.price) || formData.price < 0)) {
-    errors.price = "Price must be a valid positive number";
+    errors.price = formData.propertyType === "rent" ? "Monthly rent must be a valid positive number" : "Price must be a valid positive number";
+  }
+
+  if (formData.propertyType === "rent" && formData.deposit && (isNaN(formData.deposit) || formData.deposit < 0)) {
+    errors.deposit = "Security deposit must be a valid non-negative number";
   }
 
   if (
@@ -230,15 +273,17 @@ export function createPropertySummary(formData) {
       title: formData.title,
       type: `${formData.propertyType} - ${formData.category}`,
       price: formData.price,
+      deposit: formData.propertyType === "rent" ? formData.deposit : undefined,
       location: `${formData.location}, ${formData.city}`,
     },
     specifications: {
       bhk: formData.bhk,
+      preferredTenants: formData.propertyType === "rent" ? formData.preferredTenants : undefined,
+      availableFrom: formData.propertyType === "rent" ? formData.availableFrom : undefined,
       area: `${formData.builtUpArea} sq ft built-up, ${formData.carpetArea} sq ft carpet`,
       floor: formData.floor
-        ? `${getOrdinalSuffix(formData.floor)}${
-            formData.totalFloors ? ` of ${formData.totalFloors}` : ""
-          }`
+        ? `${getOrdinalSuffix(formData.floor)}${formData.totalFloors ? ` of ${formData.totalFloors}` : ""
+        }`
         : "N/A",
       age: `${formData.age} ${formData.ageUnit}`,
       furnishing: formData.furnishing,
@@ -448,3 +493,34 @@ export function estimateProcessingTime(formData) {
   if (baseTime < 60) return "1 hour";
   return `${Math.ceil(baseTime / 60)} hours`;
 }
+
+/**
+ * Formats a price number into a human-readable string (Lakh/Crore) following Indian numbering system
+ * @param {number|string} price - The price to format
+ * @returns {string} - Formatted price string
+ */
+export const formatPrice = (price) => {
+  const numPrice = Number(price);
+  if (!numPrice || isNaN(numPrice)) return "Price on request";
+
+  if (numPrice >= 10000000) {
+    // 1 Crore or more
+    const crores = numPrice / 10000000;
+    return `₹${crores.toLocaleString("en-IN", {
+      minimumFractionDigits: crores % 1 === 0 ? 0 : 1,
+      maximumFractionDigits: 2,
+    })} Crore`;
+  }
+
+  if (numPrice >= 100000) {
+    // 1 Lakh or more
+    const lakhs = numPrice / 100000;
+    return `₹${lakhs.toLocaleString("en-IN", {
+      minimumFractionDigits: lakhs % 1 === 0 ? 0 : 1,
+      maximumFractionDigits: 2,
+    })} Lakh`;
+  }
+
+  // Less than 1 lakh - show as-is with commas
+  return `₹${numPrice.toLocaleString("en-IN")}`;
+};

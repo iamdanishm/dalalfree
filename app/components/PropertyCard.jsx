@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useWishlist } from "@/app/lib/hooks/useWishlist";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 
 export default function PropertyCard({
   property,
@@ -55,13 +57,10 @@ export default function PropertyCard({
     }
   };
 
-  const formatPrice = (price) => {
-    // Handle both number and string prices
-    if (typeof price === 'number') {
-      return `₹${price.toLocaleString()}`;
-    }
-    return price || 'Price not available';
-  };
+  const displayPrice = typeof property?.price === 'number'
+    ? formatPrice(property.price)
+    : (property?.price || 'Price not available');
+
 
   return (
     <motion.div
@@ -180,7 +179,7 @@ export default function PropertyCard({
         {/* Price */}
         <div className="mb-2">
           <p className="text-xl font-bold text-gray-900 leading-tight">
-            {formatPrice(property.price)}
+            {displayPrice}
             {property.propertyType === 'rent' && property.negotiable !== 'No' && '/month'}
           </p>
         </div>

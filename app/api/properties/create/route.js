@@ -93,7 +93,8 @@ export const POST = requireAuth(async function (req) {
               "age",
               "parking",
               "facing",
-              "possessionStatus",
+              "possessionStatus (for sell)",
+              "move-in period (for rent)",
               "coordinates",
               "price",
               "images",
@@ -150,9 +151,8 @@ export const POST = requireAuth(async function (req) {
     }
 
     if (!fileFields.kycFiles || fileFields.kycFiles.length < 4) {
-      validationErrors.kycFiles = `KYC documents incomplete. Found ${
-        fileFields.kycFiles?.length || 0
-      }, need 4 (Aadhaar, PAN, Agreement, Video)`;
+      validationErrors.kycFiles = `KYC documents incomplete. Found ${fileFields.kycFiles?.length || 0
+        }, need 4 (Aadhaar, PAN, Agreement, Video)`;
     } else {
       // Remove the kycFiles error from propertyHelpers since we have files
       delete validationErrors.kycFiles;
@@ -190,13 +190,13 @@ export const POST = requireAuth(async function (req) {
 
       // Specifications
       bhk: textData.bhk,
-      bathrooms: textData.bathrooms ? parseInt(textData.bathrooms) : undefined,
-      balcony: textData.balcony ? parseInt(textData.balcony) : undefined,
+      bathrooms: (textData.bathrooms !== undefined && textData.bathrooms !== null && textData.bathrooms !== "") ? parseInt(textData.bathrooms) : undefined,
+      balcony: (textData.balcony !== undefined && textData.balcony !== null && textData.balcony !== "") ? parseInt(textData.balcony) : undefined,
       furnishing: textData.furnishing,
       builtUpArea: parseFloat(textData.builtUpArea),
       carpetArea: parseFloat(textData.carpetArea),
       floor: textData.floor,
-      totalFloors: textData.totalFloors
+      totalFloors: (textData.totalFloors !== undefined && textData.totalFloors !== null && textData.totalFloors !== "")
         ? parseInt(textData.totalFloors)
         : undefined,
       age: parseInt(textData.age),
@@ -204,9 +204,15 @@ export const POST = requireAuth(async function (req) {
       parking: textData.parking,
       facing: textData.facing,
       possessionStatus: textData.possessionStatus,
+
+      // Rent specific fields
+      deposit: textData.propertyType === "rent" ? parseFloat(textData.deposit) : undefined,
+      preferredTenants: textData.propertyType === "rent" ? textData.preferredTenants : undefined,
+      availableFrom: textData.propertyType === "rent" ? textData.availableFrom : undefined,
+
       // Only save maintenance for rent properties or commercial properties
       maintenance: ((textData.category === "Residential" && textData.propertyType === "rent") ||
-                   textData.category === "Commercial") ? textData.maintenance : undefined,
+        textData.category === "Commercial") ? textData.maintenance : undefined,
 
       // Location
       location: textData.location,

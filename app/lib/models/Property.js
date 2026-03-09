@@ -114,6 +114,13 @@ const propertySchema = new mongoose.Schema(
         "possession-in-6-months",
       ],
     },
+    // Rent specific fields
+    deposit: Number,
+    preferredTenants: {
+      type: String,
+      enum: ["Family", "Bachelors", "Any"],
+    },
+    availableFrom: String,
     maintenance: String,
     location: String,
     address: String,

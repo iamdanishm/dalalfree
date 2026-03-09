@@ -4,6 +4,8 @@ import { FiMapPin, FiEdit3, FiEye, FiTrash2, FiZap } from "react-icons/fi";
 import { FaRupeeSign } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 
 export default function PartnerPropertyCard({ property, onEdit, onDelete }) {
     const router = useRouter();
@@ -95,7 +97,7 @@ export default function PartnerPropertyCard({ property, onEdit, onDelete }) {
                         {property.title}
                     </h3>
                     <p className="font-bold text-primary whitespace-nowrap ml-2">
-                        {formatCurrency(property.price)}
+                        {formatPrice(property.price)}
                     </p>
                 </div>
 

@@ -253,17 +253,45 @@ export default function StepBasicInfo({
 
   const handlePriceChange = (price) => {
     const numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice < 0) {
-      updateFormData({ price: "" });
-    } else {
-      updateFormData({ price: numPrice });
+
+    // Determine market range based on price
+    let marketRange = "";
+    if (numPrice > 0 && !isNaN(numPrice)) {
+      const suggestion = priceSuggestionsList.find(
+        (s) => numPrice >= s.min && numPrice <= s.max
+      );
+      if (suggestion) {
+        marketRange = suggestion.label;
+      }
     }
 
-    // Clear price error if valid price entered
-    if (errors.price && numPrice > 0 && !isNaN(numPrice)) {
+    if (isNaN(numPrice) || numPrice < 0) {
+      updateFormData({ price: "", marketRange: "" });
+    } else {
+      updateFormData({
+        price: numPrice,
+        marketRange: marketRange || formData.marketRange || "",
+      });
+    }
+
+    // Clear errors if valid values entered
+    if (errors.price || errors.marketRange) {
       const newErrors = { ...errors };
-      delete newErrors.price;
-      setErrors(newErrors);
+      let changed = false;
+
+      if (numPrice > 0 && !isNaN(numPrice) && errors.price) {
+        delete newErrors.price;
+        changed = true;
+      }
+
+      if (marketRange && errors.marketRange) {
+        delete newErrors.marketRange;
+        changed = true;
+      }
+
+      if (changed) {
+        setErrors(newErrors);
+      }
     }
   };
 
@@ -408,9 +436,8 @@ export default function StepBasicInfo({
           <textarea
             value={formData.title || ""}
             onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder={`Enter a compelling title for your ${
-              formData.category?.toLowerCase() || "property"
-            }`}
+            placeholder={`Enter a compelling title for your ${formData.category?.toLowerCase() || "property"
+              }`}
             className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 resize-none"
             rows={3}
             maxLength={100}
@@ -509,16 +536,18 @@ export default function StepBasicInfo({
             <span className="text-white text-lg">₹</span>
           </div>
           <label className="text-xl font-bold text-heading">
-            Price
+            {formData.propertyType === "rent" ? "Monthly Rent" : "Price"}
             {formData.propertyType === "rent" && (
               <span className="ml-2 text-sm text-muted font-normal">
                 per month
               </span>
             )}
+            <span className="text-red-500 ml-1">*</span>
           </label>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
+          {/* Price Input */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -526,13 +555,19 @@ export default function StepBasicInfo({
             className="space-y-3 w-full sm:w-80"
           >
             <label className="text-sm font-medium text-gray-700 block">
-              Enter Price (₹):
+              {formData.propertyType === "rent"
+                ? "Monthly Rent (₹):"
+                : "Enter Price (₹):"}
             </label>
             <input
               type="number"
               value={formData.price || ""}
               onChange={(e) => handlePriceChange(e.target.value)}
-              placeholder="Enter price in rupees"
+              placeholder={
+                formData.propertyType === "rent"
+                  ? "Enter monthly rent"
+                  : "Enter price in rupees"
+              }
               className="w-full border border-gray-300 rounded-lg px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 touch-manipulation"
               min="0"
             />
@@ -543,7 +578,8 @@ export default function StepBasicInfo({
                 animate={{ opacity: 1 }}
                 className="text-sm text-primary font-medium bg-primary/5 px-3 py-1 rounded-full inline-block"
               >
-                {formatPrice(formData.price)}
+                {formatPrice(formData.price)}{" "}
+                {formData.propertyType === "rent" ? "/ month" : ""}
               </motion.div>
             )}
 
@@ -560,6 +596,59 @@ export default function StepBasicInfo({
             )}
           </motion.div>
 
+          {/* Security Deposit (Only for Rent) */}
+          {formData.propertyType === "rent" && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+              className="space-y-3 w-full sm:w-80"
+            >
+              <label className="text-sm font-medium text-gray-700 block">
+                Security Deposit (₹): <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={formData.deposit || ""}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  updateFormData({ deposit: isNaN(val) ? "" : val });
+                  if (errors.deposit && !isNaN(val)) {
+                    const newErrors = { ...errors };
+                    delete newErrors.deposit;
+                    setErrors(newErrors);
+                  }
+                }}
+                placeholder="Enter deposit amount"
+                className="w-full border border-gray-300 rounded-lg px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 touch-manipulation"
+                min="0"
+              />
+
+              {formData.deposit && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full inline-block"
+                >
+                  {formatPrice(formData.deposit)}
+                </motion.div>
+              )}
+
+              {errors.deposit && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                >
+                  <p className="text-red-600 text-sm font-medium">
+                    {errors.deposit}
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Market Range */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -575,22 +664,22 @@ export default function StepBasicInfo({
                 value={
                   formData.price && formData.price > 0
                     ? priceSuggestionsList.find(
-                        (s) =>
-                          formData.price >= s.min && formData.price <= s.max
-                      )
+                      (s) =>
+                        formData.price >= s.min && formData.price <= s.max
+                    )
                       ? {
-                          value: priceSuggestionsList
-                            .find(
-                              (s) =>
-                                formData.price >= s.min &&
-                                formData.price <= s.max
-                            )
-                            .min.toString(),
-                          label: priceSuggestionsList.find(
+                        value: priceSuggestionsList
+                          .find(
                             (s) =>
-                              formData.price >= s.min && formData.price <= s.max
-                          ).label,
-                        }
+                              formData.price >= s.min &&
+                              formData.price <= s.max
+                          )
+                          .min.toString(),
+                        label: priceSuggestionsList.find(
+                          (s) =>
+                            formData.price >= s.min && formData.price <= s.max
+                        ).label,
+                      }
                       : null
                     : null
                 }
@@ -603,7 +692,7 @@ export default function StepBasicInfo({
                       handlePriceChange(suggestion.max);
                     }
                   } else {
-                    updateFormData({ price: "" });
+                    updateFormData({ price: "", marketRange: "" });
                   }
                 }}
                 options={[
@@ -656,13 +745,13 @@ export default function StepBasicInfo({
                     backgroundColor: state.isSelected
                       ? "#e90914"
                       : state.isFocused
-                      ? "#fef2f2"
-                      : "white",
+                        ? "#fef2f2"
+                        : "white",
                     color: state.isSelected
                       ? "white"
                       : state.isFocused
-                      ? "#111827"
-                      : "#374151",
+                        ? "#111827"
+                        : "#374151",
                     cursor: "pointer",
                     "&:hover": {
                       backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -758,13 +847,13 @@ export default function StepBasicInfo({
                   backgroundColor: state.isSelected
                     ? "#e90914"
                     : state.isFocused
-                    ? "#fef2f2"
-                    : "white",
+                      ? "#fef2f2"
+                      : "white",
                   color: state.isSelected
                     ? "white"
                     : state.isFocused
-                    ? "#111827"
-                    : "#374151",
+                      ? "#111827"
+                      : "#374151",
                   cursor: "pointer",
                   "&:hover": {
                     backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -863,11 +952,10 @@ export default function StepBasicInfo({
             value={formData.address || ""}
             onChange={(e) => updateFormData({ address: e.target.value })}
             placeholder="Enter complete property address with landmark"
-            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation resize-none ${
-              errors.address
+            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation resize-none ${errors.address
                 ? "border-red-500 focus:ring-red-500"
                 : "border-gray-300 focus:ring-red-500"
-            }`}
+              }`}
             rows={3}
             maxLength={200}
           />
@@ -899,11 +987,10 @@ export default function StepBasicInfo({
             value={formData.location || ""}
             onChange={(e) => handleLocationChange(e.target.value)}
             placeholder="e.g., Baner, Andheri West, Koramangala"
-            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
-              errors.location
+            className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${errors.location
                 ? "border-red-500 focus:ring-red-500"
                 : "border-gray-300 focus:ring-red-500"
-            }`}
+              }`}
           />
           {errors.location && (
             <motion.div
@@ -928,11 +1015,10 @@ export default function StepBasicInfo({
               value={formData.city || ""}
               onChange={(e) => updateFormData({ city: e.target.value })}
               placeholder="e.g., Mumbai, Delhi, Bangalore"
-              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
-                errors.city
+              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${errors.city
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-red-500"
-              }`}
+                }`}
             />
             {errors.city && (
               <motion.div
@@ -1038,13 +1124,13 @@ export default function StepBasicInfo({
                     backgroundColor: state.isSelected
                       ? "#e90914"
                       : state.isFocused
-                      ? "#fef2f2"
-                      : "white",
+                        ? "#fef2f2"
+                        : "white",
                     color: state.isSelected
                       ? "white"
                       : state.isFocused
-                      ? "#111827"
-                      : "#374151",
+                        ? "#111827"
+                        : "#374151",
                     cursor: "pointer",
                     "&:hover": {
                       backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -1083,11 +1169,10 @@ export default function StepBasicInfo({
                 updateFormData({ pincode: value });
               }}
               placeholder="e.g., 400001"
-              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${
-                errors.pincode
+              className={`w-full px-4 py-4 sm:py-3 text-base sm:text-sm text-gray-900 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 touch-manipulation ${errors.pincode
                   ? "border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:ring-red-500"
-              }`}
+                }`}
               maxLength={6}
             />
             {errors.pincode && (
@@ -1176,15 +1261,14 @@ export default function StepBasicInfo({
                 whileTap={{ scale: 0.98 }}
                 onClick={getCurrentLocation}
                 disabled={locationStatus === "loading"}
-                className={`w-full sm:w-auto px-4 py-4 sm:py-3 rounded-lg font-medium transition-all border text-sm touch-manipulation ${
-                  locationStatus === "loading"
+                className={`w-full sm:w-auto px-4 py-4 sm:py-3 rounded-lg font-medium transition-all border text-sm touch-manipulation ${locationStatus === "loading"
                     ? "bg-blue-50 text-blue-600 border-blue-200 cursor-not-allowed"
                     : locationStatus === "success"
-                    ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                    : locationStatus === "error"
-                    ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                    : "bg-primary text-primary-foreground border-primary hover:opacity-90"
-                }`}
+                      ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                      : locationStatus === "error"
+                        ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                        : "bg-primary text-primary-foreground border-primary hover:opacity-90"
+                  }`}
               >
                 {locationStatus === "loading" ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -1258,9 +1342,8 @@ export default function StepBasicInfo({
           <textarea
             value={formData.description || ""}
             onChange={(e) => updateFormData({ description: e.target.value })}
-            placeholder={`Provide detailed description of your ${
-              formData.category?.toLowerCase() || "property"
-            }...`}
+            placeholder={`Provide detailed description of your ${formData.category?.toLowerCase() || "property"
+              }...`}
             className="w-full px-4 py-3 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 resize-none"
             rows={6}
             maxLength={1000}

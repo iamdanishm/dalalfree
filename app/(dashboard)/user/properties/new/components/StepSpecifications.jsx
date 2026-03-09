@@ -323,11 +323,10 @@ export default function StepSpecifications({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => handleInputChange("bhk", option.value)}
-                  className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                    formData.bhk === option.value
-                      ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
-                      : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
-                  }`}
+                  className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${formData.bhk === option.value
+                    ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                    : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
+                    }`}
                 >
                   <div className="font-semibold text-heading mb-1">
                     {option.label}
@@ -359,11 +358,10 @@ export default function StepSpecifications({
                 value={
                   formData.bathrooms
                     ? {
-                        value: formData.bathrooms,
-                        label: `${formData.bathrooms} Bathroom${
-                          formData.bathrooms > 1 ? "s" : ""
+                      value: formData.bathrooms,
+                      label: `${formData.bathrooms} Bathroom${formData.bathrooms > 1 ? "s" : ""
                         }`,
-                      }
+                    }
                     : null
                 }
                 onChange={(selectedOption) =>
@@ -402,13 +400,13 @@ export default function StepSpecifications({
                     backgroundColor: state.isSelected
                       ? "#e90914"
                       : state.isFocused
-                      ? "#fef2f2"
-                      : "white",
+                        ? "#fef2f2"
+                        : "white",
                     color: state.isSelected
                       ? "white"
                       : state.isFocused
-                      ? "#111827"
-                      : "#374151",
+                        ? "#111827"
+                        : "#374151",
                     cursor: "pointer",
                     "&:hover": {
                       backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -440,16 +438,16 @@ export default function StepSpecifications({
               </label>
               <Select
                 value={
-                  formData.balcony !== undefined && formData.balcony !== null
+                  (formData.balcony !== undefined && formData.balcony !== null && formData.balcony !== "")
                     ? {
-                        value: formData.balcony,
-                        label:
-                          formData.balcony === 0
-                            ? "No Balcony"
-                            : formData.balcony === 1
+                      value: Number(formData.balcony),
+                      label:
+                        Number(formData.balcony) === 0
+                          ? "No Balcony"
+                          : Number(formData.balcony) === 1
                             ? "1 Balcony"
                             : `${formData.balcony} Balconies`,
-                      }
+                    }
                     : null
                 }
                 onChange={(selectedOption) =>
@@ -488,13 +486,13 @@ export default function StepSpecifications({
                     backgroundColor: state.isSelected
                       ? "#e90914"
                       : state.isFocused
-                      ? "#fef2f2"
-                      : "white",
+                        ? "#fef2f2"
+                        : "white",
                     color: state.isSelected
                       ? "white"
                       : state.isFocused
-                      ? "#111827"
-                      : "#374151",
+                        ? "#111827"
+                        : "#374151",
                     cursor: "pointer",
                     "&:hover": {
                       backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -541,11 +539,10 @@ export default function StepSpecifications({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => handleInputChange("furnishing", option.value)}
-                  className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                    formData.furnishing === option.value
-                      ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
-                      : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
-                  }`}
+                  className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${formData.furnishing === option.value
+                    ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                    : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
+                    }`}
                 >
                   <div className="font-semibold text-heading mb-1">
                     {option.label}
@@ -770,12 +767,11 @@ export default function StepSpecifications({
             {(formData.floor || formData.totalFloors) && (
               <div className="text-sm text-primary font-medium bg-primary/5 px-3 py-1 rounded-full inline-block">
                 {formData.floor && formData.totalFloors
-                  ? `${getOrdinalSuffix(formData.floor)} of ${
-                      formData.totalFloors
-                    }`
+                  ? `${getOrdinalSuffix(formData.floor)} of ${formData.totalFloors
+                  }`
                   : formData.floor
-                  ? getOrdinalSuffix(formData.floor)
-                  : `${formData.totalFloors} floors`}
+                    ? getOrdinalSuffix(formData.floor)
+                    : `${formData.totalFloors} floors`}
               </div>
             )}
 
@@ -816,10 +812,10 @@ export default function StepSpecifications({
                 value={
                   formData.ageUnit
                     ? {
-                        value: formData.ageUnit,
-                        label:
-                          formData.ageUnit === "years old" ? "Years" : "Months",
-                      }
+                      value: formData.ageUnit,
+                      label:
+                        formData.ageUnit === "years old" ? "Years" : "Months",
+                    }
                     : { value: "years old", label: "Years" }
                 }
                 onChange={(selectedOption) =>
@@ -865,13 +861,13 @@ export default function StepSpecifications({
                     backgroundColor: state.isSelected
                       ? "#e90914"
                       : state.isFocused
-                      ? "#fef2f2"
-                      : "white",
+                        ? "#fef2f2"
+                        : "white",
                     color: state.isSelected
                       ? "white"
                       : state.isFocused
-                      ? "#111827"
-                      : "#374151",
+                        ? "#111827"
+                        : "#374151",
                     cursor: "pointer",
                     "&:hover": {
                       backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -956,13 +952,13 @@ export default function StepSpecifications({
                   backgroundColor: state.isSelected
                     ? "#e90914"
                     : state.isFocused
-                    ? "#fef2f2"
-                    : "white",
+                      ? "#fef2f2"
+                      : "white",
                   color: state.isSelected
                     ? "white"
                     : state.isFocused
-                    ? "#111827"
-                    : "#374151",
+                      ? "#111827"
+                      : "#374151",
                   cursor: "pointer",
                   "&:hover": {
                     backgroundColor: state.isSelected ? "#e90914" : "#fef2f2",
@@ -1010,11 +1006,10 @@ export default function StepSpecifications({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => handleInputChange("facing", option.value)}
-              className={`p-4 rounded-xl border-2 text-center transition-all duration-300 ${
-                formData.facing === option.value
-                  ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
-                  : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
-              }`}
+              className={`p-4 rounded-xl border-2 text-center transition-all duration-300 ${formData.facing === option.value
+                ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
+                }`}
             >
               <div className="text-2xl mb-2">{option.icon}</div>
               <div className="font-semibold text-heading text-sm mb-1">
@@ -1039,59 +1034,159 @@ export default function StepSpecifications({
       </motion.div>
 
       {/* Possession Status */}
-      <motion.div variants={itemVariants} className="space-y-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg">
-            <FiCalendar className="text-white" size={18} />
+      {formData.propertyType !== "rent" && (
+        <motion.div variants={itemVariants} className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg">
+              <FiCalendar className="text-white" size={18} />
+            </div>
+            <label className="text-xl font-bold text-heading">
+              Possession Status <span className="text-red-500">*</span>
+            </label>
           </div>
-          <label className="text-xl font-bold text-heading">
-            Possession Status <span className="text-red-500">*</span>
-          </label>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {possessionOptions.map((option, index) => (
-            <motion.button
-              key={option.value}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              onClick={() =>
-                handleInputChange("possessionStatus", option.value)
-              }
-              className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                formData.possessionStatus === option.value
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {possessionOptions.map((option, index) => (
+              <motion.button
+                key={option.value}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() =>
+                  handleInputChange("possessionStatus", option.value)
+                }
+                className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${formData.possessionStatus === option.value
                   ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
                   : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
-              }`}
-            >
-              <div className="font-semibold text-heading mb-1">
-                {option.label}
-              </div>
-              <div className="text-sm text-muted">{option.description}</div>
-            </motion.button>
-          ))}
-        </div>
+                  }`}
+              >
+                <div className="font-semibold text-heading mb-1">
+                  {option.label}
+                </div>
+                <div className="text-sm text-muted">{option.description}</div>
+              </motion.button>
+            ))}
+          </div>
 
-        {errors.possessionStatus && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-3 bg-red-50 border border-red-200 rounded-lg"
-          >
-            <p className="text-red-600 text-sm font-medium">
-              {errors.possessionStatus}
-            </p>
+          {errors.possessionStatus && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-3 bg-red-50 border border-red-200 rounded-lg"
+            >
+              <p className="text-red-600 text-sm font-medium">
+                {errors.possessionStatus}
+              </p>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Rent Specific Specifications */}
+      {formData.propertyType === "rent" && (
+        <>
+          {/* Preferred Tenants */}
+          <motion.div variants={itemVariants} className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-pink-500 to-rose-600 rounded-lg">
+                <FiSettings className="text-white" size={18} />
+              </div>
+              <label className="text-xl font-bold text-heading">
+                Preferred Tenants <span className="text-red-500">*</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { value: "Any", label: "Anyone", desc: "No specific preference" },
+                { value: "Family", label: "Family", desc: "Married couples/families" },
+                { value: "Bachelors", label: "Bachelors", desc: "Single professionals/students" },
+              ].map((option, index) => (
+                <motion.button
+                  key={option.value}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleInputChange("preferredTenants", option.value)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${formData.preferredTenants === option.value
+                    ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20"
+                    : "border-border bg-surface hover:border-primary/30 hover:shadow-lg"
+                    }`}
+                >
+                  <div className="font-semibold text-heading mb-1">{option.label}</div>
+                  <div className="text-xs text-muted">{option.desc}</div>
+                </motion.button>
+              ))}
+            </div>
+
+            {errors.preferredTenants && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">{errors.preferredTenants}</p>
+              </motion.div>
+            )}
           </motion.div>
-        )}
-      </motion.div>
+
+          {/* Availability / Move-in Period */}
+          <motion.div variants={itemVariants} className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg">
+                <FiCalendar className="text-white" size={18} />
+              </div>
+              <label className="text-xl font-bold text-heading">
+                Move-in Period <span className="text-red-500">*</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                "Immediate",
+                "Within 15 days",
+                "Within 1 month",
+                "After 1 month",
+              ].map((option, index) => (
+                <motion.button
+                  key={option}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => handleInputChange("availableFrom", option)}
+                  className={`p-3 rounded-lg border-2 text-center text-sm font-medium transition-all duration-300 ${formData.availableFrom === option
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border bg-surface hover:border-primary/30"
+                    }`}
+                >
+                  {option}
+                </motion.button>
+              ))}
+            </div>
+
+            {errors.availableFrom && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <p className="text-red-600 text-sm font-medium">{errors.availableFrom}</p>
+              </motion.div>
+            )}
+          </motion.div>
+        </>
+      )}
 
       {/* Maintenance Cost - For Residential/Rent or Commercial */}
       {(formData.category === "Residential" &&
         formData.propertyType === "rent") ||
-      formData.category === "Commercial" ? (
+        formData.category === "Commercial" ? (
         <motion.div variants={itemVariants} className="space-y-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg">
@@ -1196,12 +1291,11 @@ export default function StepSpecifications({
               </div>
               <div className="text-sm font-semibold text-slate-800">
                 {formData.floor && formData.totalFloors
-                  ? `${getOrdinalSuffix(formData.floor)} of ${
-                      formData.totalFloors
-                    }`
+                  ? `${getOrdinalSuffix(formData.floor)} of ${formData.totalFloors
+                  }`
                   : formData.floor
-                  ? getOrdinalSuffix(formData.floor)
-                  : "—"}
+                    ? getOrdinalSuffix(formData.floor)
+                    : "—"}
               </div>
             </div>
 
@@ -1211,9 +1305,8 @@ export default function StepSpecifications({
               </div>
               <div className="text-sm font-semibold text-amber-700">
                 {formData.age
-                  ? `${formData.age} ${
-                      formData.ageUnit === "years old" ? "years" : "months"
-                    }`
+                  ? `${formData.age} ${formData.ageUnit === "years old" ? "years" : "months"
+                  }`
                   : "—"}
               </div>
             </div>

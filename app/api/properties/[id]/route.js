@@ -135,10 +135,17 @@ export const PUT = requireAuth(async function (req, { params }) {
   // Initialize updateData from textData
   let updateData = { ...textData };
 
+  // Only save rent-specific fields for rent properties
+  const isRent = updateData.propertyType === "rent";
+
+  if (updateData.deposit !== undefined && !isRent) updateData.deposit = undefined;
+  if (updateData.preferredTenants !== undefined && !isRent) updateData.preferredTenants = undefined;
+  if (updateData.availableFrom !== undefined && !isRent) updateData.availableFrom = undefined;
+
   // Only save maintenance for rent properties or commercial properties
   if (updateData.maintenance !== undefined) {
     const shouldHaveMaintenance = (
-      (updateData.category === "Residential" && updateData.propertyType === "rent") ||
+      (updateData.category === "Residential" && isRent) ||
       updateData.category === "Commercial"
     );
     if (!shouldHaveMaintenance) {

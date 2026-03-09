@@ -16,6 +16,8 @@ import {
   FaSubway,
   FaUtensils,
 } from "react-icons/fa";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 import { FiHome } from "react-icons/fi";
 import AmenitiesComponent from "./components/AmenitiesComponent";
 import BreadcrumbNavigation from "./components/BreadcrumbNavigation";
@@ -42,20 +44,7 @@ const getOrdinalSuffix = (num) => {
   return num + "th";
 };
 
-// Utility function to format price
-const formatPrice = (price) => {
-  if (!price) return "Price on request";
-  if (price < 100000) {
-    // Less than 1 lakh - show as-is with commas
-    return `₹${price.toLocaleString("en-IN")}`;
-  }
-  // 1 lakh or more - show in lakhs
-  const lakhs = price / 100000;
-  return `₹${lakhs.toLocaleString("en-IN", {
-    minimumFractionDigits: lakhs < 10 ? 1 : 0,
-    maximumFractionDigits: 2,
-  })} Lakh`;
-};
+
 
 export default function PropertyDetails({ params }) {
   const { slug } = use(params);
@@ -195,6 +184,9 @@ export default function PropertyDetails({ params }) {
 
       images,
       imageCategories: dbProperty.imageCategories || [],
+      deposit: dbProperty.deposit ? formatPrice(dbProperty.deposit) : null,
+      preferredTenants: dbProperty.preferredTenants,
+      availableFrom: dbProperty.availableFrom,
       specs: {
         bhk: dbProperty.bhk || "N/A",
         area: dbProperty.builtUpArea
@@ -352,11 +344,25 @@ export default function PropertyDetails({ params }) {
               ? `${dbProperty.age} ${dbProperty.ageUnit}`
               : "N/A",
         },
-        // Only show Maintenance for rent properties
-        ...(dbProperty.propertyType === "rent" ? [{
-          label: "Maintenance",
-          value: dbProperty.maintenance || "N/A"
-        }] : []),
+        // Only show Maintenance/Deposit for rent properties
+        ...(dbProperty.propertyType === "rent" ? [
+          {
+            label: "Maintenance",
+            value: dbProperty.maintenance || "N/A"
+          },
+          {
+            label: "Security Deposit",
+            value: dbProperty.deposit ? formatPrice(dbProperty.deposit) : "N/A"
+          },
+          {
+            label: "Preferred Tenants",
+            value: dbProperty.preferredTenants || "Any"
+          },
+          {
+            label: "Available From",
+            value: dbProperty.availableFrom || "N/A"
+          }
+        ] : []),
       ],
       neighborhood: {
         walkScore: 75,

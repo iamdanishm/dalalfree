@@ -184,7 +184,18 @@ export default function StepReviewPublish({
       data: [
         { label: "Title", value: formData.title },
         { label: "Description", value: formData.description },
-        { label: "Price", value: formatPrice(formData.price) },
+        {
+          label: formData.propertyType === "rent" ? "Monthly Rent" : "Price",
+          value: formatPrice(formData.price),
+        },
+        ...(formData.propertyType === "rent"
+          ? [
+            {
+              label: "Security Deposit",
+              value: formatPrice(formData.deposit),
+            },
+          ]
+          : []),
         { label: "Address", value: formData.address },
         { label: "Area/Locality", value: formData.location },
         { label: "City", value: formData.city },
@@ -199,11 +210,11 @@ export default function StepReviewPublish({
       data: [
         ...(formData.category === "Residential"
           ? [
-              { label: "BHK", value: formData.bhk },
-              { label: "Bathrooms", value: formData.bathrooms },
-              { label: "Balcony", value: formData.balcony },
-              { label: "Furnishing", value: formData.furnishing },
-            ]
+            { label: "BHK", value: formData.bhk },
+            { label: "Bathrooms", value: formData.bathrooms },
+            { label: "Balcony", value: formData.balcony },
+            { label: "Furnishing", value: formData.furnishing },
+          ]
           : []),
         { label: "Built-up Area", value: formatArea(formData.builtUpArea) },
         { label: "Carpet Area", value: formatArea(formData.carpetArea) },
@@ -219,18 +230,33 @@ export default function StepReviewPublish({
         },
         { label: "Parking", value: formData.parking },
         { label: "Facing", value: formData.facing },
-        { label: "Possession", value: formData.possession },
+        ...(formData.propertyType !== "rent"
+          ? [
+            {
+              label: "Possession Status",
+              value: formData.possessionStatus,
+            },
+          ]
+          : []),
         ...(formData.propertyType === "rent"
           ? [
-              {
-                label: "Maintenance",
-                value: formData.maintenance
-                  ? formData.maintenance.includes("₹")
-                    ? formData.maintenance
-                    : `₹${formData.maintenance}`
-                  : null,
-              },
-            ]
+            {
+              label: "Preferred Tenants",
+              value: formData.preferredTenants,
+            },
+            {
+              label: "Move-in Period",
+              value: formData.availableFrom,
+            },
+            {
+              label: "Maintenance",
+              value: formData.maintenance
+                ? formData.maintenance.includes("₹")
+                  ? formData.maintenance
+                  : `₹${formData.maintenance}`
+                : null,
+            },
+          ]
           : []),
       ].filter((item) => item.value),
     },

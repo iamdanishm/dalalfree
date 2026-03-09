@@ -196,7 +196,37 @@ export default function PropertyOwnerCard({ property }) {
       );
     }
 
-    // Free Users - No Subscription
+    // Check if the current user is the owner (partner preview case)
+    const isActualOwner =
+      session?.user &&
+      property?.ownerId &&
+      String(session.user.id || session.user._id) ===
+      String(property.ownerId._id || property.ownerId);
+
+    // If it's the owner (partner previewing his listing), show details directly
+    if (isActualOwner) {
+      return (
+        <div className="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-100">
+          <div className="flex items-center text-gray-800">
+            <FiPhone className="mr-3 flex-shrink-0 text-blue-600" size={16} />
+            <span className="text-sm font-bold">
+              {ownerData.phone || "No phone added"}
+            </span>
+          </div>
+          <div className="flex items-center text-gray-800">
+            <FiMail className="mr-3 flex-shrink-0 text-blue-600" size={16} />
+            <span className="text-sm font-medium">
+              {ownerData.email || "No email added"}
+            </span>
+          </div>
+          <p className="text-xs text-blue-700 text-center mt-2 italic">
+            Preview: Contact visible to you as the owner
+          </p>
+        </div>
+      );
+    }
+
+    // Default: Show lead generation options for non-owners (including for partner listings)
     return (
       <>
         {/* Blurred Contact Preview */}
@@ -241,6 +271,7 @@ export default function PropertyOwnerCard({ property }) {
         </div>
       </>
     );
+
   };
 
   return (

@@ -15,6 +15,8 @@ import {
     FiActivity
 } from "react-icons/fi";
 import { useToast } from "@/app/lib/hooks/useToast";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 
 export default function PartnerPropertyDetailPage({ params }) {
     const { id } = use(params);
@@ -133,7 +135,7 @@ export default function PartnerPropertyDetailPage({ params }) {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-bold text-primary">{formatCurrency(property.price)}</div>
+                                <div className="text-2xl font-bold text-primary">{formatPrice(property.price)}</div>
                                 <div className="text-sm text-gray-500">Listed Price</div>
                             </div>
                         </div>

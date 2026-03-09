@@ -9,6 +9,9 @@ import {
   FiDollarSign,
   FiSun,
   FiTruck,
+  FiLock,
+  FiUsers,
+  FiClock,
   FiHome as FiBuilding,
 } from "react-icons/fi";
 import { FaBath } from "react-icons/fa";
@@ -26,6 +29,9 @@ export default function PropertyDetailsGrid({ details }) {
     Floor: FiLayers,
     Age: FiCalendar,
     Maintenance: FiDollarSign,
+    "Security Deposit": FiLock,
+    "Preferred Tenants": FiUsers,
+    "Available From": FiClock,
   };
 
   return (

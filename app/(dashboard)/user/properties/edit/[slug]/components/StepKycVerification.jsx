@@ -114,17 +114,15 @@ export default function StepKycVerification({
     (file, allowedTypes, maxSize = MAX_FILE_SIZE) => {
       if (file.size > maxSize) {
         setErrors({
-          kyc: `File ${file.name} is too large. Max size: ${
-            maxSize / (1024 * 1024)
-          }MB`,
+          kyc: `File ${file.name} is too large. Max size: ${maxSize / (1024 * 1024)
+            }MB`,
         });
         return false;
       }
       if (!allowedTypes.includes(file.type)) {
         setErrors({
-          kyc: `File ${
-            file.name
-          } is not a supported format. Allowed: ${allowedTypes.join(", ")}`,
+          kyc: `File ${file.name
+            } is not a supported format. Allowed: ${allowedTypes.join(", ")}`,
         });
         return false;
       }
@@ -282,9 +280,8 @@ export default function StepKycVerification({
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
-        const fileName = `kyc-video-${Date.now()}.${
-          mimeType.includes("webm") ? "webm" : "mp4"
-        }`;
+        const fileName = `kyc-video-${Date.now()}.${mimeType.includes("webm") ? "webm" : "mp4"
+          }`;
 
         setLocalFiles((prev) => ({
           ...prev,
@@ -435,11 +432,10 @@ export default function StepKycVerification({
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div
-                className={`p-2 rounded-lg ${
-                  isApproved
+                className={`p-2 rounded-lg ${isApproved
                     ? "bg-gray-400"
                     : "bg-gradient-to-r from-blue-500 to-blue-600"
-                }`}
+                  }`}
               >
                 <FiFileText className="text-white" size={18} />
               </div>
@@ -462,9 +458,8 @@ export default function StepKycVerification({
                   {localFiles.aadhaar.map((file, index) => (
                     <div
                       key={file.id || `aadhaar-${index}`}
-                      className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${
-                        isApproved ? "opacity-75" : ""
-                      }`}
+                      className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${isApproved ? "opacity-75" : ""
+                        }`}
                     >
                       <div className="flex items-center space-x-3">
                         {getFileIcon(file.type)}
@@ -472,31 +467,57 @@ export default function StepKycVerification({
                           <p className="text-sm font-medium text-heading truncate">
                             {file.type === "application/pdf"
                               ? file.name
-                              : `${index === 0 ? "Front" : "Back"}: ${
-                                  file.name
-                                }`}
+                              : `${index === 0 ? "Front" : "Back"}: ${file.name
+                              }`}
                           </p>
                           <p className="text-xs text-muted">
-                            {(file.size / (1024 * 1024)).toFixed(2)} MB
+                            {file.size ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : "Existing Document"}
                           </p>
                         </div>
-                        {!isApproved && (
-                          <button
-                            onClick={() => {
-                              URL.revokeObjectURL(file.url);
-                              setLocalFiles((prev) => ({
-                                ...prev,
-                                aadhaar: prev.aadhaar.filter(
-                                  (_, i) => i !== index
-                                ),
-                              }));
-                            }}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {file.url && (
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                              title="View Document"
+                            >
+                              <FiEye size={16} />
+                            </a>
+                          )}
+                          {!isApproved && (
+                            <button
+                              onClick={() => {
+                                if (file.url?.startsWith("blob:")) {
+                                  URL.revokeObjectURL(file.url);
+                                }
+                                setLocalFiles((prev) => ({
+                                  ...prev,
+                                  aadhaar: prev.aadhaar.filter(
+                                    (_, i) => i !== index
+                                  ),
+                                }));
+                              }}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                              title="Remove"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Image Preview */}
+                      {file.type?.startsWith("image/") && file.url && (
+                        <div className="mt-3 aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                          <img
+                            src={file.url}
+                            alt={`Aadhaar ${index === 0 ? "Front" : "Back"}`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -514,11 +535,10 @@ export default function StepKycVerification({
                   if (files.length === 0 || canAddMore) {
                     return (
                       <div
-                        className={`relative border-2 border-dashed rounded-lg p-6 md:p-4 text-center transition-all duration-200 cursor-pointer min-h-[120px] md:min-h-[80px] flex flex-col justify-center ${
-                          isDragOver
+                        className={`relative border-2 border-dashed rounded-lg p-6 md:p-4 text-center transition-all duration-200 cursor-pointer min-h-[120px] md:min-h-[80px] flex flex-col justify-center ${isDragOver
                             ? "border-primary bg-primary/5"
                             : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
-                        }`}
+                          }`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, "aadhaar")}
@@ -562,11 +582,10 @@ export default function StepKycVerification({
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div
-                className={`p-2 rounded-lg ${
-                  isApproved
+                className={`p-2 rounded-lg ${isApproved
                     ? "bg-gray-400"
                     : "bg-gradient-to-r from-green-500 to-green-600"
-                }`}
+                  }`}
               >
                 <FiFileText className="text-white" size={18} />
               </div>
@@ -580,9 +599,8 @@ export default function StepKycVerification({
 
             {localFiles.pan ? (
               <div
-                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${
-                  isApproved ? "opacity-75" : ""
-                }`}
+                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${isApproved ? "opacity-75" : ""
+                  }`}
               >
                 <div className="flex items-center space-x-3">
                   {getFileIcon(localFiles.pan.type)}
@@ -591,27 +609,51 @@ export default function StepKycVerification({
                       {localFiles.pan.name}
                     </p>
                     <p className="text-xs text-muted">
-                      {(localFiles.pan.size / (1024 * 1024)).toFixed(2)} MB
+                      {localFiles.pan.size ? `${(localFiles.pan.size / (1024 * 1024)).toFixed(2)} MB` : "Existing Document"}
                     </p>
                   </div>
-                  {!isApproved && (
-                    <button
-                      onClick={() => removeFile("pan")}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                    >
-                      <FiTrash2 size={16} />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {localFiles.pan.url && (
+                      <a
+                        href={localFiles.pan.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                        title="View Document"
+                      >
+                        <FiEye size={16} />
+                      </a>
+                    )}
+                    {!isApproved && (
+                      <button
+                        onClick={() => removeFile("pan")}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                        title="Remove"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Image Preview */}
+                {localFiles.pan.type?.startsWith("image/") && localFiles.pan.url && (
+                  <div className="mt-4 aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                    <img
+                      src={localFiles.pan.url}
+                      alt="PAN Card"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               !isApproved && (
                 <div
-                  className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${
-                    isDragOver
+                  className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${isDragOver
                       ? "border-primary bg-primary/5"
                       : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, "pan")}
@@ -648,11 +690,10 @@ export default function StepKycVerification({
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div
-                className={`p-2 rounded-lg ${
-                  isApproved
+                className={`p-2 rounded-lg ${isApproved
                     ? "bg-gray-400"
                     : "bg-gradient-to-r from-purple-500 to-purple-600"
-                }`}
+                  }`}
               >
                 <FiShield className="text-white" size={18} />
               </div>
@@ -670,9 +711,8 @@ export default function StepKycVerification({
 
             {localFiles.agreement ? (
               <div
-                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${
-                  isApproved ? "opacity-75" : ""
-                }`}
+                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${isApproved ? "opacity-75" : ""
+                  }`}
               >
                 <div className="flex items-center space-x-3">
                   {getFileIcon(localFiles.agreement.type)}
@@ -681,28 +721,40 @@ export default function StepKycVerification({
                       {localFiles.agreement.name}
                     </p>
                     <p className="text-xs text-muted">
-                      {(localFiles.agreement.size / (1024 * 1024)).toFixed(2)}{" "}
-                      MB
+                      {localFiles.agreement.size ? `${(localFiles.agreement.size / (1024 * 1024)).toFixed(2)} MB` : "Existing Document"}
                     </p>
                   </div>
-                  {!isApproved && (
-                    <button
-                      onClick={() => removeFile("agreement")}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                    >
-                      <FiTrash2 size={16} />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {localFiles.agreement.url && (
+                      <a
+                        href={localFiles.agreement.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                        title="View Document"
+                      >
+                        <FiEye size={16} />
+                      </a>
+                    )}
+                    {!isApproved && (
+                      <button
+                        onClick={() => removeFile("agreement")}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                        title="Remove"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
               !isApproved && (
                 <div
-                  className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${
-                    isDragOver
+                  className={`relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-200 cursor-pointer min-h-[120px] flex flex-col justify-center ${isDragOver
                       ? "border-primary bg-primary/5"
                       : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, "agreement")}
@@ -739,11 +791,10 @@ export default function StepKycVerification({
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div
-                className={`p-2 rounded-lg ${
-                  isApproved
+                className={`p-2 rounded-lg ${isApproved
                     ? "bg-gray-400"
                     : "bg-gradient-to-r from-red-500 to-red-600"
-                }`}
+                  }`}
               >
                 <FiVideo className="text-white" size={18} />
               </div>
@@ -761,9 +812,8 @@ export default function StepKycVerification({
 
             {localFiles.video ? (
               <div
-                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${
-                  isApproved ? "opacity-75" : ""
-                }`}
+                className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${isApproved ? "opacity-75" : ""
+                  }`}
               >
                 <div className="flex items-center space-x-3 mb-3">
                   <FiVideo className="w-5 h-5 text-red-500" />
@@ -810,11 +860,10 @@ export default function StepKycVerification({
                     </div>
                   ) : (
                     <div
-                      className={`border-2 rounded-lg p-4 ${
-                        countdown > 0
+                      className={`border-2 rounded-lg p-4 ${countdown > 0
                           ? "border-yellow-300 bg-yellow-50"
                           : "border-red-300 bg-red-50"
-                      }`}
+                        }`}
                     >
                       <div className="space-y-4">
                         <div className="relative aspect-video bg-black rounded-lg overflow-hidden">

@@ -11,6 +11,8 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PropertyCard from "../components/PropertyCard";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 
 function SearchPageContent() {
   const router = useRouter();
@@ -106,9 +108,9 @@ function SearchPageContent() {
     const newBudgetRange =
       budgetMin && budgetMax
         ? {
-            min: parseInt(budgetMin),
-            max: budgetMax ? parseInt(budgetMax) : null,
-          }
+          min: parseInt(budgetMin),
+          max: budgetMax ? parseInt(budgetMax) : null,
+        }
         : null;
 
     setActiveTab(tab);
@@ -251,11 +253,10 @@ function SearchPageContent() {
                     // Fetch properties for new tab with explicit tab parameter
                     fetchProperties({ tab: newTab });
                   }}
-                  className={`px-6 py-3 text-sm font-semibold rounded-full transition-all duration-200 ${
-                    activeTab === tab.toLowerCase()
+                  className={`px-6 py-3 text-sm font-semibold rounded-full transition-all duration-200 ${activeTab === tab.toLowerCase()
                       ? "bg-primary text-white shadow-lg"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-                  }`}
+                    }`}
                   suppressHydrationWarning
                 >
                   {tab}
@@ -307,8 +308,8 @@ function SearchPageContent() {
                     backgroundColor: state.isSelected
                       ? "var(--color-primary)"
                       : state.isFocused
-                      ? "#f3f4f6"
-                      : "white",
+                        ? "#f3f4f6"
+                        : "white",
                     color: state.isSelected ? "white" : "#374151",
                     cursor: "pointer",
                   }),
@@ -340,9 +341,8 @@ function SearchPageContent() {
                 value={locality}
                 onChange={(e) => setLocality(e.target.value)}
                 disabled={!city}
-                className={`bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 w-full ${
-                  !city ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 w-full ${!city ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 suppressHydrationWarning
               />
 
@@ -395,8 +395,8 @@ function SearchPageContent() {
                     backgroundColor: state.isSelected
                       ? "var(--color-primary)"
                       : state.isFocused
-                      ? "#f3f4f6"
-                      : "white",
+                        ? "#f3f4f6"
+                        : "white",
                     color: state.isSelected ? "white" : "#374151",
                     cursor: "pointer",
                   }),
@@ -426,11 +426,11 @@ function SearchPageContent() {
                 value={
                   budgetRange
                     ? {
-                        value: budgetRange,
-                        label:
-                          budgetRange.label ||
-                          `${budgetRange.min} - ${budgetRange.max || "above"}`,
-                      }
+                      value: budgetRange,
+                      label:
+                        budgetRange.label ||
+                        `${budgetRange.min} - ${budgetRange.max || "above"}`,
+                    }
                     : null
                 }
                 onChange={(selectedOption) =>
@@ -473,8 +473,8 @@ function SearchPageContent() {
                     backgroundColor: state.isSelected
                       ? "var(--color-primary)"
                       : state.isFocused
-                      ? "#f3f4f6"
-                      : "white",
+                        ? "#f3f4f6"
+                        : "white",
                     color: state.isSelected ? "white" : "#374151",
                     cursor: "pointer",
                   }),
@@ -544,9 +544,8 @@ function SearchPageContent() {
             </div>
 
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                showFilters ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${showFilters ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -610,8 +609,8 @@ function SearchPageContent() {
                           backgroundColor: state.isSelected
                             ? "var(--color-primary)"
                             : state.isFocused
-                            ? "#f3f4f6"
-                            : "white",
+                              ? "#f3f4f6"
+                              : "white",
                           color: state.isSelected ? "white" : "#374151",
                           cursor: "pointer",
                         }),
@@ -657,9 +656,8 @@ function SearchPageContent() {
                         />
                         <div className="w-5 h-5 bg-gray-200 rounded-lg peer-checked:bg-primary transition-colors duration-200 flex items-center justify-center">
                           <svg
-                            className={`w-3 h-3 text-white transition-opacity duration-200 ${
-                              showVerifiedOnly ? "opacity-100" : "opacity-0"
-                            }`}
+                            className={`w-3 h-3 text-white transition-opacity duration-200 ${showVerifiedOnly ? "opacity-100" : "opacity-0"
+                              }`}
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -690,9 +688,8 @@ function SearchPageContent() {
             <h1 className="text-2xl font-bold text-heading mb-2">
               {isLoading
                 ? "Searching..."
-                : `${properties.length} Properties Found${
-                    city ? ` in ${city}` : ""
-                  }${locality ? `, ${locality}` : ""}`}
+                : `${properties.length} Properties Found${city ? ` in ${city}` : ""
+                }${locality ? `, ${locality}` : ""}`}
             </h1>
             {city && (
               <p className="text-gray-600 text-sm">
@@ -732,7 +729,7 @@ function SearchPageContent() {
                 _id: property._id,
                 title: property.title,
                 price: property.price
-                  ? `₹${property.price.toLocaleString()}`
+                  ? formatPrice(property.price)
                   : "Price not available",
                 images: property.images || [],
                 location:

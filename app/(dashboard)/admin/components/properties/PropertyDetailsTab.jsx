@@ -14,6 +14,8 @@ import {
 } from "react-icons/fi";
 import { MdVerified, MdStars, MdRocket } from "react-icons/md";
 import { FaBath } from "react-icons/fa";
+import { formatPrice } from "@/app/lib/propertyHelpers";
+
 
 export default function PropertyDetailsTab({ property }) {
   const getStatusColor = (status) => {
@@ -42,19 +44,7 @@ export default function PropertyDetailsTab({ property }) {
     });
   };
 
-  const formatPrice = (price) => {
-    if (!price) return "Price on request";
-    if (price < 100000) {
-      // Less than 1 lakh - show as-is with commas
-      return `₹${price.toLocaleString("en-IN")}`;
-    }
-    // 1 lakh or more - show in lakhs
-    const lakhs = price / 100000;
-    return `₹${lakhs.toLocaleString("en-IN", {
-      minimumFractionDigits: lakhs < 10 ? 1 : 0,
-      maximumFractionDigits: 2,
-    })} Lakh`;
-  };
+
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -63,11 +53,10 @@ export default function PropertyDetailsTab({ property }) {
         <div className="w-full lg:w-auto">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span
-              className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                property.propertyType === "rent"
+              className={`px-3 py-1 text-xs font-semibold rounded-full ${property.propertyType === "rent"
                   ? "bg-emerald-100 text-emerald-800"
                   : "bg-amber-100 text-amber-800"
-              }`}
+                }`}
             >
               {property.propertyType === "rent" ? "For Rent" : "For Sale"}
             </span>

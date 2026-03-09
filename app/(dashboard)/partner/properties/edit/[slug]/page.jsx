@@ -126,8 +126,9 @@ export default function PartnerPropertyEditWizard() {
 
                 const property = data.property;
 
-                // Check permissions - convert to string for comparison
-                const isOwner = String(property.ownerId) === String(session.user.id);
+                // Check permissions - compare ID correctly even if ownerId is populated
+                const propertyOwnerId = property.ownerId?._id || property.ownerId;
+                const isOwner = String(propertyOwnerId) === String(session?.user?.id || session?.user?._id);
                 const isAdmin = session.user.role === "admin";
 
                 if (!isOwner && !isAdmin) {
@@ -211,7 +212,7 @@ export default function PartnerPropertyEditWizard() {
             // Specifications
             bhk: property.bhk || "",
             bathrooms: property.bathrooms || "",
-            balcony: property.balcony || "",
+            balcony: (property.balcony !== undefined && property.balcony !== null) ? property.balcony : "",
             furnishing: property.furnishing || "",
             builtUpArea: property.builtUpArea || "",
             carpetArea: property.carpetArea || "",
@@ -223,6 +224,9 @@ export default function PartnerPropertyEditWizard() {
             facing: property.facing || "",
             possessionStatus: property.possessionStatus || "",
             maintenance: property.maintenance || "",
+            deposit: property.deposit || "",
+            preferredTenants: property.preferredTenants || "Any",
+            availableFrom: property.availableFrom || "Immediate",
 
             // Arrays and objects - handle both old and new data structures
             highlights: property.highlights || [],

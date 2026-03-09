@@ -19,6 +19,7 @@ import {
 import PropertyDetailModal from "./PropertyDetailModal";
 import ConfirmationModal from "@/app/components/ConfirmationModal";
 import RejectionModal from "@/app/components/RejectionModal";
+import { formatPrice } from "@/app/lib/propertyHelpers";
 
 export default function PropertiesManagementTable() {
   const { success, error: showError } = useToast();
@@ -393,7 +394,6 @@ export default function PropertiesManagementTable() {
       throw err;
     }
   };
-
   const handlePageChange = (page) => {
     fetchProperties(page, statusFilter?.value || "", debouncedSearchTerm);
   };
@@ -435,20 +435,6 @@ export default function PropertiesManagementTable() {
     return firstImage?.url || null;
   };
 
-  const formatPrice = (price) => {
-    if (!price) return "Price on request";
-    if (price < 100000) {
-      // Less than 1 lakh - show as-is with commas
-      return `₹${price.toLocaleString("en-IN")}`;
-    }
-    // 1 lakh or more - show in lakhs
-    const lakhs = price / 100000;
-    return `₹${lakhs.toLocaleString("en-IN", {
-      minimumFractionDigits: lakhs < 10 ? 1 : 0,
-      maximumFractionDigits: 2,
-    })} Lakh`;
-  };
-
   if (loading && properties.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-soft border border-border p-6">
@@ -461,6 +447,7 @@ export default function PropertiesManagementTable() {
   }
 
   return (
+
     <>
       <motion.div
         className="bg-white rounded-xl shadow-soft border border-border overflow-hidden"
@@ -754,11 +741,10 @@ export default function PropertiesManagementTable() {
                     <button
                       key={i}
                       onClick={() => handlePageChange(i)}
-                      className={`px-3 py-1 border border-border rounded-md ${
-                        i === currentPage
-                          ? "bg-primary text-white border-primary"
-                          : "hover:bg-white"
-                      }`}
+                      className={`px-3 py-1 border border-border rounded-md ${i === currentPage
+                        ? "bg-primary text-white border-primary"
+                        : "hover:bg-white"
+                        }`}
                     >
                       {i}
                     </button>

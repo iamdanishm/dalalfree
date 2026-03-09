@@ -126,8 +126,9 @@ export default function PropertyEditWizard() {
 
         const property = data.property;
 
-        // Check permissions - convert to string for comparison
-        const isOwner = String(property.ownerId) === String(session.user.id);
+        // Check permissions - compare ID correctly even if ownerId is populated
+        const propertyOwnerId = property.ownerId?._id || property.ownerId;
+        const isOwner = String(propertyOwnerId) === String(session?.user?.id || session?.user?._id);
         const isAdmin = session.user.role === "admin";
 
         if (!isOwner && !isAdmin) {
@@ -211,7 +212,7 @@ export default function PropertyEditWizard() {
       // Specifications
       bhk: property.bhk || "",
       bathrooms: property.bathrooms || "",
-      balcony: property.balcony || "",
+      balcony: (property.balcony !== undefined && property.balcony !== null) ? property.balcony : "",
       furnishing: property.furnishing || "",
       builtUpArea: property.builtUpArea || "",
       carpetArea: property.carpetArea || "",
@@ -223,6 +224,9 @@ export default function PropertyEditWizard() {
       facing: property.facing || "",
       possessionStatus: property.possessionStatus || "",
       maintenance: property.maintenance || "",
+      deposit: property.deposit || "",
+      preferredTenants: property.preferredTenants || "Any",
+      availableFrom: property.availableFrom || "Immediate",
 
       // Arrays and objects - handle both old and new data structures
       highlights: property.highlights || [],
@@ -819,10 +823,10 @@ export default function PropertyEditWizard() {
             </h1>
             <div className="flex items-center gap-4 text-sm text-muted">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${originalProperty.status === "approved"
-                  ? "bg-green-100 text-green-800"
-                  : originalProperty.status === "pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
+                ? "bg-green-100 text-green-800"
+                : originalProperty.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-red-100 text-red-800"
                 }`}>
                 {originalProperty.status.charAt(0).toUpperCase() + originalProperty.status.slice(1)}
               </span>
@@ -898,12 +902,12 @@ export default function PropertyEditWizard() {
                       {/* Step Circle - Touch-friendly on mobile */}
                       <motion.div
                         className={`relative w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all duration-200 ${isReadOnly
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : isCompleted
-                              ? "bg-green-500 text-white"
-                              : isCurrent
-                                ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4"
-                                : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
+                          ? "bg-gray-400 text-white cursor-not-allowed"
+                          : isCompleted
+                            ? "bg-green-500 text-white"
+                            : isCurrent
+                              ? "bg-primary text-white ring-4 ring-primary/20 sm:ring-4"
+                              : "bg-white text-gray-400 border-2 border-gray-300 hover:border-primary/40"
                           }`}
                         whileHover={!isReadOnly ? { scale: 1.1 } : {}}
                         whileTap={!isReadOnly ? { scale: 0.95 } : {}}
@@ -944,12 +948,12 @@ export default function PropertyEditWizard() {
                       >
                         <div
                           className={`text-xs sm:text-sm font-medium leading-tight ${isReadOnly
-                              ? "text-gray-500"
-                              : isCompleted
-                                ? "text-green-600"
-                                : isCurrent
-                                  ? "text-primary font-semibold"
-                                  : "text-gray-500"
+                            ? "text-gray-500"
+                            : isCompleted
+                              ? "text-green-600"
+                              : isCurrent
+                                ? "text-primary font-semibold"
+                                : "text-gray-500"
                             }`}
                         >
                           {step.title}
@@ -968,12 +972,12 @@ export default function PropertyEditWizard() {
                       >
                         <div
                           className={`text-[10px] font-medium leading-tight whitespace-nowrap ${isReadOnly
-                              ? "text-gray-500"
-                              : isCompleted
-                                ? "text-green-600"
-                                : isCurrent
-                                  ? "text-primary font-semibold"
-                                  : "text-gray-500"
+                            ? "text-gray-500"
+                            : isCompleted
+                              ? "text-green-600"
+                              : isCurrent
+                                ? "text-primary font-semibold"
+                                : "text-gray-500"
                             }`}
                         >
                           {step.title.split(" ")[0]}
@@ -1041,8 +1045,8 @@ export default function PropertyEditWizard() {
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${isSubmitting
-                      ? "bg-muted text-muted cursor-not-allowed"
-                      : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
+                    ? "bg-muted text-muted cursor-not-allowed"
+                    : "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 shadow-sm"
                     }`}
                 >
                   {isSubmitting ? (
@@ -1088,8 +1092,8 @@ export default function PropertyEditWizard() {
                   disabled={isSubmitting}
                   whileTap={{ scale: 0.98 }}
                   className={`btn-touch flex items-center justify-center gap-2 flex-1 px-6 py-4 rounded-mobile-lg font-bold text-lg animate-mobile touch-feedback ${isSubmitting
-                      ? "bg-muted text-muted cursor-not-allowed"
-                      : "bg-linear-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
+                    ? "bg-muted text-muted cursor-not-allowed"
+                    : "bg-linear-to-r from-green-500 to-green-600 text-white shadow-mobile-lg"
                     }`}
                 >
                   {isSubmitting ? (
