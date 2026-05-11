@@ -66,10 +66,10 @@ const propertySchema = new mongoose.Schema(
     slug: { type: String, unique: true, index: true },
     description: String,
     subtitle: String,
-    price: Number,
+    price: { type: Number, min: 0 },
     marketRange: String,
     negotiable: { type: String, enum: ["Yes", "No"], default: "No" },
-    originalPrice: Number,
+    originalPrice: { type: Number, min: 0 },
     discount: String,
     propertyType: { type: String, enum: ["sell", "rent"], required: true },
     category: {
@@ -79,17 +79,17 @@ const propertySchema = new mongoose.Schema(
     },
     score: String,
     bhk: String,
-    bathrooms: Number,
-    balcony: Number,
+    bathrooms: { type: Number, min: 0 },
+    balcony: { type: Number, min: 0 },
     furnishing: {
       type: String,
       enum: ["furnished", "semi-furnished", "unfurnished"],
     },
-    builtUpArea: Number,
-    carpetArea: Number,
+    builtUpArea: { type: Number, min: 0 },
+    carpetArea: { type: Number, min: 0 },
     floor: String,
-    totalFloors: Number,
-    age: Number,
+    totalFloors: { type: Number, min: 0 },
+    age: { type: Number, min: 0 },
     ageUnit: String,
     parking: String,
     facing: {
@@ -115,7 +115,7 @@ const propertySchema = new mongoose.Schema(
       ],
     },
     // Rent specific fields
-    deposit: Number,
+    deposit: { type: Number, min: 0 },
     preferredTenants: {
       type: String,
       enum: ["Family", "Bachelors", "Any"],
@@ -129,7 +129,6 @@ const propertySchema = new mongoose.Schema(
     pincode: String,
     coordinates: { lat: Number, lng: Number },
     highlights: [String],
-    societyAmenities: [String],
 
     // Use explicit sub-schemas
     nearbyPlaces: [nearbyPlaceSchema],
@@ -240,20 +239,5 @@ propertySchema.index({ ownerId: 1, inquiriesCount: -1 });
 // Text search index for admin
 propertySchema.index({ title: "text", description: "text" });
 
-// Aggressive model cache clearing for development
-if (mongoose.models && mongoose.models.Property) {
-  delete mongoose.models.Property;
-}
-
-// Clear connection models cache
-if (mongoose.connection && mongoose.connection.models) {
-  delete mongoose.connection.models.Property;
-}
-
-// Clear any compiled schemas
-if (mongoose.modelSchemas && mongoose.modelSchemas.Property) {
-  delete mongoose.modelSchemas.Property;
-}
-
-const Property = mongoose.model("Property", propertySchema);
+const Property = mongoose.models.Property || mongoose.model("Property", propertySchema);
 export default Property;

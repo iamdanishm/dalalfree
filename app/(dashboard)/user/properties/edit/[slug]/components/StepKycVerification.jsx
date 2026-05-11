@@ -63,6 +63,8 @@ export default function StepKycVerification({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [showVideoGuide, setShowVideoGuide] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [cameraStatus, setCameraStatus] = useState("unknown"); // "unknown", "ready", "none", "error"
+  const [availableCameras, setAvailableCameras] = useState([]);
 
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -93,6 +95,38 @@ export default function StepKycVerification({
       updateFormData({ kycFiles: localFiles });
     }
   }, [localFiles]); // Removed updateFormData and formData from dependencies to break circular loop
+
+  // Check camera availability
+  const checkCameraAvailability = useCallback(async () => {
+    try {
+      if (!navigator.mediaDevices?.enumerateDevices) {
+        setCameraStatus("error");
+        return;
+      }
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((device) => device.kind === "videoinput");
+      setAvailableCameras(videoDevices);
+
+      if (videoDevices.length > 0) {
+        setCameraStatus("ready");
+      } else {
+        setCameraStatus("none");
+      }
+    } catch (error) {
+      console.error("Error checking cameras:", error);
+      setCameraStatus("error");
+    }
+  }, []);
+
+  // Check on mount and when window gains focus
+  useEffect(() => {
+    checkCameraAvailability();
+
+    // Re-check when user switches back to the tab
+    window.addEventListener("focus", checkCameraAvailability);
+    return () => window.removeEventListener("focus", checkCameraAvailability);
+  }, [checkCameraAvailability]);
 
   // Cleanup camera stream on unmount
   useEffect(() => {
@@ -252,10 +286,20 @@ export default function StepKycVerification({
 
       // Only request new media if we don't already have a stream from the modal
       if (!stream) {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-          audio: true,
-        });
+        try {
+          // Try with facingMode: "user" first
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" },
+            audio: true,
+          });
+        } catch (innerError) {
+          console.warn("Retrying without facingMode constraint...");
+          // Fallback to generic video if facingMode fails
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        }
       }
 
       setRecordingStream(stream);
@@ -323,12 +367,14 @@ export default function StepKycVerification({
     } catch (error) {
       console.error("Camera error:", error);
       const messages = {
-        NotAllowedError: "Camera access denied. Please allow permissions.",
-        NotFoundError: "No camera found on this device.",
+        NotAllowedError: "Camera access denied. Please allow permissions in browser settings.",
+        NotFoundError: "No camera found. Please connect a webcam.",
         NotReadableError: "Camera is in use by another app.",
+        OverconstrainedError: "The requested camera features are not supported.",
       };
-      setErrors({ kyc: messages[error.name] || "Unable to access camera." });
+      setErrors({ kyc: messages[error.name] || `Camera error: ${error.message}` });
       setIsRecording(false);
+      setCameraStatus("error");
     }
   };
 
@@ -847,16 +893,49 @@ export default function StepKycVerification({
                 <div className="space-y-4">
                   {!isRecording && countdown === 0 ? (
                     <div
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 md:p-6 text-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-gray-50 min-h-[140px] flex flex-col justify-center"
-                      onClick={() => setShowVideoGuide(true)}
+                      className={`border-2 border-dashed rounded-lg p-8 md:p-6 text-center transition-all duration-200 min-h-[140px] flex flex-col justify-center ${
+                        cameraStatus === "none"
+                          ? "border-red-200 bg-red-50"
+                          : "border-gray-300 hover:border-primary hover:bg-gray-50 cursor-pointer"
+                      }`}
+                      onClick={() => {
+                        if (cameraStatus === "none") {
+                          checkCameraAvailability();
+                        } else {
+                          setShowVideoGuide(true);
+                        }
+                      }}
                     >
-                      <FiCamera className="mx-auto h-10 w-10 md:h-8 md:w-8 text-gray-400 mb-3 md:mb-2" />
-                      <p className="text-base md:text-sm text-gray-600 mb-2 font-medium">
-                        Click to start recording
-                      </p>
-                      <p className="text-sm md:text-xs text-gray-500">
-                        Introduce yourself and confirm property ownership
-                      </p>
+                      {cameraStatus === "none" ? (
+                        <>
+                          <FiAlertCircle className="mx-auto h-10 w-10 text-red-400 mb-3" />
+                          <p className="text-base text-red-600 mb-2 font-medium">
+                            No camera detected
+                          </p>
+                          <p className="text-sm text-red-500 mb-3">
+                            Please connect a webcam or use a device with a camera.
+                          </p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              checkCameraAvailability();
+                            }}
+                            className="text-xs font-semibold text-primary underline hover:text-primary-dark"
+                          >
+                            Retry Detection
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <FiCamera className="mx-auto h-10 w-10 md:h-8 md:w-8 text-gray-400 mb-3 md:mb-2" />
+                          <p className="text-base md:text-sm text-gray-600 mb-2 font-medium">
+                            Click to start recording
+                          </p>
+                          <p className="text-sm md:text-xs text-gray-500">
+                            Introduce yourself and confirm property ownership
+                          </p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div
@@ -1037,40 +1116,58 @@ export default function StepKycVerification({
               <button
                 onClick={async () => {
                   setShowVideoGuide(false);
-                  try {
-                    // Start camera first
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                      video: { facingMode: "user" },
-                      audio: true,
-                    });
+                    try {
+                      // Start camera first
+                      let stream;
+                      try {
+                        // Try with facingMode: "user" first
+                        stream = await navigator.mediaDevices.getUserMedia({
+                          video: { facingMode: "user" },
+                          audio: true,
+                        });
+                      } catch (innerError) {
+                        console.warn("Retrying without facingMode constraint...");
+                        // Fallback to generic video if facingMode fails
+                        stream = await navigator.mediaDevices.getUserMedia({
+                          video: true,
+                          audio: true,
+                        });
+                      }
 
-                    // Set stream for preview during countdown
-                    if (videoRef.current) {
-                      videoRef.current.srcObject = stream;
-                    }
+                      // Set stream for preview during countdown
+                      if (videoRef.current) {
+                        videoRef.current.srcObject = stream;
+                      }
 
-                    // Save stream to state so it can be cleaned up if component unmounts
-                    setRecordingStream(stream);
+                      // Save stream to state so it can be cleaned up if component unmounts
+                      setRecordingStream(stream);
 
-                    // Start 3 second countdown
-                    setCountdown(3);
-                    const countdownInterval = setInterval(() => {
-                      setCountdown((prev) => {
-                        if (prev <= 1) {
-                          clearInterval(countdownInterval);
-                          // PASS THE EXISTING STREAM to startRecording to avoid double initialization
-                          startRecording(stream);
-                          return 0;
-                        }
-                        return prev - 1;
+                      // Start 3 second countdown
+                      setCountdown(3);
+                      const countdownInterval = setInterval(() => {
+                        setCountdown((prev) => {
+                          if (prev <= 1) {
+                            clearInterval(countdownInterval);
+                            // PASS THE EXISTING STREAM to startRecording to avoid double initialization
+                            startRecording(stream);
+                            return 0;
+                          }
+                          return prev - 1;
+                        });
+                      }, 1000);
+                    } catch (error) {
+                      console.error("Camera error:", error);
+                      const messages = {
+                        NotAllowedError: "Camera access denied. Please allow permissions in browser settings.",
+                        NotFoundError: "No camera found. Please connect a webcam.",
+                        NotReadableError: "Camera is in use by another app.",
+                        OverconstrainedError: "The requested camera features are not supported.",
+                      };
+                      setErrors({
+                        kyc: messages[error.name] || `Camera error: ${error.message}`,
                       });
-                    }, 1000);
-                  } catch (error) {
-                    console.error("Camera error:", error);
-                    setErrors({
-                      kyc: "Camera access denied. Please allow permissions.",
-                    });
-                  }
+                      setCameraStatus("error");
+                    }
                 }}
                 className="flex-1 px-6 py-3 md:px-4 md:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-base md:text-sm"
               >

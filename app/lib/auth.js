@@ -36,26 +36,19 @@ export const requireAuth = (handler) => {
       // Try different ways to access the Authorization header
       let authHeader =
         request.headers.get("authorization") ||
-        request.headers.get("Authorization") ||
-        request.headers.authorization ||
-        request.headers.Authorization;
+        request.headers.get("Authorization");
 
       if (authHeader && authHeader.startsWith("Bearer ")) {
-        // Remove all "Bearer " prefixes (handles cases where Postman double-adds it)
-        // Also handles if the token itself starts with "Bearer "
-        const token = authHeader
-          .replace(/^Bearer\s+/g, "")
-          .replace(/^Bearer\s+/g, "")
-          .trim();
+        const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+        const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+        if (!secret) {
+          throw new Error("AUTH_SECRET is not defined in environment variables");
+        }
 
         try {
           // Verify JWT token
-          const decoded = jwt.verify(
-            token,
-            process.env.NEXTAUTH_SECRET ||
-            process.env.JWT_SECRET ||
-            "fallback-secret"
-          );
+          const decoded = jwt.verify(token, secret);
 
           // Get user from database using token payload
           user = await User.findById(decoded.id);

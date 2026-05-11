@@ -45,8 +45,11 @@ UserContactHistorySchema.index({ userId: 1, propertyId: 1 });
 // Index for property-based queries (to get all contacts for a property)
 UserContactHistorySchema.index({ propertyId: 1 });
 
-// Static method to log contact reveal
+// Static method to log contact reveal with atomic transaction
 UserContactHistorySchema.statics.logContact = async function (userId, propertyId, contactType, contactValue, creditsUsed = 1) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Validate credits used
     if (creditsUsed < 1) {
@@ -55,7 +58,7 @@ UserContactHistorySchema.statics.logContact = async function (userId, propertyId
 
     // Check if user has sufficient credits
     const User = mongoose.model("User");
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).session(session);
 
     if (!user) {
       throw new Error("User not found");
@@ -72,7 +75,7 @@ UserContactHistorySchema.statics.logContact = async function (userId, propertyId
 
     // Deduct credits from user
     user.subscription.adUnlockCredits -= creditsUsed;
-    await user.save();
+    await user.save({ session });
 
     // Create contact history record
     const contactHistory = new this({
@@ -83,9 +86,15 @@ UserContactHistorySchema.statics.logContact = async function (userId, propertyId
       creditsUsed
     });
 
-    return await contactHistory.save();
+    const savedHistory = await contactHistory.save({ session });
+
+    await session.commitTransaction();
+    return savedHistory;
   } catch (error) {
+    await session.abortTransaction();
     throw error;
+  } finally {
+    session.endSession();
   }
 };
 
@@ -175,56 +184,58 @@ UserContactHistorySchema.methods.populateProperty = function () {
   });
 };
 
-// Static method to get contact statistics for user
+// Static method to get contact statistics for user (Optimized)
 UserContactHistorySchema.statics.getUserContactStats = async function (userId) {
-  const stats = await this.aggregate([
-    { $match: { userId: mongoose.Types.ObjectId(userId) } },
+  const statsResult = await this.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     {
-      $group: {
-        _id: null,
-        totalContacts: { $sum: 1 },
-        totalCreditsUsed: { $sum: "$creditsUsed" },
-        contactsByType: {
-          $push: "$contactType"
-        },
-        recentContacts: {
-          $push: {
-            contactType: "$contactType",
-            contactRevealedAt: "$contactRevealedAt",
-            creditsUsed: "$creditsUsed"
+      $facet: {
+        totals: [
+          {
+            $group: {
+              _id: null,
+              totalContacts: { $sum: 1 },
+              totalCreditsUsed: { $sum: "$creditsUsed" }
+            }
           }
-        }
+        ],
+        byType: [
+          {
+            $group: {
+              _id: "$contactType",
+              count: { $sum: 1 }
+            }
+          }
+        ],
+        recent: [
+          { $sort: { contactRevealedAt: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              contactType: 1,
+              contactRevealedAt: 1,
+              creditsUsed: 1
+            }
+          }
+        ]
       }
     }
   ]);
 
-  if (stats.length === 0) {
-    return {
-      totalContacts: 0,
-      totalCreditsUsed: 0,
-      contactsByType: {},
-      recentContacts: []
-    };
-  }
-
-  const stat = stats[0];
-
-  // Count contacts by type
-  const contactsByType = stat.contactsByType.reduce((acc, type) => {
-    acc[type] = (acc[type] || 0) + 1;
+  const stats = statsResult[0];
+  const totals = stats.totals[0] || { totalContacts: 0, totalCreditsUsed: 0 };
+  
+  // Transform byType array to object
+  const contactsByType = stats.byType.reduce((acc, curr) => {
+    acc[curr._id] = curr.count;
     return acc;
   }, {});
 
-  // Get recent 5 contacts
-  const recentContacts = stat.recentContacts
-    .sort((a, b) => new Date(b.contactRevealedAt) - new Date(a.contactRevealedAt))
-    .slice(0, 5);
-
   return {
-    totalContacts: stat.totalContacts,
-    totalCreditsUsed: stat.totalCreditsUsed,
+    totalContacts: totals.totalContacts,
+    totalCreditsUsed: totals.totalCreditsUsed,
     contactsByType,
-    recentContacts
+    recentContacts: stats.recent
   };
 };
 
@@ -248,14 +259,5 @@ UserContactHistorySchema.pre('save', async function (next) {
   }
 });
 
-// Clear any existing model to prevent caching issues
-if (mongoose.models && mongoose.models.UserContactHistory) {
-  delete mongoose.models.UserContactHistory;
-}
-
-if (mongoose.connection && mongoose.connection.models) {
-  delete mongoose.connection.models.UserContactHistory;
-}
-
-const UserContactHistory = mongoose.model("UserContactHistory", UserContactHistorySchema);
+const UserContactHistory = mongoose.models.UserContactHistory || mongoose.model("UserContactHistory", UserContactHistorySchema);
 export default UserContactHistory;

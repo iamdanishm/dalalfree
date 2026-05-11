@@ -161,15 +161,52 @@ export const POST = requireAuth(async function (req) {
     // Property will be created with verified: false and status: "pending"
     const body = await req.json();
 
+    // Whitelist allowed fields for creation
+    const {
+      title,
+      description,
+      price,
+      city,
+      locality,
+      propertyType, // sell/rent
+      category, // Residential/Commercial
+      bhk,
+      bathrooms,
+      area,
+      furnishing,
+      amenities,
+      images,
+      videos,
+      address,
+      latitude,
+      longitude,
+    } = body;
+
     // Generate unique slug from title if not provided
-    const slug = body.slug || (await generateUniquePropertySlug(body.title));
+    const slug = body.slug || (await generateUniquePropertySlug(title));
 
     const property = await Property.create({
-      ...body,
+      title,
+      description,
+      price,
+      city,
+      locality,
+      propertyType,
+      category,
+      bhk,
+      bathrooms,
+      area,
+      furnishing,
+      amenities,
+      images,
+      videos,
+      address,
+      latitude,
+      longitude,
       slug,
       ownerId: userId,
-      verified: false, // Will be set to true when admin verifies KYC
-      status: "pending",
+      verified: false, // Force false, admin must verify
+      status: "pending", // Force pending
     });
 
     return NextResponse.json(property);

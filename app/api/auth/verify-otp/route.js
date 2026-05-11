@@ -47,8 +47,26 @@ export async function POST(req) {
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or OTP." },
-        { status: 404 }
+        { status: 400 }
       );
+    }
+
+    // Check for rate limiting (max 5 attempts, 15 min lockout)
+    const LOCKOUT_TIME = 15 * 60 * 1000;
+    const MAX_ATTEMPTS = 5;
+
+    if (user.resetPasswordOtpAttempts >= MAX_ATTEMPTS && user.lastOtpAttempt) {
+      const timeSinceLastAttempt = Date.now() - new Date(user.lastOtpAttempt).getTime();
+      if (timeSinceLastAttempt < LOCKOUT_TIME) {
+        const remainingMinutes = Math.ceil((LOCKOUT_TIME - timeSinceLastAttempt) / 60000);
+        return NextResponse.json(
+          { error: `Too many failed attempts. Please try again in ${remainingMinutes} minutes.` },
+          { status: 429 }
+        );
+      } else {
+        // Reset attempts after lockout period
+        user.resetPasswordOtpAttempts = 0;
+      }
     }
 
     // Check if account is active
@@ -61,7 +79,15 @@ export async function POST(req) {
 
     // Check if OTP exists and matches
     if (!user.resetPasswordOtp || user.resetPasswordOtp !== otp) {
-      return NextResponse.json({ error: "Invalid OTP." }, { status: 400 });
+      user.resetPasswordOtpAttempts = (user.resetPasswordOtpAttempts || 0) + 1;
+      user.lastOtpAttempt = new Date();
+      await user.save();
+      
+      const remainingAttempts = MAX_ATTEMPTS - user.resetPasswordOtpAttempts;
+      return NextResponse.json({ 
+        error: "Invalid OTP.",
+        remainingAttempts: remainingAttempts > 0 ? remainingAttempts : 0
+      }, { status: 400 });
     }
 
     // Check if OTP is expired
@@ -72,6 +98,7 @@ export async function POST(req) {
       // Clear expired OTP
       user.resetPasswordOtp = undefined;
       user.resetPasswordOtpExpiry = undefined;
+      user.resetPasswordOtpAttempts = 0;
       await user.save();
 
       return NextResponse.json(
@@ -81,21 +108,27 @@ export async function POST(req) {
     }
 
     // OTP is valid - generate a reset token that will be used for password reset
+    const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+        console.error("FATAL: JWT secret is not defined in environment");
+        return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+    }
+
     const resetToken = jwt.sign(
       {
         userId: user._id,
         email: user.email,
         type: "password_reset",
+        tokenVersion: user.password ? user.password.substring(0, 10) : "new_user" // Version the token based on current password hash
       },
-      process.env.NEXTAUTH_SECRET ||
-      process.env.JWT_SECRET ||
-      "fallback-secret",
+      secret,
       { expiresIn: "30m" } // 30 minutes to complete password reset
     );
 
-    // Clear the OTP after successful verification
+    // Clear the OTP and attempts after successful verification
     user.resetPasswordOtp = undefined;
     user.resetPasswordOtpExpiry = undefined;
+    user.resetPasswordOtpAttempts = 0;
     await user.save();
 
     return NextResponse.json(

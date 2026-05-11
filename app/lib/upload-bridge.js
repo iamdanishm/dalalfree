@@ -5,7 +5,7 @@ import { UPLOAD_CONFIG } from "./upload-config.js";
 import Property from "./models/Property.js";
 
 export class UploadBridge {
-  static getStoragePath(propertyId, type, subType = "") {
+  static async getStoragePath(propertyId, type, subType = "") {
     let template = UPLOAD_CONFIG.structure[type];
 
     // Only replace propertyId for property-specific types
@@ -17,13 +17,15 @@ export class UploadBridge {
     }
 
     const fullPath = path.join(UPLOAD_CONFIG.baseDir, template);
-    this.ensureDirectoryExists(fullPath);
+    await this.ensureDirectoryExists(fullPath);
     return fullPath;
   }
 
-  static ensureDirectoryExists(dirPath) {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
+  static async ensureDirectoryExists(dirPath) {
+    try {
+      await fs.promises.access(dirPath, fs.constants.F_OK);
+    } catch {
+      await fs.promises.mkdir(dirPath, { recursive: true });
     }
   }
 
@@ -60,7 +62,10 @@ export class UploadBridge {
    * @returns {string} 16-character secure hash
    */
   static generatePropertyHash(propertyId) {
-    const salt = process.env.FILE_HASH_SALT || "dalalfree-secure-salt-2025";
+    const salt = process.env.FILE_HASH_SALT;
+    if (!salt) {
+      throw new Error("FILE_HASH_SALT is not defined in environment variables");
+    }
     return crypto
       .createHash("sha256")
       .update(propertyId + salt)
@@ -114,7 +119,7 @@ export class UploadBridge {
    * @param {string} subType - Sub-type for KYC
    * @returns {string} Secure storage path
    */
-  static getSecureStoragePath(propertyId, type, subType = "") {
+  static async getSecureStoragePath(propertyId, type, subType = "") {
     const hash = this.generatePropertyHash(propertyId);
     let template = UPLOAD_CONFIG.structure[type];
 
@@ -126,7 +131,7 @@ export class UploadBridge {
     }
 
     const fullPath = path.join(UPLOAD_CONFIG.baseDir, template);
-    this.ensureDirectoryExists(fullPath);
+    await this.ensureDirectoryExists(fullPath);
     return fullPath;
   }
 }

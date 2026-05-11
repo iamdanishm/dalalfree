@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Amenity from "@/app/lib/models/Amenity";
 import { UploadBridge } from "@/app/lib/upload-bridge.js";
+import { UPLOAD_CONFIG } from "@/app/lib/upload-config.js";
 import path from "path";
 import fs from "fs";
 
@@ -100,21 +101,22 @@ export async function POST(req) {
     }
 
     // Validate file type
-    const allowedImageTypes = /jpeg|jpg|png|gif|bmp|webp|tiff|tif/i;
-    if (!allowedImageTypes.test(imageFile.name.toLowerCase())) {
+    const allowedImageTypes = UPLOAD_CONFIG.allowedTypes.image;
+    if (!allowedImageTypes.includes(imageFile.type.toLowerCase())) {
       return NextResponse.json(
         {
           error:
-            "Only image files are allowed (jpeg, jpg, png, gif, bmp, webp, tiff, tif)",
+            "Only image files are allowed: " + allowedImageTypes.join(", "),
         },
         { status: 400 }
       );
     }
 
-    // Validate file size (5MB)
-    if (imageFile.size > 5 * 1024 * 1024) {
+    // Validate file size
+    const maxSize = UPLOAD_CONFIG.maxFileSize.amenity;
+    if (imageFile.size > maxSize) {
       return NextResponse.json(
-        { error: "Image size cannot exceed 5MB" },
+        { error: `Image size cannot exceed ${maxSize / (1024 * 1024)}MB` },
         { status: 400 }
       );
     }
@@ -126,10 +128,10 @@ export async function POST(req) {
     const filename = `${timestamp}-${randomId}.${extension}`;
 
     // Save file to external directory
-    const dirPath = UploadBridge.getStoragePath(null, "amenities");
+    const dirPath = await UploadBridge.getStoragePath(null, "amenities");
     const fullPath = path.join(dirPath, filename);
     const buffer = Buffer.from(await imageFile.arrayBuffer());
-    fs.writeFileSync(fullPath, buffer);
+    await fs.promises.writeFile(fullPath, buffer);
 
     // Create amenity in database
     const imageUrl = UploadBridge.getFileUrl(null, "amenities", filename);

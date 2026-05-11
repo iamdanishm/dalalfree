@@ -74,8 +74,10 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Check if file exists
-    if (!fs.existsSync(fullPath)) {
+    // Check if file exists using async access
+    try {
+      await fs.promises.access(fullPath, fs.constants.F_OK);
+    } catch {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
@@ -83,34 +85,56 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Get file info
-    const stat = fs.statSync(fullPath);
+    // Get file info using async stat
+    const stat = await fs.promises.stat(fullPath);
     const fileSize = stat.size;
-
-    // Read file
-    const fileBuffer = fs.readFileSync(fullPath);
 
     // Determine content type
     let contentType = "application/octet-stream";
     const ext = path.extname(fullPath).toLowerCase();
 
-    if (
-      [".jpg", ".jpeg", ".png", ".gif", ".webp", ".tiff", ".tif"].includes(ext)
-    ) {
-      contentType = `image/${ext.slice(1)}`;
-    } else if (
-      [".mp4", ".avi", ".mov", ".wmv", ".mkv", ".flv", ".webm"].includes(ext)
-    ) {
-      contentType = `video/${ext.slice(1)}`;
-    } else if ([".pdf", ".doc", ".docx", ".txt", ".rtf"].includes(ext)) {
-      contentType = `application/${ext.slice(1)}`;
-      if (ext === ".docx")
-        contentType =
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    }
+    const mimeMap = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".tiff": "image/tiff",
+      ".tif": "image/tiff",
+      ".mp4": "video/mp4",
+      ".avi": "video/x-msvideo",
+      ".mov": "video/quicktime",
+      ".wmv": "video/x-ms-wmv",
+      ".mkv": "video/x-matroska",
+      ".flv": "video/x-flv",
+      ".webm": "video/webm",
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".txt": "text/plain",
+      ".rtf": "application/rtf",
+    };
+
+    contentType = mimeMap[ext] || contentType;
+
+    // Create a readable stream for the file
+    const fileStream = fs.createReadStream(fullPath);
+
+    // Convert Node.js ReadStream to Web ReadableStream
+    // Next.js 16 NextResponse accepts ReadableStream or BodyInit
+    const webStream = new ReadableStream({
+      start(controller) {
+        fileStream.on("data", (chunk) => controller.enqueue(chunk));
+        fileStream.on("end", () => controller.close());
+        fileStream.on("error", (err) => controller.error(err));
+      },
+      cancel() {
+        fileStream.destroy();
+      },
+    });
 
     // Return file with security headers
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(webStream, {
       headers: {
         "Content-Type": contentType,
         "Content-Length": fileSize.toString(),

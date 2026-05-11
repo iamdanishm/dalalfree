@@ -50,7 +50,7 @@ export async function POST(req) {
       email,
       password: hashed,
       phone,
-      role: role || "user",
+      role: "user", // Always default to user role for public registration
     });
 
     // Auto-login the user after registration

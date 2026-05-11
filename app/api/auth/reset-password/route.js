@@ -70,13 +70,14 @@ export async function POST(req) {
 
     // Verify the reset token
     let decodedToken;
+    const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+        console.error("FATAL: JWT secret is not defined in environment");
+        return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+    }
+
     try {
-      decodedToken = jwt.verify(
-        resetToken,
-        process.env.NEXTAUTH_SECRET ||
-        process.env.JWT_SECRET ||
-        "fallback-secret"
-      );
+      decodedToken = jwt.verify(resetToken, secret);
     } catch (tokenError) {
       if (tokenError.name === "TokenExpiredError") {
         return NextResponse.json(
@@ -107,6 +108,15 @@ export async function POST(req) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // Verify token version (prevent replay attacks)
+    const currentTokenVersion = user.password ? user.password.substring(0, 10) : "new_user";
+    if (decodedToken.tokenVersion !== currentTokenVersion) {
+        return NextResponse.json(
+            { error: "This reset link has already been used or is invalid." },
+            { status: 401 }
+        );
     }
 
     // Check if account is active

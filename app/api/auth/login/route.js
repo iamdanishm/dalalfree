@@ -38,7 +38,7 @@ export async function POST(req) {
     const user = await User.findOne({ email });
 
     if (!user)
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
+      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword)
@@ -64,6 +64,15 @@ export async function POST(req) {
       adUnlockCredits: user.adUnlockCredits,
     };
 
+    const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("AUTH_SECRET is not defined in environment variables");
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      );
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       {
@@ -72,9 +81,7 @@ export async function POST(req) {
         role: user.role,
         name: user.name,
       },
-      process.env.NEXTAUTH_SECRET ||
-        process.env.JWT_SECRET ||
-        "fallback-secret",
+      secret,
       { expiresIn: "7d" }
     );
 

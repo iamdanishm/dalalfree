@@ -44,20 +44,6 @@ amenitySchema.pre("save", async function (next) {
   next();
 });
 
-// Clear any cached models for development
-if (mongoose.models && mongoose.models.Amenity) {
-  delete mongoose.models.Amenity;
-}
-
-if (mongoose.connection && mongoose.connection.models) {
-  delete mongoose.connection.models.Amenity;
-}
-
-if (mongoose.modelSchemas && mongoose.modelSchemas.Amenity) {
-  delete mongoose.modelSchemas.Amenity;
-}
-
-const Amenity = mongoose.model("Amenity", amenitySchema);
+const Amenity = mongoose.models.Amenity || mongoose.model("Amenity", amenitySchema);
 
 export default Amenity;
-

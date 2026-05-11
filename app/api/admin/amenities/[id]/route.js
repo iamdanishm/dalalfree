@@ -60,21 +60,22 @@ export async function PUT(req, { params }) {
     // Handle image upload if provided
     if (imageFile) {
       // Validate file type
-      const allowedImageTypes = /jpeg|jpg|png|gif|bmp|webp|tiff|tif/i;
-      if (!allowedImageTypes.test(imageFile.name.toLowerCase())) {
+      const allowedImageTypes = UPLOAD_CONFIG.allowedTypes.image;
+      if (!allowedImageTypes.includes(imageFile.type.toLowerCase())) {
         return NextResponse.json(
           {
             error:
-              "Only image files are allowed (jpeg, jpg, png, gif, bmp, webp, tiff, tif)",
+              "Only image files are allowed: " + allowedImageTypes.join(", "),
           },
           { status: 400 }
         );
       }
 
-      // Validate file size (5MB)
-      if (imageFile.size > 5 * 1024 * 1024) {
+      // Validate file size
+      const maxSize = UPLOAD_CONFIG.maxFileSize.amenity;
+      if (imageFile.size > maxSize) {
         return NextResponse.json(
-          { error: "Image size cannot exceed 5MB" },
+          { error: `Image size cannot exceed ${maxSize / (1024 * 1024)}MB` },
           { status: 400 }
         );
       }
@@ -88,8 +89,11 @@ export async function PUT(req, { params }) {
           "images",
           filename
         );
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+        try {
+          await fs.promises.access(oldImagePath, fs.constants.F_OK);
+          await fs.promises.unlink(oldImagePath);
+        } catch (err) {
+          // File doesn't exist or other error, ignore
         }
       }
 
@@ -100,10 +104,10 @@ export async function PUT(req, { params }) {
       const filename = `${timestamp}-${randomId}.${extension}`;
 
       // Save new file to external directory
-      const dirPath = UploadBridge.getStoragePath(null, "amenities");
+      const dirPath = await UploadBridge.getStoragePath(null, "amenities");
       const fullPath = path.join(dirPath, filename);
       const buffer = Buffer.from(await imageFile.arrayBuffer());
-      fs.writeFileSync(fullPath, buffer);
+      await fs.promises.writeFile(fullPath, buffer);
 
       imageUrl = UploadBridge.getFileUrl(null, "amenities", filename);
     }
@@ -187,8 +191,11 @@ export async function DELETE(req, { params }) {
         "images",
         filename
       );
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+      try {
+        await fs.promises.access(imagePath, fs.constants.F_OK);
+        await fs.promises.unlink(imagePath);
+      } catch (err) {
+        // File doesn't exist or other error, ignore
       }
     }
 

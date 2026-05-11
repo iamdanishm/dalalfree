@@ -93,57 +93,78 @@ UserFavoritesSchema.methods.populateProperty = function () {
 // Static method to get user's favorites with populated property details
 UserFavoritesSchema.statics.getUserFavorites = async function (userId, options = {}) {
   const { page = 1, limit = 10, sortBy = "newest" } = options;
-
-  let sortOption = { addedAt: -1 }; // default: newest first
-
-  switch (sortBy) {
-    case "newest":
-      sortOption = { addedAt: -1 };
-      break;
-    case "oldest":
-      sortOption = { addedAt: 1 };
-      break;
-    case "title":
-      // This requires population first, will be handled in query
-      break;
-  }
-
-  const query = this.find({ userId }).populate({
-    path: "propertyId",
-    select: "title slug propertyType category price location status images city state createdAt ownerId",
-    populate: {
-      path: "ownerId",
-      select: "name role"
-    },
-    match: { isArchived: { $ne: true } } // Only show non-archived properties
-  });
-
-  // If sorting by title, we need to sort after population
-  if (sortBy === "title") {
-    query.sort({ "propertyId.title": 1 });
-  } else {
-    query.sort(sortOption);
-  }
-
-  // Apply pagination
   const skip = (page - 1) * limit;
-  query.skip(skip).limit(limit);
 
-  const favorites = await query.lean();
+  // Use aggregation to allow sorting by property fields and efficient filtering
+  const pipeline = [
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    {
+      $lookup: {
+        from: "properties",
+        localField: "propertyId",
+        foreignField: "_id",
+        as: "property"
+      }
+    },
+    { $unwind: "$property" },
+    { $match: { "property.isArchived": { $ne: true } } }
+  ];
 
-  // Filter out favorites where property was not found or is archived
-  const validFavorites = favorites.filter(fav => fav.propertyId);
+  // Apply sorting
+  let sortStage = { $sort: { addedAt: -1 } };
+  if (sortBy === "oldest") sortStage = { $sort: { addedAt: 1 } };
+  if (sortBy === "title") sortStage = { $sort: { "property.title": 1 } };
+  if (sortBy === "price_high") sortStage = { $sort: { "property.price": -1 } };
+  if (sortBy === "price_low") sortStage = { $sort: { "property.price": 1 } };
+  
+  pipeline.push(sortStage);
 
-  // Get total count for pagination
-  const totalCount = await this.countDocuments({
-    userId,
-    propertyId: {
-      $in: await mongoose.model("Property").find({ isArchived: { $ne: true } }).distinct("_id")
+  // Count total matching documents
+  const countPipeline = [...pipeline, { $count: "total" }];
+  const countResult = await this.aggregate(countPipeline);
+  const totalCount = countResult[0]?.total || 0;
+
+  // Pagination
+  pipeline.push({ $skip: skip });
+  pipeline.push({ $limit: limit });
+
+  // Final project and clean up
+  pipeline.push({
+    $project: {
+      _id: 1,
+      userId: 1,
+      propertyId: 1,
+      addedAt: 1,
+      notes: 1,
+      property: {
+        _id: 1,
+        title: 1,
+        slug: 1,
+        propertyType: 1,
+        category: 1,
+        price: 1,
+        location: 1,
+        status: 1,
+        images: 1,
+        city: 1,
+        state: 1,
+        createdAt: 1,
+        ownerId: 1
+      }
     }
   });
 
+  const favorites = await this.aggregate(pipeline);
+
+  // Manually populate ownerId if needed (or include in aggregation)
+  // For simplicity and to match previous format, we'll transform the output slightly
+  const formattedFavorites = favorites.map(fav => ({
+    ...fav,
+    propertyId: fav.property // Match the previous format where propertyId was populated
+  }));
+
   return {
-    favorites: validFavorites,
+    favorites: formattedFavorites,
     totalCount,
     totalPages: Math.ceil(totalCount / limit),
     currentPage: page
@@ -170,14 +191,5 @@ UserFavoritesSchema.pre('save', async function (next) {
   }
 });
 
-// Clear any existing model to prevent caching issues
-if (mongoose.models && mongoose.models.UserFavorites) {
-  delete mongoose.models.UserFavorites;
-}
-
-if (mongoose.connection && mongoose.connection.models) {
-  delete mongoose.connection.models.UserFavorites;
-}
-
-const UserFavorites = mongoose.model("UserFavorites", UserFavoritesSchema);
+const UserFavorites = mongoose.models.UserFavorites || mongoose.model("UserFavorites", UserFavoritesSchema);
 export default UserFavorites;

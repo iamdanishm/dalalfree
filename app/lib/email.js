@@ -10,9 +10,9 @@ const createTransporter = () => {
       user: process.env.SMTP_USER, // your email
       pass: process.env.SMTP_PASS, // your email password or app password
     },
-    // Additional security settings
+    // Additional security settings (enforce valid certificates)
     tls: {
-      rejectUnauthorized: false, // For development, consider removing in production
+      rejectUnauthorized: true,
     },
   });
 };

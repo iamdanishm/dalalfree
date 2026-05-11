@@ -4,6 +4,8 @@ import { connectDB } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import User from "@/app/lib/models/User";
+import bcrypt from "bcrypt";
+import { REGEX } from "@/app/lib/validation";
 
 // GET /api/admin/users - Paginated user list with filters
 export async function GET(req) {
@@ -102,7 +104,7 @@ export async function POST(req) {
   if (!phone?.trim()) fieldErrors.phone = "Phone number is required";
 
   // Additional validations
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && !REGEX.EMAIL.test(email)) {
     fieldErrors.email = "Please enter a valid email address";
   }
 
@@ -110,7 +112,7 @@ export async function POST(req) {
     fieldErrors.password = "Password must be at least 8 characters";
   }
 
-  if (phone && !/^[\+]?[1-9][\d]{0,15}$/.test(phone)) {
+  if (phone && !REGEX.PHONE.test(phone)) {
     fieldErrors.phone = "Please enter a valid phone number";
   }
 
@@ -138,7 +140,6 @@ export async function POST(req) {
     );
 
   // Hash password
-  const bcrypt = require("bcrypt");
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create user

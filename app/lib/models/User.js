@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { REGEX } from "../validation";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -9,7 +10,7 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       validate: {
         validator: function (v) {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+          return REGEX.EMAIL.test(v);
         },
         message: 'Invalid email format'
       }
@@ -19,7 +20,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator: function (v) {
-          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
+          return !v || REGEX.PHONE.test(v);
         },
         message: 'Invalid phone number format'
       }
@@ -100,6 +101,8 @@ const UserSchema = new mongoose.Schema(
     // Password reset OTP fields
     resetPasswordOtp: { type: String },
     resetPasswordOtpExpiry: { type: Date },
+    resetPasswordOtpAttempts: { type: Number, default: 0 },
+    lastOtpAttempt: { type: Date },
 
     // Partner Request
     partnerRequestStatus: {
@@ -170,10 +173,5 @@ UserSchema.index({ accountStatus: 1 });
 // Used in /api/admin/users for filtering and sorting admin user lists
 UserSchema.index({ role: 1, accountStatus: 1, createdAt: -1 });
 
-// In Next.js development, models can sometimes be cached with old schemas.
-// This check ensures the model is re-compiled if the schema has changed.
-if (mongoose.models.User && !mongoose.models.User.schema.paths.partnerRequestStatus) {
-  delete mongoose.models.User;
-}
-
+// Export the model
 export default mongoose.models.User || mongoose.model("User", UserSchema);

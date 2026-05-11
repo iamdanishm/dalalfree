@@ -3,43 +3,28 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { UploadBridge } from "@/app/lib/upload-bridge.js";
 
-// File validation constants
+import { UPLOAD_CONFIG } from "@/app/lib/upload-config.js";
+
+// File validation constants derived from UPLOAD_CONFIG
 const FILE_VALIDATION = {
   images: {
-    maxSize: 10 * 1024 * 1024, // 10MB
-    allowedTypes: [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-      "image/avif",
-    ],
+    maxSize: UPLOAD_CONFIG.maxFileSize.image,
+    allowedTypes: UPLOAD_CONFIG.allowedTypes.image,
     maxFiles: 20,
   },
   videos: {
-    maxSize: 100 * 1024 * 1024, // 100MB
-    allowedTypes: [
-      "video/mp4",
-      "video/webm",
-      "video/quicktime",
-      "video/x-msvideo",
-    ],
+    maxSize: UPLOAD_CONFIG.maxFileSize.video,
+    allowedTypes: UPLOAD_CONFIG.allowedTypes.video,
     maxFiles: 5,
   },
   kycDocuments: {
-    maxSize: 5 * 1024 * 1024, // 5MB
-    allowedTypes: [
-      "image/jpeg",
-      "image/png",
-      "application/pdf",
-      "image/heic",
-      "image/heif",
-    ],
+    maxSize: UPLOAD_CONFIG.maxFileSize.document,
+    allowedTypes: UPLOAD_CONFIG.allowedTypes.document.concat(UPLOAD_CONFIG.allowedTypes.image),
     maxFiles: 10,
   },
   kycVideos: {
-    maxSize: 50 * 1024 * 1024, // 50MB
-    allowedTypes: ["video/mp4", "video/webm", "video/quicktime"],
+    maxSize: UPLOAD_CONFIG.maxFileSize.kycVideo,
+    allowedTypes: UPLOAD_CONFIG.allowedTypes.video,
     maxFiles: 1,
   },
 };
@@ -100,9 +85,11 @@ export function generateSecureFilename(file, prefix) {
  * Ensure directory exists
  * @param {string} dirPath - Directory path
  */
-export function ensureDirectoryExists(dirPath) {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+export async function ensureDirectoryExists(dirPath) {
+  try {
+    await fs.promises.access(dirPath, fs.constants.F_OK);
+  } catch {
+    await fs.promises.mkdir(dirPath, { recursive: true });
   }
 }
 
@@ -141,12 +128,12 @@ export async function processImages(imageFiles, propertyId) {
       const secureFilename = generateSecureFilename(file, "img");
 
       // Use UploadBridge for external storage
-      const dirPath = UploadBridge.getStoragePath(propertyId, "propertyImages");
+      const dirPath = await UploadBridge.getStoragePath(propertyId, "propertyImages");
       const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(fullPath, buffer);
+      await fs.promises.writeFile(fullPath, buffer);
 
       // Get secure URL using UploadBridge (with hash instead of ID)
       const fileUrl = UploadBridge.getSecureFileUrl(
@@ -216,12 +203,12 @@ export async function processVideos(videoFiles, propertyId) {
       const secureFilename = generateSecureFilename(file, "vid");
 
       // Use UploadBridge for external storage
-      const dirPath = UploadBridge.getStoragePath(propertyId, "propertyVideos");
+      const dirPath = await UploadBridge.getStoragePath(propertyId, "propertyVideos");
       const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(fullPath, buffer);
+      await fs.promises.writeFile(fullPath, buffer);
 
       // Get secure URL using UploadBridge (with hash instead of ID)
       const fileUrl = UploadBridge.getSecureFileUrl(
@@ -311,12 +298,12 @@ export async function processKycFiles(kycFilesArray, propertyId) {
 
       // Use UploadBridge for external storage
       const subType = isVideo ? "videos" : "documents";
-      const dirPath = UploadBridge.getStoragePath(propertyId, "kyc", subType);
+      const dirPath = await UploadBridge.getStoragePath(propertyId, "kyc", subType);
       const fullPath = path.join(dirPath, secureFilename);
 
       // Save file
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(fullPath, buffer);
+      await fs.promises.writeFile(fullPath, buffer);
 
       // Get secure URL using UploadBridge (with hash instead of ID)
       const fileUrl = UploadBridge.getSecureFileUrl(
