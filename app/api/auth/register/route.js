@@ -1,70 +1,26 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import { connectDB } from "@/app/lib/db";
-import User from "@/app/lib/models/User";
+import { UserService } from "@/app/lib/services/UserService";
+import { registerSchema } from "@/app/lib/validations/auth";
+import { AppError, handleApiError, formatZodErrors } from "@/app/lib/utils/errors";
 
 export async function POST(req) {
   try {
-    let body;
-    try {
-      body = await req.json();
-    } catch (jsonError) {
-      return NextResponse.json(
-        { error: "Invalid JSON body." },
-        { status: 400 }
-      );
+    const body = await req.json();
+
+    // 1. Validate input with Zod
+    const result = registerSchema.safeParse(body);
+    if (!result.success) {
+      throw new AppError("Validation failed", 400, formatZodErrors(result.error));
     }
 
-    const { name, email, password, role, phone } = body;
+    // 2. Register via UserService (handles hashing and duplication check)
+    const newUser = await UserService.register(result.data);
 
-    const errors = [];
-    if (!name) errors.push("name");
-    if (!email) errors.push("email");
-    if (!password) errors.push("password");
-    if (!phone) errors.push("phone");
-
-    if (errors.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Missing required fields",
-          required: ["name", "email", "phone", "password"],
-          missing: errors,
-        },
-        { status: 400 }
-      );
-    }
-
-    await connectDB();
-
-    const existing = await User.findOne({ email });
-    if (existing)
-      return NextResponse.json(
-        { error: "Email already registered." },
-        { status: 400 }
-      );
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashed,
-      phone,
-      role: "user", // Always default to user role for public registration
-    });
-
-    // Auto-login the user after registration
-    const userForSession = {
-      id: newUser._id.toString(),
-      email: newUser.email,
-      name: newUser.name,
-      role: newUser.role,
-    };
-
+    // 3. Success response
     return NextResponse.json(
       {
         message: "User registered successfully",
-        redirectTo: "/onboard", // Auto-redirect to onboarding
+        redirectTo: "/onboard",
         user: {
           id: newUser._id,
           name: newUser.name,
@@ -72,24 +28,13 @@ export async function POST(req) {
           phone: newUser.phone,
           role: newUser.role,
           accountStatus: newUser.accountStatus,
-          isVerified: newUser.isVerified,
-          // Include subscription data (mainly for buyers)
-          subscriptionStatus: newUser.subscriptionStatus,
-          subscriptionStartDate: newUser.subscriptionStartDate,
-          subscriptionEndDate: newUser.subscriptionEndDate,
-          freeTrialUsed: newUser.freeTrialUsed,
-          freeTrialStartDate: newUser.freeTrialStartDate,
-          freeTrialEndDate: newUser.freeTrialEndDate,
-          adUnlockCredits: newUser.adUnlockCredits,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Register error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
+
+

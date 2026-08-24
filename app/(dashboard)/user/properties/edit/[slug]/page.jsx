@@ -233,7 +233,7 @@ export default function PropertyEditWizard() {
 
       // Society amenities - try new structure first, then fallback to old
       societyAmenities: extractSocietyAmenityIds(
-        property.amenities?.society || property.societyAmenities || []
+        property.societyAmenities || property.amenities?.society || []
       ),
 
       // Nearby places - try new structure first, then fallback to old
@@ -665,6 +665,14 @@ export default function PropertyEditWizard() {
 
         if (!response.ok) {
           const errorData = await response.json();
+          if (errorData.details) {
+            console.error("Backend validation details:", errorData.details);
+            setErrors(errorData.details);
+            const detailMsgs = Object.entries(errorData.details)
+              .map(([field, msg]) => `${field}: ${msg}`)
+              .join(" | ");
+            throw new Error(`Validation failed: ${detailMsgs}`);
+          }
           throw new Error(
             errorData.error || errorData.message || "Failed to update property"
           );

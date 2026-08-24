@@ -13,9 +13,19 @@ export const authOptions = {
       async authorize(credentials) {
         await connectDB();
         const user = await User.findOne({ email: credentials.email });
-        if (!user) throw new Error("User not found");
+        if (!user) {
+          throw new Error("Invalid email or password");
+        }
+        
         const valid = await bcrypt.compare(credentials.password, user.password);
-        if (!valid) throw new Error("Invalid password");
+        if (!valid) {
+          throw new Error("Invalid email or password");
+        }
+
+        if (user.accountStatus?.toLowerCase() !== "active") {
+          throw new Error(`Account is ${user.accountStatus}. Please contact support.`);
+        }
+
         return {
           id: user._id,
           email: user.email,
@@ -25,6 +35,7 @@ export const authOptions = {
           partnerRequestStatus: user.partnerRequestStatus || "none",
         };
       },
+
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
+import { AppError, handleApiError } from "@/app/lib/utils/errors";
 
 export async function POST(req) {
   try {
@@ -9,49 +11,26 @@ export async function POST(req) {
     try {
       body = await req.json();
     } catch (jsonError) {
-      return NextResponse.json(
-        { error: "Invalid JSON body." },
-        { status: 400 }
-      );
+      throw new AppError("Invalid JSON body", 400);
     }
 
     const { email, otp } = body;
 
-    // Validate input
+    // 1. Basic validation
     if (!email || !otp) {
-      return NextResponse.json(
-        {
-          error: "Both email and OTP are required.",
-          required: ["email", "otp"],
-          missing: [!email ? "email" : null, !otp ? "otp" : null].filter(
-            Boolean
-          ),
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate OTP format (6 digits)
-    if (!/^\d{6}$/.test(otp)) {
-      return NextResponse.json(
-        { error: "OTP must be 6 digits." },
-        { status: 400 }
-      );
+      throw new AppError("Email and OTP are required", 400);
     }
 
     await connectDB();
 
-    // Find user by email
+    // 2. Find user by email
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or OTP." },
-        { status: 400 }
-      );
+      throw new AppError("Invalid email or OTP", 400);
     }
 
-    // Check for rate limiting (max 5 attempts, 15 min lockout)
+    // 3. Rate limiting check
     const LOCKOUT_TIME = 15 * 60 * 1000;
     const MAX_ATTEMPTS = 5;
 
@@ -59,59 +38,45 @@ export async function POST(req) {
       const timeSinceLastAttempt = Date.now() - new Date(user.lastOtpAttempt).getTime();
       if (timeSinceLastAttempt < LOCKOUT_TIME) {
         const remainingMinutes = Math.ceil((LOCKOUT_TIME - timeSinceLastAttempt) / 60000);
-        return NextResponse.json(
-          { error: `Too many failed attempts. Please try again in ${remainingMinutes} minutes.` },
-          { status: 429 }
-        );
+        throw new AppError(`Too many failed attempts. Please try again in ${remainingMinutes} minutes.`, 429);
       } else {
-        // Reset attempts after lockout period
         user.resetPasswordOtpAttempts = 0;
       }
     }
 
-    // Check if account is active
+    // 4. Check if account is active
     if (user.accountStatus?.toLowerCase() !== "active") {
-      return NextResponse.json(
-        { error: "Account is not active. Please contact support." },
-        { status: 403 }
-      );
+      throw new AppError("Account is not active. Please contact support.", 403);
     }
 
-    // Check if OTP exists and matches
-    if (!user.resetPasswordOtp || user.resetPasswordOtp !== otp) {
+    // 5. Verify OTP
+    if (!user.resetPasswordOtp) {
+      throw new AppError("OTP not found or already used. Please request a new one.", 400);
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.resetPasswordOtp);
+    if (!isOtpValid) {
       user.resetPasswordOtpAttempts = (user.resetPasswordOtpAttempts || 0) + 1;
       user.lastOtpAttempt = new Date();
       await user.save();
       
       const remainingAttempts = MAX_ATTEMPTS - user.resetPasswordOtpAttempts;
-      return NextResponse.json({ 
-        error: "Invalid OTP.",
-        remainingAttempts: remainingAttempts > 0 ? remainingAttempts : 0
-      }, { status: 400 });
+      throw new AppError(`Invalid OTP. ${remainingAttempts > 0 ? remainingAttempts : 0} attempts remaining.`, 400);
     }
 
-    // Check if OTP is expired
-    if (
-      !user.resetPasswordOtpExpiry ||
-      user.resetPasswordOtpExpiry < new Date()
-    ) {
-      // Clear expired OTP
+    // 6. Check expiry
+    if (!user.resetPasswordOtpExpiry || user.resetPasswordOtpExpiry < new Date()) {
       user.resetPasswordOtp = undefined;
       user.resetPasswordOtpExpiry = undefined;
       user.resetPasswordOtpAttempts = 0;
       await user.save();
-
-      return NextResponse.json(
-        { error: "OTP has expired. Please request a new one." },
-        { status: 400 }
-      );
+      throw new AppError("OTP has expired. Please request a new one.", 400);
     }
 
-    // OTP is valid - generate a reset token that will be used for password reset
+    // 7. Success - Generate reset token
     const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
     if (!secret) {
-        console.error("FATAL: JWT secret is not defined in environment");
-        return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+        throw new Error("Configuration error: JWT secret missing");
     }
 
     const resetToken = jwt.sign(
@@ -119,13 +84,13 @@ export async function POST(req) {
         userId: user._id,
         email: user.email,
         type: "password_reset",
-        tokenVersion: user.password ? user.password.substring(0, 10) : "new_user" // Version the token based on current password hash
+        tokenVersion: user.password ? user.password.substring(0, 10) : "new_user"
       },
       secret,
-      { expiresIn: "30m" } // 30 minutes to complete password reset
+      { expiresIn: "30m" }
     );
 
-    // Clear the OTP and attempts after successful verification
+    // 8. Clear OTP
     user.resetPasswordOtp = undefined;
     user.resetPasswordOtpExpiry = undefined;
     user.resetPasswordOtpAttempts = 0;
@@ -140,10 +105,7 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Verify OTP error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
+

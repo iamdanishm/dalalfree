@@ -9,9 +9,13 @@ export default function PropertyAmenitiesTab({ property }) {
         <h3 className="font-semibold text-heading mb-4 text-lg md:text-xl">
           Society Amenities
         </h3>
-        {property.amenities?.society?.length > 0 ? (
+        {((Array.isArray(property.societyAmenities) && property.societyAmenities.length > 0)
+          ? property.societyAmenities
+          : (property.amenities?.society || [])).length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-            {property.amenities.society.map((amenity, index) => (
+            {((Array.isArray(property.societyAmenities) && property.societyAmenities.length > 0)
+              ? property.societyAmenities
+              : (property.amenities?.society || [])).map((amenity, index) => (
               <div
                 key={index}
                 className="flex items-center p-3 md:p-4 bg-surface rounded-lg hover:shadow-md transition-all duration-200"

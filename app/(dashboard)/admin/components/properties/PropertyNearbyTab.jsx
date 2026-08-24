@@ -65,16 +65,20 @@ export default function PropertyNearbyTab({ property }) {
         <h3 className="font-semibold text-heading mb-4 text-lg md:text-xl">
           Nearby Places
         </h3>
-        {property.amenities?.nearby?.length > 0 ? (
+        {((Array.isArray(property.nearbyPlaces) && property.nearbyPlaces.length > 0)
+          ? property.nearbyPlaces
+          : (property.amenities?.nearby || [])).length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            {property.amenities.nearby.map((place, index) => (
+            {((Array.isArray(property.nearbyPlaces) && property.nearbyPlaces.length > 0)
+              ? property.nearbyPlaces
+              : (property.amenities?.nearby || [])).map((place, index) => (
               <div
                 key={index}
                 className="flex items-center p-3 md:p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/50 rounded-xl hover:shadow-md transition-all duration-200"
               >
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
                   {(() => {
-                    const IconComponent = getNearbyIcon(place.icon);
+                    const IconComponent = getNearbyIcon(place.icon || place.type);
                     return (
                       <IconComponent
                         className="text-blue-600"

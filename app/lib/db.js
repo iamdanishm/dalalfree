@@ -19,12 +19,15 @@ export const connectDB = async () => {
     );
 
     await mongoose.connect(`${MONGO_URI}/dalalfree`, {
-      // Modern Mongoose 8.0+ connection options
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10, // Maximum number of connections in the connection pool
-      minPoolSize: 5, // Minimum number of connections in the connection pool
+      // Optimized for VPS deployment
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 60000,
+      maxPoolSize: 20,
+      minPoolSize: 5,
+      family: 4, // Use IPv4
+      heartbeatFrequencyMS: 10000,
     });
+
 
     connectionAttempts = 0; // Reset on successful connection
     console.log("Database connected successfully");

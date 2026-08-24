@@ -2,34 +2,22 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import UserContactHistory from "@/app/lib/models/UserContactHistory";
 import Property from "@/app/lib/models/Property";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAuth } from "@/app/lib/auth";
+import { AppError, handleApiError } from "@/app/lib/utils/errors";
 
-export async function GET(req, { params }) {
+export const GET = requireAuth(async (req, { params }) => {
     try {
         await connectDB();
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
-        }
-
         const { id } = await params;
 
         // Verify property ownership
         const property = await Property.findOne({
             _id: id,
-            ownerId: session.user.id
+            ownerId: req.user.id
         });
 
         if (!property) {
-            return NextResponse.json(
-                { error: "Property not found or unauthorized" },
-                { status: 404 }
-            );
+            throw new AppError("Property not found or unauthorized", 404);
         }
 
         // Fetch leads
@@ -57,10 +45,7 @@ export async function GET(req, { params }) {
         });
 
     } catch (error) {
-        console.error("Error fetching leads:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch leads" },
-            { status: 500 }
-        );
+        return handleApiError(error);
     }
-}
+});
+

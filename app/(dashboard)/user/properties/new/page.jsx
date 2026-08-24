@@ -443,6 +443,14 @@ export default function PropertyWizard() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.details) {
+          console.error("Backend validation details:", errorData.details);
+          setErrors(errorData.details);
+          const detailMsgs = Object.entries(errorData.details)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join(" | ");
+          throw new Error(`Validation failed: ${detailMsgs}`);
+        }
         throw new Error(
           errorData.error || errorData.message || "Failed to create property"
         );

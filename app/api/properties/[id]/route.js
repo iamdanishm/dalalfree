@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
+import Amenity from "@/app/lib/models/Amenity";
 import { requireAuth } from "@/app/lib/auth";
 import { generateUniquePropertySlug } from "@/app/lib/slug";
 
@@ -39,9 +40,8 @@ export async function GET(_, { params }) {
       // If it's a valid MongoDB ObjectId format
       property = await Property.findById(id)
         .populate({
-          path: "amenities.society",
-          model: "Amenity",
-          select: "title",
+          path: "societyAmenities",
+          select: "name title icon image category",
         })
         .populate({
           path: "ownerId",
@@ -52,9 +52,8 @@ export async function GET(_, { params }) {
       // Otherwise, try to find by slug
       property = await Property.findOne({ slug: id })
         .populate({
-          path: "amenities.society",
-          model: "Amenity",
-          select: "title",
+          path: "societyAmenities",
+          select: "name title icon image category",
         })
         .populate({
           path: "ownerId",
@@ -173,28 +172,11 @@ export const PUT = requireAuth(async function (req, { params }) {
     updateData.videos = [...existingVideos];
   }
 
-  // Transform society amenities and nearby places to correct database structure
   if (textData.societyAmenities !== undefined) {
-    // Transform society amenities IDs to full objects
-    const societyAmenityObjects = await transformSocietyAmenities(textData.societyAmenities || []);
-    updateData.amenities = updateData.amenities || {};
-    updateData.amenities.society = societyAmenityObjects;
-    // Keep the simple array for backward compatibility if needed
     updateData.societyAmenities = textData.societyAmenities;
-  } else {
-    // Preserve existing society amenities if not being updated
-    if (property.amenities?.society && property.amenities.society.length > 0) {
-      updateData.amenities = updateData.amenities || {};
-      updateData.amenities.society = property.amenities.society;
-    }
   }
 
   if (textData.nearbyPlaces !== undefined) {
-    // Transform nearby places to amenities format
-    const nearbyPlacesAmenities = transformNearbyPlacesToAmenities(textData.nearbyPlaces || []);
-    updateData.amenities = updateData.amenities || {};
-    updateData.amenities.nearby = nearbyPlacesAmenities;
-    // Keep the direct array for backward compatibility if needed
     updateData.nearbyPlaces = textData.nearbyPlaces;
   }
 

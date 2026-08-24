@@ -1,34 +1,29 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAuth } from "@/app/lib/auth";
+import { AppError, handleApiError } from "@/app/lib/utils/errors";
 
 export const revalidate = 0;
 
-export async function GET() {
+export const GET = requireAuth(async (req) => {
     try {
         await connectDB();
-        const session = await getServerSession(authOptions);
-
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await User.findById(session.user.id).select("role partnerRequestStatus");
+        const user = await User.findById(req.user.id).select("role partnerRequestStatus");
 
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            throw new AppError("User not found", 404);
         }
 
         return NextResponse.json({
+            success: true,
             user: {
                 role: user.role,
                 partnerRequestStatus: user.partnerRequestStatus
             }
         });
     } catch (error) {
-        console.error("Error fetching user status:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return handleApiError(error);
     }
-}
+});
+

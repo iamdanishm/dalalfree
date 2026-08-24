@@ -1,183 +1,47 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/app/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import Amenity from "@/app/lib/models/Amenity";
-import { UploadBridge } from "@/app/lib/upload-bridge.js";
-import { UPLOAD_CONFIG } from "@/app/lib/upload-config.js";
-import path from "path";
-import fs from "fs";
-
-// Wrapper for multer middleware in App Router
-const runMiddleware = (req, middleware) => {
-  return new Promise((resolve, reject) => {
-    middleware(req, {}, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-};
+import { requireAdmin } from "@/app/lib/auth";
+import { AmenityService } from "@/app/lib/services/AmenityService";
+import { handleApiError } from "@/app/lib/utils/errors";
 
 // GET /api/admin/amenities - Get paginated list of amenities
-export async function GET(req) {
+export const GET = requireAdmin(async (req) => {
   try {
-    await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
-    const search = searchParams.get("search");
+    const params = {
+      page: parseInt(searchParams.get("page")) || 1,
+      limit: parseInt(searchParams.get("limit")) || 10,
+      search: searchParams.get("search")
+    };
 
-    // Build query
-    const query = {};
-    if (search) {
-      query.title = { $regex: search, $options: "i" };
-    }
-
-    const skip = (page - 1) * limit;
-
-    // Get amenities with pagination
-    const amenities = await Amenity.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const total = await Amenity.countDocuments(query);
+    const result = await AmenityService.listAmenities(params);
 
     return NextResponse.json({
-      amenities,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      success: true,
+      ...result
     });
   } catch (error) {
-    console.error("Error fetching amenities:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch amenities" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});
 
 // POST /api/admin/amenities - Create new amenity with image upload
-export async function POST(req) {
+export const POST = requireAdmin(async (req) => {
   try {
-    await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Handle multipart form data
     const formData = await req.formData();
     const title = formData.get("title");
     const available = formData.get("available") === "true";
     const imageFile = formData.get("image");
 
-    // Validate required fields
-    if (!title) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
-    if (!imageFile) {
-      return NextResponse.json({ error: "Image is required" }, { status: 400 });
-    }
-
-    if (title.length > 100) {
-      return NextResponse.json(
-        { error: "Title cannot exceed 100 characters" },
-        { status: 400 }
-      );
-    }
-
-    // Validate file type
-    const allowedImageTypes = UPLOAD_CONFIG.allowedTypes.image;
-    if (!allowedImageTypes.includes(imageFile.type.toLowerCase())) {
-      return NextResponse.json(
-        {
-          error:
-            "Only image files are allowed: " + allowedImageTypes.join(", "),
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size
-    const maxSize = UPLOAD_CONFIG.maxFileSize.amenity;
-    if (imageFile.size > maxSize) {
-      return NextResponse.json(
-        { error: `Image size cannot exceed ${maxSize / (1024 * 1024)}MB` },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomId = Math.round(Math.random() * 1e9);
-    const extension = imageFile.name.split(".").pop();
-    const filename = `${timestamp}-${randomId}.${extension}`;
-
-    // Save file to external directory
-    const dirPath = await UploadBridge.getStoragePath(null, "amenities");
-    const fullPath = path.join(dirPath, filename);
-    const buffer = Buffer.from(await imageFile.arrayBuffer());
-    await fs.promises.writeFile(fullPath, buffer);
-
-    // Create amenity in database
-    const imageUrl = UploadBridge.getFileUrl(null, "amenities", filename);
-
-    const amenity = await Amenity.create({
-      title: title.trim(),
-      image: imageUrl,
-      available,
-    });
+    const amenity = await AmenityService.createAmenity({ title, available }, imageFile);
 
     return NextResponse.json({
+      success: true,
       message: "Amenity created successfully",
-      amenity: {
-        _id: amenity._id,
-        title: amenity.title,
-        image: amenity.image,
-        available: amenity.available,
-        createdAt: amenity.createdAt,
-      },
+      amenity
     });
   } catch (error) {
-    console.error("Error creating amenity:", error);
-
-    // Handle duplicate title error
-    if (error.code === "DUPLICATE_TITLE") {
-      return NextResponse.json(
-        { error: "An amenity with this title already exists" },
-        { status: 400 }
-      );
-    }
-
-    // Handle validation errors
-    if (error.name === "ValidationError") {
-      const errors = {};
-      for (const field in error.errors) {
-        errors[field] = error.errors[field].message;
-      }
-      return NextResponse.json(
-        { error: "Validation failed", details: errors },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create amenity" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});
+
+

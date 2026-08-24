@@ -279,18 +279,26 @@ export default function StepKycVerification({
       // Only request new media if we don't already have a stream from the modal
       if (!stream) {
         try {
-          // Try with facingMode: "user" first
+          // 1. Try video with facingMode + audio
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "user" },
             audio: true,
           });
-        } catch (innerError) {
-          console.warn("Retrying without facingMode constraint...");
-          // Fallback to generic video if facingMode fails
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
+        } catch (err1) {
+          console.warn("Retrying with plain video: true, audio: true...");
+          try {
+            // 2. Try generic video + audio
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: true,
+            });
+          } catch (err2) {
+            console.warn("Retrying video without audio constraint...");
+            // 3. Fallback to video-only (microphone missing/blocked)
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+            });
+          }
         }
       }
 
@@ -301,12 +309,17 @@ export default function StepKycVerification({
         videoRef.current.srcObject = stream;
       }
 
-      // Start MediaRecorder
-      const mimeType = MediaRecorder.isTypeSupported("video/webm")
-        ? "video/webm"
-        : "video/mp4";
+      // Start MediaRecorder with audio+video codecs fallback
+      const mimeType = [
+        "video/webm;codecs=vp8,opus",
+        "video/webm;codecs=vp9,opus",
+        "video/webm",
+        "video/mp4"
+      ].find((type) => MediaRecorder.isTypeSupported(type)) || "";
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       const chunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -982,18 +995,26 @@ export default function StepKycVerification({
                       // Start camera first
                       let stream;
                       try {
-                        // Try with facingMode: "user" first
+                        // 1. Try video with facingMode + audio
                         stream = await navigator.mediaDevices.getUserMedia({
                           video: { facingMode: "user" },
                           audio: true,
                         });
-                      } catch (innerError) {
-                        console.warn("Retrying without facingMode constraint...");
-                        // Fallback to generic video if facingMode fails
-                        stream = await navigator.mediaDevices.getUserMedia({
-                          video: true,
-                          audio: true,
-                        });
+                      } catch (err1) {
+                        console.warn("Retrying with plain video: true, audio: true...");
+                        try {
+                          // 2. Try generic video + audio
+                          stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: true,
+                          });
+                        } catch (err2) {
+                          console.warn("Retrying video without audio constraint...");
+                          // 3. Fallback to video-only
+                          stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                          });
+                        }
                       }
 
                       // Set stream for preview during countdown

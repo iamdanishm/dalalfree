@@ -166,7 +166,11 @@ export default function StepReviewPublish({
 
   // Get amenity display names
   const getAmenityNames = (amenityIds) => {
-    return amenityIds?.map((id) => amenitiesMap[id]).filter(Boolean) || [];
+    return (
+      amenityIds
+        ?.map((id) => amenitiesMap[id] || (typeof id === "object" ? id?.name || id?.title : id))
+        .filter(Boolean) || []
+    );
   };
 
   const stepSections = [

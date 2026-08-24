@@ -29,13 +29,9 @@ export async function GET(req) {
   const andConditions = [];
 
   if (search) {
-    andConditions.push({
-      $or: [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ],
-    });
+    query.$text = { $search: search };
   }
+
 
   if (hasKyc === "true") {
     andConditions.push({
@@ -56,6 +52,7 @@ export async function GET(req) {
   const properties = await Property.find(query)
     .populate("ownerId", "name email phone role isVerified")
     .populate("approvedBy", "name email")
+    .populate("societyAmenities", "name title icon image category")
     .select("-__v")
     .sort({ createdAt: -1 })
     .skip(skip)

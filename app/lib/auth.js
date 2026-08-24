@@ -105,16 +105,24 @@ export const requireAuth = (handler) => {
   };
 };
 
-// Require Partner role middleware
-export const requirePartner = (handler) => {
+
+// Common role-based middlewares
+export const requireRoles = (allowedRoles) => (handler) => {
   return requireAuth(async (request, ...args) => {
-    if (request.user.role !== "partner") {
-      return new Response(JSON.stringify({ error: "Partner access required" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!allowedRoles.includes(request.user.role)) {
+      return new Response(
+        JSON.stringify({ error: `Access denied. Required roles: ${allowedRoles.join(", ")}` }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
     }
     return handler(request, ...args);
   });
 };
+
+export const requireAdmin = requireRoles(["admin"]);
+export const requirePartner = requireRoles(["partner"]);
+export const requireSubAdmin = requireRoles(["admin", "sub-admin"]);
+export const requireStaff = requireRoles(["admin", "sub-admin", "partner"]);
+
+
 

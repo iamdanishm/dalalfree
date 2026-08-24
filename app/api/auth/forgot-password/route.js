@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 import { connectDB } from "@/app/lib/db";
 import User from "@/app/lib/models/User";
 import { sendEmail } from "@/app/lib/email";
+import { resetPasswordRequestSchema } from "@/app/lib/validations/auth";
+import { AppError, handleApiError, formatZodErrors } from "@/app/lib/utils/errors";
 
 export async function POST(req) {
   try {
@@ -10,34 +13,27 @@ export async function POST(req) {
     try {
       body = await req.json();
     } catch (jsonError) {
+      throw new AppError("Invalid JSON body", 400);
+    }
+
+    // 1. Validate with Zod
+    const result = resetPasswordRequestSchema.safeParse(body);
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid JSON body." },
+        { 
+          error: "Validation failed", 
+          details: formatZodErrors(result.error),
+          code: "VALIDATION_ERROR"
+        },
         { status: 400 }
       );
     }
 
-    const { email } = body;
-
-    // Validate input
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email is required." },
-        { status: 400 }
-      );
-    }
-
-    // Email validation regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format." },
-        { status: 400 }
-      );
-    }
+    const { email } = result.data;
 
     await connectDB();
 
-    // Find user by email
+    // 2. Find user by email
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
@@ -51,34 +47,33 @@ export async function POST(req) {
       );
     }
 
-    // Check if account is active
+    // 3. Check if account is active
     if (user.accountStatus?.toLowerCase() !== "active") {
-      return NextResponse.json(
-        { error: "Account is not active. Please contact support." },
-        { status: 403 }
-      );
+      throw new AppError("Account is not active. Please contact support.", 403);
     }
 
-    // Generate 6-digit OTP
+    // 4. Generate 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
 
-    // Set OTP expiry (15 minutes from now)
+    // 5. Hash OTP for secure storage
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    // 6. Set OTP expiry (15 minutes from now)
     const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Update user with OTP
-    user.resetPasswordOtp = otp;
+    // Update user with hashed OTP
+    user.resetPasswordOtp = hashedOtp;
     user.resetPasswordOtpExpiry = otpExpiry;
+    user.resetPasswordOtpAttempts = 0; // Reset attempts on new OTP request
     await user.save();
 
-    // Send OTP email
+    // 7. Send OTP email
     try {
-      await sendEmail(email, "passwordResetOtp", {
-        otp: otp,
+      await sendEmail(email.toLowerCase(), "passwordResetOtp", {
+        otp: otp, // Send plain OTP to user
         name: user.name,
         email: user.email,
       });
-
-      console.log(`📧 Password reset OTP sent to ${email}`);
 
       return NextResponse.json(
         {
@@ -90,22 +85,16 @@ export async function POST(req) {
       );
     } catch (emailError) {
       console.error("Email sending failed:", emailError);
-
-      // If email fails, clear the OTP from database
+      
+      // Rollback OTP on email failure
       user.resetPasswordOtp = undefined;
       user.resetPasswordOtpExpiry = undefined;
       await user.save();
 
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
-      );
+      throw new AppError("Failed to send email. Please try again later.", 500);
     }
   } catch (error) {
-    console.error("Forgot password error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
+

@@ -23,9 +23,11 @@ const amenitySchema = new mongoose.Schema(
 );
 
 // Add index for faster searches
+amenitySchema.index({ title: "text" });
 amenitySchema.index({ title: 1 });
 amenitySchema.index({ available: 1 });
 amenitySchema.index({ createdAt: -1 });
+
 
 // Prevent duplicate titles (case-insensitive)
 amenitySchema.pre("save", async function (next) {

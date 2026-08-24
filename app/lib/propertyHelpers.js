@@ -77,10 +77,10 @@ export function transformPropertyDataForAPI(formData) {
     apiData.append("nearbyPlaces", JSON.stringify(formData.nearbyPlaces));
   }
 
-  // File handling - these will be added separately
-  // images: File[]
-  // videos: File[]
-  // kycFiles: { aadhaar: File[], pan: File, agreement: File, video: File }
+  // File presence metadata for backend textData validation
+  if (formData.images && formData.images.length > 0) {
+    apiData.append("hasImages", "true");
+  }
 
   return apiData;
 }
@@ -149,14 +149,18 @@ export function addFilesToFormData(formData, files) {
     }
 
     // KYC verification video (single)
-    if (files.kycFiles.video && files.kycFiles.video.file) {
-      const videoFile = files.kycFiles.video.file;
-      const renamedFile = new File(
-        [videoFile],
-        `video_${videoFile.name}`,
-        { type: videoFile.type }
-      );
-      formData.append("kycFiles", renamedFile);
+    if (files.kycFiles.video) {
+      const rawVideo = files.kycFiles.video.file || files.kycFiles.video;
+      if (rawVideo instanceof File || rawVideo instanceof Blob) {
+        const videoName = files.kycFiles.video.name || rawVideo.name || `kyc_video_${Date.now()}.webm`;
+        const videoType = files.kycFiles.video.type || rawVideo.type || "video/webm";
+        const renamedFile = new File(
+          [rawVideo],
+          `video_${videoName}`,
+          { type: videoType }
+        );
+        formData.append("kycFiles", renamedFile);
+      }
     }
   }
 
@@ -252,7 +256,7 @@ export function validatePropertyData(formData) {
   }
 
   // File validations
-  if (!formData.images || formData.images.length === 0) {
+  if (!formData.hasImages && (!formData.images || formData.images.length === 0)) {
     errors.images = "At least one property image is required";
   }
 

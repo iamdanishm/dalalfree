@@ -2,236 +2,51 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
 import Property from "@/app/lib/models/Property";
 import { requireAuth } from "@/app/lib/auth";
-import { generateUniquePropertySlug } from "@/app/lib/slug";
+import { PropertyService } from "@/app/lib/services/PropertyService";
+import { propertySearchSchema } from "@/app/lib/validations/property";
+import { AppError, handleApiError, formatZodErrors } from "@/app/lib/utils/errors";
 
 // GET all properties with search/filter functionality
 export async function GET(request) {
   try {
-    await connectDB();
-
     const { searchParams } = new URL(request.url);
-    const tab = searchParams.get("tab") || "buy";
-    const city = searchParams.get("city");
-    const locality = searchParams.get("locality");
-    const propertyType = searchParams.get("propertyType");
-    const budgetMin = searchParams.get("budgetMin");
-    const budgetMax = searchParams.get("budgetMax");
-    const sortBy = searchParams.get("sort") || "relevance";
-    const verifiedOnly = searchParams.get("verifiedOnly") === "true";
-    const limit = parseInt(searchParams.get("limit")) || 50;
-    const page = parseInt(searchParams.get("page")) || 1;
+    const params = Object.fromEntries(searchParams.entries());
 
-    // Build query object
-    let query = {};
-
-    // Tab filter (buy/rent/commercial)
-    // When users select "buy", they want properties available for sale (propertyType: "sell")
-    // When users select "rent", they want properties available for rent (propertyType: "rent")
-    if (tab === "buy") {
-      query.propertyType = "sell";
-    } else if (tab === "rent") {
-      query.propertyType = "rent";
-    } else if (tab === "commercial") {
-      query.category = "Commercial";
+    // 1. Validate with Zod
+    const validation = propertySearchSchema.safeParse(params);
+    if (!validation.success) {
+      throw new AppError("Invalid search parameters", 400, formatZodErrors(validation.error));
     }
 
-    // City filter
-    if (city) {
-      query.city = { $regex: city, $options: "i" };
-    }
-
-    // Locality filter
-    if (locality) {
-      query.locality = { $regex: locality, $options: "i" };
-    }
-
-    // Property type filter (BHK, office, etc.)
-    if (propertyType) {
-      query.bhk = { $regex: propertyType, $options: "i" };
-    }
-
-    // Budget filter
-    if (budgetMin || budgetMax) {
-      query.price = {};
-      const min = budgetMin ? parseInt(budgetMin) : 0;
-      const max = budgetMax ? parseInt(budgetMax) : null;
-
-      if (max) {
-        query.price.$gte = min;
-        query.price.$lte = max;
-      } else {
-        query.price.$gte = min;
-      }
-    }
-
-    // Verified filter - only show verified properties by default for public search
-    // If verifiedOnly parameter is not provided or is not "false", show only verified properties
-    const verifiedOnlyParam = searchParams.get("verifiedOnly");
-    if (!verifiedOnlyParam || verifiedOnlyParam !== "false") {
-      query.verified = true;
-    }
-
-    // Build sort object
-    let sortOptions = {};
-    switch (sortBy) {
-      case "price-low":
-        sortOptions.price = 1;
-        break;
-      case "price-high":
-        sortOptions.price = -1;
-        break;
-      case "verified-first":
-        sortOptions.verified = -1;
-        sortOptions.createdAt = -1;
-        break;
-      case "newest":
-        sortOptions.createdAt = -1;
-        break;
-      case "oldest":
-        sortOptions.createdAt = 1;
-        break;
-      default:
-        sortOptions.createdAt = -1; // Default to newest first
-    }
-
-    // Execute query with pagination
-    const skip = (page - 1) * limit;
-    const properties = await Property.find(query)
-      .populate("ownerId", "name email role")
-      .select("-partnerCommission -commissionPaid -commissionPaidDate -commissionTransactionId")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    // Get total count for pagination
-    const totalCount = await Property.countDocuments(query);
+    // 2. Delegate to Service Layer
+    const result = await PropertyService.searchProperties(validation.data);
 
     return NextResponse.json({
       success: true,
-      properties,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasNext: page * limit < totalCount,
-        hasPrev: page > 1,
-      },
+      ...result
     });
   } catch (error) {
-    console.error("Error fetching properties:", error);
-
-    // Check if it's a database connection error
-    if (
-      error.message?.includes("database") ||
-      error.message?.includes("connect")
-    ) {
-      return NextResponse.json(
-        {
-          error: "Database temporarily unavailable",
-          message:
-            "The backend server is currently experiencing database connectivity issues. Please try again in a few moments.",
-        },
-        { status: 503 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to fetch properties", message: error.message },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
+
 
 // POST new property
 export const POST = requireAuth(async function (req) {
   try {
     await connectDB();
-
-    const userId = req.user._id;
-    const role = req.user.role;
-    if (role !== "partner" && role !== "user") {
-      return NextResponse.json(
-        { error: "Only partners and users can list properties" },
-        { status: 403 }
-      );
-    }
-
-    // KYC is now per-property - user can create property, but it will be pending until KYC is verified
-    // Property will be created with verified: false and status: "pending"
     const body = await req.json();
 
-    // Whitelist allowed fields for creation
-    const {
-      title,
-      description,
-      price,
-      city,
-      locality,
-      propertyType, // sell/rent
-      category, // Residential/Commercial
-      bhk,
-      bathrooms,
-      area,
-      furnishing,
-      amenities,
-      images,
-      videos,
-      address,
-      latitude,
-      longitude,
-    } = body;
+    // Delegate to Service Layer (includes slug generation and defaults)
+    const property = await PropertyService.createProperty(req.user.id, body);
 
-    // Generate unique slug from title if not provided
-    const slug = body.slug || (await generateUniquePropertySlug(title));
-
-    const property = await Property.create({
-      title,
-      description,
-      price,
-      city,
-      locality,
-      propertyType,
-      category,
-      bhk,
-      bathrooms,
-      area,
-      furnishing,
-      amenities,
-      images,
-      videos,
-      address,
-      latitude,
-      longitude,
-      slug,
-      ownerId: userId,
-      verified: false, // Force false, admin must verify
-      status: "pending", // Force pending
+    return NextResponse.json({
+        success: true,
+        property,
+        message: "Property submitted for approval"
     });
-
-    return NextResponse.json(property);
   } catch (error) {
-    console.error("Error creating property:", error);
-
-    // Handle database connectivity issues
-    if (
-      error.message?.includes("database") ||
-      error.message?.includes("connect") ||
-      error.name === "MongooseError"
-    ) {
-      return NextResponse.json(
-        {
-          error: "Database temporarily unavailable",
-          message:
-            "Unable to create property due to database connectivity issues. Please try again later.",
-        },
-        { status: 503 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create property", message: error.message },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
+

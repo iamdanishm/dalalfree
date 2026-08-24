@@ -59,17 +59,7 @@ export default function TrustBadges({ property }) {
     });
   }
 
-  // Featured property badge
-  if (property?.featured) {
-    trustBadges.push({
-      label: "Featured Property",
-      icon: FiAward,
-      color: "text-amber-600",
-      bg: "bg-gradient-to-br from-amber-50 to-amber-100",
-      border: "border-amber-200",
-      description: "Premium Listing",
-    });
-  }
+
 
   return (
     <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 backdrop-blur-sm rounded-2xl p-6 border border-blue-100/50 shadow-xl relative overflow-hidden">

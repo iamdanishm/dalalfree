@@ -1,172 +1,118 @@
 import { NextResponse } from "next/server";
 export const revalidate = 0;
 import { connectDB } from "@/app/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import User from "@/app/lib/models/User";
 import bcrypt from "bcrypt";
 import { REGEX } from "@/app/lib/validation";
+import { requireAdmin } from "@/app/lib/auth";
+
+import { AppError, handleApiError, formatZodErrors } from "@/app/lib/utils/errors";
+import { paginationSchema } from "@/app/lib/validations/common";
 
 // GET /api/admin/users - Paginated user list with filters
-export async function GET(req) {
-  await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin")
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export const GET = requireAdmin(async function (req) {
+  try {
+    await connectDB();
+    
+    const { searchParams } = new URL(req.url);
+    
+    // Validate pagination params
+    const result = paginationSchema.safeParse(Object.fromEntries(searchParams));
+    if (!result.success) {
+      throw new AppError("Invalid pagination parameters", 400, formatZodErrors(result.error));
+    }
 
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page")) || 1;
-  const limit = parseInt(searchParams.get("limit")) || 10;
-  const role = searchParams.get("role");
-  const status = searchParams.get("status");
-  const partnerRequest = searchParams.get("partnerRequest");
-  const search = searchParams.get("search");
+    const { page, limit, search } = result.data;
+    const role = searchParams.get("role");
+    const status = searchParams.get("status");
+    const partnerRequest = searchParams.get("partnerRequest");
 
-  const query = {};
-  if (role) query.role = role;
-  if (status) query.accountStatus = status;
-  if (partnerRequest === "true") {
-    query.partnerRequestStatus = "pending";
-  }
-  if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-      { phone: { $regex: search, $options: "i" } },
-    ];
-  }
+    const query = {};
+    if (role) query.role = role;
+    if (status) query.accountStatus = status;
+    if (partnerRequest === "true") {
+      query.partnerRequestStatus = "pending";
+    }
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
 
-  console.log(`[AdminUsers] Query:`, JSON.stringify(query));
+    const skip = (page - 1) * limit;
+    const users = await User.find(query)
+      .select(
+        "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings subscription createdAt updatedAt partnerRequestStatus partnerRequestDate"
+      )
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-  const skip = (page - 1) * limit;
-  const users = await User.find(query)
-    .select(
-      "name email phone role accountStatus accountStatusReason reraNumber partnerCommissionRate totalEarnings subscription createdAt updatedAt partnerRequestStatus partnerRequestDate"
-    )
-    .sort({ updatedAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+    const total = await User.countDocuments(query);
 
-  console.log(`[AdminUsers] Found ${users.length} users`);
-
-  // Map API data to UI format
-  const formattedUsers = users.map((user) => ({
-    ...user,
-    role:
-      user.role === "user"
-        ? "User"
-        : user.role === "partner"
-          ? "Partner"
-          : user.role === "admin"
-            ? "Admin"
-            : user.role === "sub-admin"
-              ? "Sub-Admin"
-              : user.role,
-    accountStatus:
-      user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1),
-    status:
-      user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1), // Add status field for UI
-    partnerRequestStatus: user.partnerRequestStatus,
-    partnerRequestDate: user.partnerRequestDate,
-  }));
-
-  const total = await User.countDocuments(query);
-
-  return NextResponse.json({
-    users: formattedUsers,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
-  });
-}
-
-// POST /api/admin/users - Admin create user (any role: user, partner, sub-admin, admin)
-export async function POST(req) {
-  await connectDB();
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin")
-    return NextResponse.json(
-      { error: "Forbidden - Admin access required" },
-      { status: 403 }
-    );
-
-  const { name, email, password, phone, role = "user", reraNumber, partnerCommissionRate } = await req.json();
-
-  // Validate required fields
-  const fieldErrors = {};
-  if (!name?.trim()) fieldErrors.name = "Name is required";
-  if (!email?.trim()) fieldErrors.email = "Email is required";
-  if (!password) fieldErrors.password = "Password is required";
-  if (!phone?.trim()) fieldErrors.phone = "Phone number is required";
-
-  // Additional validations
-  if (email && !REGEX.EMAIL.test(email)) {
-    fieldErrors.email = "Please enter a valid email address";
-  }
-
-  if (password && password.length < 8) {
-    fieldErrors.password = "Password must be at least 8 characters";
-  }
-
-  if (phone && !REGEX.PHONE.test(phone)) {
-    fieldErrors.phone = "Please enter a valid phone number";
-  }
-
-  if (role === "partner" && !reraNumber?.trim()) {
-    fieldErrors.reraNumber = "RERA number is required for partners";
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return NextResponse.json(
-      {
-        error: "Validation failed",
-        fieldErrors,
-        type: "validation_error",
+    return NextResponse.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
       },
-      { status: 400 }
-    );
+    });
+  } catch (error) {
+    return handleApiError(error);
   }
+});
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ email });
-  if (existingUser)
-    return NextResponse.json(
-      { error: "Email already exists" },
-      { status: 400 }
-    );
+// POST /api/admin/users - Admin create user
+export const POST = requireAdmin(async function (req) {
+  try {
+    await connectDB();
+    
+    const body = await req.json();
+    const { name, email, password, phone, role = "user", reraNumber, partnerCommissionRate } = body;
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
+    // Simple validation (can be replaced with a Zod adminUserSchema later)
+    if (!name || !email || !password || !phone) {
+      throw new AppError("Missing required fields", 400);
+    }
 
-  // Create user
-  const newUser = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    phone,
-    role,
-    reraNumber,
-    partnerCommissionRate: partnerCommissionRate || (role === "partner" ? 0.9 : undefined),
-    accountStatus: "active",
-  });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new AppError("Email already exists", 400);
+    }
 
-  return NextResponse.json({
-    user: {
-      id: newUser._id,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      phone: newUser.phone,
-      reraNumber: newUser.reraNumber,
-      partnerCommissionRate: newUser.partnerCommissionRate,
-      accountStatus: newUser.accountStatus,
-      subscription: newUser.subscription, // Include nested subscription object (only for users)
-      createdAt: newUser.createdAt,
-    },
-    message: `User created successfully as ${newUser.role}`,
-  });
-}
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create user
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+      reraNumber,
+      partnerCommissionRate: partnerCommissionRate || (role === "partner" ? 0.9 : undefined),
+      accountStatus: "active",
+    });
+
+    return NextResponse.json({
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      message: `User created successfully as ${newUser.role}`,
+    }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
+});
+

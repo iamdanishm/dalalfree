@@ -15,10 +15,14 @@ import {
   FaShoppingBag,
   FaSubway,
   FaUtensils,
+  FaUniversity,
+  FaLeaf,
+  FaShoppingCart,
+  FaTree,
 } from "react-icons/fa";
 import { formatPrice } from "@/app/lib/propertyHelpers";
 
-import { FiHome } from "react-icons/fi";
+import { FiHome, FiMapPin } from "react-icons/fi";
 import AmenitiesComponent from "./components/AmenitiesComponent";
 import BreadcrumbNavigation from "./components/BreadcrumbNavigation";
 import DescriptionComponent from "./components/DescriptionComponent";
@@ -123,17 +127,31 @@ export default function PropertyDetails({ params }) {
   const transformPropertyData = (dbProperty) => {
     if (!dbProperty) return null;
 
-    // Map icon strings to React components
-    const getIconComponent = (iconString) => {
+    // Map icon strings or place type keys to React components
+    const getIconComponent = (key) => {
+      if (!key) return FiMapPin;
+      const normalizedKey = key.replace("Fa", "").toLowerCase();
       const iconMap = {
-        FaGraduationCap: FaGraduationCap,
-        FaHospital: FaHospital,
-        FaShoppingBag: FaShoppingBag,
-        FaSubway: FaSubway,
-        FaUtensils: FaUtensils,
-        FaBus: FaBus,
+        school: FaGraduationCap,
+        hospital: FaHospital,
+        mall: FaShoppingBag,
+        metro: FaSubway,
+        bus: FaBus,
+        "bus-stop": FaBus,
+        restaurant: FaUtensils,
+        bank: FaUniversity,
+        park: FaTree,
+        supermarket: FaShoppingCart,
+        graduationcap: FaGraduationCap,
+        shoppingbag: FaShoppingBag,
+        subway: FaSubway,
+        utensils: FaUtensils,
+        university: FaUniversity,
+        leaf: FaLeaf,
+        shoppingcart: FaShoppingCart,
+        tree: FaTree,
       };
-      return iconMap[iconString] || FiHome; // Default to FiHome if not found
+      return iconMap[normalizedKey] || iconMap[key] || FiMapPin;
     };
 
     // Create images array combining images and videos
@@ -215,37 +233,16 @@ export default function PropertyDetails({ params }) {
       highlights: dbProperty.highlights || [],
       amenities: {
         society:
-          dbProperty.amenities?.society &&
-            Array.isArray(dbProperty.amenities.society) &&
-            dbProperty.amenities.society.length > 0
-            ? dbProperty.amenities.society
-              .filter((amenity) => amenity && typeof amenity === "object")
-              .map((amenity, index) => {
-                const defaultNames = [
-                  "Swimming Pool",
-                  "Gym",
-                  "24/7 Security",
-                  "Power Backup",
-                  "Parking",
-                  "Garden",
-                  "Play Area",
-                  "Intercom",
-                  "Lift",
-                  "Water Supply",
-                ];
-                return {
-                  name:
-                    amenity.title ||
-                    amenity.name ||
-                    defaultNames[index] ||
-                    "Society Amenity",
-                  available:
-                    amenity.available !== undefined
-                      ? amenity.available
-                      : true,
+          Array.isArray(dbProperty.societyAmenities) &&
+          dbProperty.societyAmenities.length > 0
+            ? dbProperty.societyAmenities
+                .filter((amenity) => amenity && typeof amenity === "object")
+                .map((amenity) => ({
+                  name: amenity.title || amenity.name || "Society Amenity",
+                  available: amenity.available !== undefined ? amenity.available : true,
                   image: amenity.image || "/images/home-lifestyle.png",
-                };
-              })
+                  icon: amenity.icon,
+                }))
             : [
               // Default amenities if none are specified
               {
@@ -265,12 +262,12 @@ export default function PropertyDetails({ params }) {
               },
             ],
         nearby: (
-          dbProperty.amenities?.nearby ||
-          dbProperty.nearbyPlaces ||
-          []
+          (Array.isArray(dbProperty.nearbyPlaces) && dbProperty.nearbyPlaces.length > 0)
+            ? dbProperty.nearbyPlaces
+            : (dbProperty.amenities?.nearby || [])
         ).map((place) => ({
           name: typeof place.name === "string" ? place.name : "Unknown Place",
-          icon: getIconComponent(place.icon || "FaGraduationCap"),
+          icon: getIconComponent(place.type || place.icon || place.category),
           distance: typeof place.distance === "string" ? place.distance : "N/A",
           rating: typeof place.rating === "number" ? place.rating : 0,
         })),
@@ -608,7 +605,7 @@ export default function PropertyDetails({ params }) {
                   location={property.location}
                   coordinates={property.coordinates}
                   neighborhood={property.neighborhood}
-                  amenities={property.amenities.nearby}
+                  amenities={property.nearbyPlaces || property.amenities?.nearby || []}
                 />
               </motion.div>
             </motion.div>

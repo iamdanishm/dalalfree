@@ -54,6 +54,27 @@ export default function StepReviewPublish({
   setAcceptedTerms,
 }) {
   const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+  const [amenitiesMap, setAmenitiesMap] = useState({});
+
+  // Fetch amenities for proper display
+  React.useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const res = await fetch("/api/amenities");
+        if (res.ok) {
+          const data = await res.json();
+          const map = {};
+          data.amenities.forEach((amenity) => {
+            map[amenity._id] = amenity.title;
+          });
+          setAmenitiesMap(map);
+        }
+      } catch (error) {
+        console.error("Error fetching amenities:", error);
+      }
+    };
+    fetchAmenities();
+  }, []);
 
   // Handle video click - pause previous video and start new one
   const handleVideoClick = (videoIndex, videoRef, event) => {
@@ -135,7 +156,7 @@ export default function StepReviewPublish({
 
   // Get amenity display names
   const getAmenityNames = (amenityIds) => {
-    const amenityMap = {
+    const staticMap = {
       "24-7-security": "24/7 Security",
       cctv: "CCTV Surveillance",
       intercom: "Intercom",
@@ -164,7 +185,11 @@ export default function StepReviewPublish({
       "meditation-area": "Meditation/Yoga Area",
     };
 
-    return amenityIds?.map((id) => amenityMap[id]).filter(Boolean) || [];
+    return (
+      amenityIds
+        ?.map((id) => amenitiesMap[id] || staticMap[id] || (typeof id === "object" ? id?.name || id?.title : id))
+        .filter(Boolean) || []
+    );
   };
 
   const stepSections = [

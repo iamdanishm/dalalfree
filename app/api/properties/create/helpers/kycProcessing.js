@@ -25,6 +25,15 @@ export function categorizeDocument(doc) {
     return "pan";
   }
 
+  // KYC Video patterns
+  if (
+    name.startsWith("video_") ||
+    name.includes("video") ||
+    type.startsWith("video/")
+  ) {
+    return "video";
+  }
+
   // Agreement patterns (PDFs are likely agreements)
   if (
     type === "application/pdf" ||

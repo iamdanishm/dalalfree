@@ -233,7 +233,7 @@ export default function PartnerPropertyEditWizard() {
 
             // Society amenities - try new structure first, then fallback to old
             societyAmenities: extractSocietyAmenityIds(
-                property.amenities?.society || property.societyAmenities || []
+                property.societyAmenities || property.amenities?.society || []
             ),
 
             // Nearby places - try new structure first, then fallback to old

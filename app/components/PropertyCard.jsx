@@ -169,11 +169,6 @@ export default function PropertyCard({
               Verified
             </div>
           )}
-          {property.featured && (
-            <div className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-              Featured
-            </div>
-          )}
         </div>
 
         {/* Price */}

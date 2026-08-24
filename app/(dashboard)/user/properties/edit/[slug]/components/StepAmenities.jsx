@@ -115,13 +115,8 @@ export default function StepAmenities({
       if (!formData.societyAmenities) {
         let societyAmenityIds = [];
 
-        // First try the new structure (array of IDs)
         if (originalProperty.societyAmenities && Array.isArray(originalProperty.societyAmenities)) {
-          societyAmenityIds = originalProperty.societyAmenities;
-        }
-        // Fallback to old structure (objects in amenities.society)
-        else if (originalProperty.amenities?.society && Array.isArray(originalProperty.amenities.society)) {
-          societyAmenityIds = originalProperty.amenities.society.map(
+          societyAmenityIds = originalProperty.societyAmenities.map(
             (amenity) => (typeof amenity === "string" ? amenity : amenity._id)
           ).filter(Boolean);
         }
